@@ -1,0 +1,9 @@
+spring:
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    com.nuzlocketracker: INFO
+    org.springframework.security: WARN
+    org.flywaydb: INFO
