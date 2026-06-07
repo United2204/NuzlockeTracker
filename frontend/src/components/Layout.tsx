@@ -32,7 +32,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
         {children}
       </main>
 
-      {runId && (
+      {runId ? (
         <nav className="bottom-nav">
           <Link
             to={`/runs/${runId}`}
@@ -47,6 +47,30 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
           >
             <span>⚔️</span>
             <span>Equipo</span>
+          </Link>
+          <Link
+            to={`/runs/${runId}/stats`}
+            className={`nav-tab ${location.pathname === `/runs/${runId}/stats` ? 'active' : ''}`}
+          >
+            <span>📊</span>
+            <span>Stats</span>
+          </Link>
+        </nav>
+      ) : (
+        <nav className="bottom-nav">
+          <Link
+            to="/runs"
+            className={`nav-tab ${location.pathname === '/runs' ? 'active' : ''}`}
+          >
+            <span>🎮</span>
+            <span>Runs</span>
+          </Link>
+          <Link
+            to="/profile"
+            className={`nav-tab ${location.pathname === '/profile' ? 'active' : ''}`}
+          >
+            <span>👤</span>
+            <span>Perfil</span>
           </Link>
         </nav>
       )}

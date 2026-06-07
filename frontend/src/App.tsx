@@ -10,6 +10,8 @@ import { RunsPage } from './pages/RunsPage';
 import { NewRunPage } from './pages/NewRunPage';
 import { RunDetailPage } from './pages/RunDetailPage';
 import { TeamPage } from './pages/TeamPage';
+import { RunStatsPage } from './pages/RunStatsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { useSyncFlush } from './hooks/useSyncFlush';
 
 const queryClient = new QueryClient({
@@ -38,7 +40,9 @@ function App() {
             <Route path="/runs"         element={<ProtectedRoute><RunsPage /></ProtectedRoute>} />
             <Route path="/runs/new"     element={<ProtectedRoute><NewRunPage /></ProtectedRoute>} />
             <Route path="/runs/:runId"  element={<ProtectedRoute><RunDetailPage /></ProtectedRoute>} />
-            <Route path="/runs/:runId/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+            <Route path="/runs/:runId/team"  element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+            <Route path="/runs/:runId/stats" element={<ProtectedRoute><RunStatsPage /></ProtectedRoute>} />
+            <Route path="/profile"           element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/runs" replace />} />
           </Routes>

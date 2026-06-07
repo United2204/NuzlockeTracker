@@ -5,6 +5,7 @@ import { runsApi } from '../api/runs';
 import { Layout } from '../components/Layout';
 import { PokemonCard } from '../components/PokemonCard';
 import { PokemonSearch } from '../components/PokemonSearch';
+import { DamageCalcModal } from '../components/DamageCalcModal';
 import type { CaughtPokemonResponse, PokemonSearchResponse } from '../types/api';
 
 type Tab = 'team' | 'box' | 'graveyard';
@@ -82,7 +83,14 @@ export function TeamPage() {
   const [tab, setTab] = useState<Tab>('team');
   const [selected, setSelected] = useState<CaughtPokemonResponse | null>(null);
   const [evolving, setEvolving] = useState<CaughtPokemonResponse | null>(null);
+  const [calcTarget, setCalcTarget] = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
+
+  const runQ = useQuery({
+    queryKey: ['runs', runId],
+    queryFn:  () => runsApi.get(runId!).then(r => r.data),
+    enabled:  !!runId,
+  });
 
   const teamQ = useQuery({
     queryKey: ['runs', runId, 'team'],
@@ -203,6 +211,12 @@ export function TeamPage() {
                   🧬 Evolucionar
                 </button>
               )}
+              <button
+                className="btn btn-info"
+                onClick={() => { setCalcTarget(selected); setSelected(null); }}
+              >
+                ⚡ Calcular daño
+              </button>
               <button className="btn btn-ghost" onClick={() => setSelected(null)}>
                 Cancelar
               </button>
@@ -216,6 +230,15 @@ export function TeamPage() {
           pokemon={evolving}
           runId={runId}
           onClose={() => setEvolving(null)}
+        />
+      )}
+
+      {calcTarget && runId && runQ.data && (
+        <DamageCalcModal
+          runId={runId}
+          gameId={runQ.data.gameId}
+          attacker={calcTarget}
+          onClose={() => setCalcTarget(null)}
         />
       )}
     </Layout>

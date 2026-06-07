@@ -17,4 +17,10 @@ public interface RunRepository extends JpaRepository<Run, UUID> {
     Optional<Run> findByIdAndDeletedAtIsNull(UUID id);
 
     boolean existsByUserIdAndSlug(UUID userId, String slug);
+
+    @Query("SELECT COUNT(r) FROM Run r WHERE r.user.id = :userId AND r.deletedAt IS NULL")
+    long countByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(r) FROM Run r WHERE r.user.id = :userId AND r.deletedAt IS NULL AND r.status = :status")
+    long countByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") Run.Status status);
 }

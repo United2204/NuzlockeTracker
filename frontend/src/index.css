@@ -809,3 +809,292 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   font-size: 14px;
   font-weight: 500;
 }
+
+/* ─── Damage Calculator ──────────────────────────────────────────── */
+.calc-modal {
+  max-width: 560px;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+.calc-body { display: flex; flex-direction: column; gap: 20px; }
+
+.calc-section {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.calc-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calc-sprite { width: 32px; height: 32px; image-rendering: pixelated; }
+
+.calc-types { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+
+.calc-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.calc-row label, .calc-eviv label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.calc-row input, .calc-row select,
+.calc-eviv input, .calc-eviv select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 14px;
+  width: 80px;
+}
+.calc-row select, .calc-eviv select { width: 140px; }
+
+.calc-eviv { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.calc-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.calc-stat-row > span { width: 60px; color: var(--text-muted); }
+.calc-stat-row label { flex-direction: row; align-items: center; gap: 4px; }
+.calc-stat-row input { width: 56px; }
+
+.calc-base-stats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.calc-hint { font-size: 13px; color: var(--text-muted); margin: 0; }
+
+.calc-result {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+.calc-result-header {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.calc-effectiveness { font-size: 14px; color: var(--text-muted); }
+.calc-stab {
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .05em;
+}
+.calc-damage-range {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-h);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+.calc-percent { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+.calc-ko { font-size: 14px; color: var(--accent); font-weight: 600; margin-top: 6px; }
+
+/* Type badge colours (used in calc and elsewhere) */
+.type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: #fff;
+  text-transform: uppercase;
+}
+.type-normal   { background: #9099a1; }
+.type-fire     { background: #ff7c24; }
+.type-water    { background: #4d90d5; }
+.type-electric { background: #f2d94e; color: #333; }
+.type-grass    { background: #63bc5a; }
+.type-ice      { background: #74cec0; color: #333; }
+.type-fighting { background: #ce4265; }
+.type-poison   { background: #ab6ac8; }
+.type-ground   { background: #d97845; }
+.type-flying   { background: #8fa8dd; }
+.type-psychic  { background: #f97176; }
+.type-bug      { background: #91c12f; }
+.type-rock     { background: #c5b78c; }
+.type-ghost    { background: #5269ac; }
+.type-dragon   { background: #0b6dc3; }
+.type-dark     { background: #4f4747; }
+.type-steel    { background: #5a8ea2; }
+.type-fairy    { background: #ec8fe6; }
+
+/* ─── Stats ────────────────────────────────────────────────────────── */
+.stats-section { margin-bottom: 24px; }
+
+.stats-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-row-death {
+  border-left: 3px solid var(--danger);
+}
+
+.stats-sprite {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.stats-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.stats-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stats-row-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.stats-row-species {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.stats-row-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.stats-death-notes {
+  color: var(--text) !important;
+  font-style: italic;
+}
+
+.stats-row-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ─── Profile ───────────────────────────────────────────────────────── */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.profile-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-username {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0;
+}
