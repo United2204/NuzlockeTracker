@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
+import { catalogApi } from '../api/catalog';
+import { socialApi } from '../api/social';
 import { Layout } from '../components/Layout';
 import { EncounterModal } from '../components/EncounterModal';
 import { RunSocialSection } from '../components/RunSocialSection';
-import type { RouteWithEncounterResponse } from '../types/api';
+import type { RouteWithEncounterResponse, RunDetailResponse } from '../types/api';
 
 const OUTCOME_CONFIG: Record<string, { label: string; color: string }> = {
   PENDING:           { label: 'Pendiente',     color: '#6b7280' },
@@ -112,9 +114,105 @@ function RunMenu({ runId, runStatus }: { runId: string; runStatus: string }) {
   );
 }
 
+function BadgeModal({ run, onClose }: { run: RunDetailResponse; onClose: () => void }) {
+  const qc = useQueryClient();
+
+  const { data: allBadges = [] } = useQuery({
+    queryKey: ['catalog', 'badges', run.gameId],
+    queryFn: () => catalogApi.badges(run.gameId).then(r => r.data),
+  });
+
+  const obtainedIds = new Set(run.badges.map(b => b.badgeId));
+  const available = allBadges.filter(b => !obtainedIds.has(b.id));
+
+  const obtainMut = useMutation({
+    mutationFn: (badgeId: number) => runsApi.obtainBadge(run.id, badgeId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', run.id] });
+      onClose();
+    },
+  });
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
+        <div className="modal-header">
+          <h2 className="modal-title">Obtener medalla</h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        </div>
+        <div className="modal-body">
+          {available.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
+              Ya obtuviste todas las medallas.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {available.map(b => (
+                <button
+                  key={b.id}
+                  className="btn btn-ghost btn-full"
+                  style={{ textAlign: 'left', padding: '10px 12px' }}
+                  onClick={() => obtainMut.mutate(b.id)}
+                  disabled={obtainMut.isPending}
+                >
+                  🏅 {b.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RunActions({ run }: { run: RunDetailResponse }) {
+  const qc = useQueryClient();
+
+  const { data: subscribed = false } = useQuery({
+    queryKey: ['runs', run.id, 'subscription'],
+    queryFn: () => socialApi.isSubscribed(run.id).then(r => r.data),
+  });
+
+  const subMut = useMutation({
+    mutationFn: () => subscribed ? socialApi.unsubscribe(run.id) : socialApi.subscribe(run.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['runs', run.id, 'subscription'] }),
+  });
+
+  const favMut = useMutation({
+    mutationFn: () => run.favorite ? runsApi.update(run.id, { favorite: false }) : runsApi.update(run.id, { favorite: true }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', run.id] });
+      qc.invalidateQueries({ queryKey: ['runs'] });
+    },
+  });
+
+  return (
+    <div style={{ display: 'flex', gap: 8, padding: '0 16px 8px' }}>
+      <button
+        className={`btn ${run.favorite ? 'btn-primary' : 'btn-ghost'}`}
+        style={{ flex: 1, fontSize: 13 }}
+        onClick={() => favMut.mutate()}
+        disabled={favMut.isPending}
+      >
+        {run.favorite ? '⭐ Favorita' : '☆ Favorita'}
+      </button>
+      <button
+        className={`btn ${subscribed ? 'btn-primary' : 'btn-ghost'}`}
+        style={{ flex: 1, fontSize: 13 }}
+        onClick={() => subMut.mutate()}
+        disabled={subMut.isPending}
+      >
+        {subscribed ? '🔔 Suscripto' : '🔕 Suscribirse'}
+      </button>
+    </div>
+  );
+}
+
 export function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>();
   const [activeRoute, setActiveRoute] = useState<RouteWithEncounterResponse | null>(null);
+  const [badgeModal, setBadgeModal] = useState(false);
 
   const { data: run } = useQuery({
     queryKey: ['runs', runId],
@@ -146,15 +244,26 @@ export function RunDetailPage() {
         </div>
       )}
 
-      {run && run.badges.length > 0 && (
+      {run && (
         <div className="badges-row">
           {run.badges.map(b => (
             <div key={b.badgeId} className="badge-chip" title={b.badgeName}>
               🏅 {b.badgeName}
             </div>
           ))}
+          {run.status === 'ACTIVE' && (
+            <button
+              className="btn btn-ghost badge-chip"
+              style={{ fontSize: 13, padding: '4px 10px', cursor: 'pointer' }}
+              onClick={() => setBadgeModal(true)}
+            >
+              + Medalla
+            </button>
+          )}
         </div>
       )}
+
+      {run && <RunActions run={run} />}
 
       <div className="page-content">
         {isLoading && <div className="spinner" style={{ margin: '48px auto' }} />}
@@ -198,6 +307,10 @@ export function RunDetailPage() {
       </div>
 
       {runId && <RunSocialSection runId={runId} />}
+
+      {badgeModal && run && (
+        <BadgeModal run={run} onClose={() => setBadgeModal(false)} />
+      )}
 
       {activeRoute && runId && (
         <EncounterModal

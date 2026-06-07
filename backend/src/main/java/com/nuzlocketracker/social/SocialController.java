@@ -54,6 +54,11 @@ public class SocialController {
 
     // ── Run subscription ──────────────────────────────────────────────────────
 
+    @GetMapping("/api/runs/{runId}/subscription")
+    public boolean isSubscribed(@PathVariable UUID runId, Authentication auth) {
+        return socialService.isSubscribed(me(auth), runId);
+    }
+
     @PostMapping("/api/runs/{runId}/subscription")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void subscribe(@PathVariable UUID runId, Authentication auth) {

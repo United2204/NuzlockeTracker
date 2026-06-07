@@ -18,6 +18,7 @@ import { ContributionFormPage } from './pages/ContributionFormPage';
 import { MyContributionsPage } from './pages/MyContributionsPage';
 import { ResubmitContributionPage } from './pages/ResubmitContributionPage';
 import { AdminContributionsPage } from './pages/AdminContributionsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { useSyncFlush } from './hooks/useSyncFlush';
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ function App() {
             <Route path="/contributions/:id/resubmit"    element={<ProtectedRoute><ResubmitContributionPage /></ProtectedRoute>} />
             <Route path="/me/contributions"              element={<ProtectedRoute><MyContributionsPage /></ProtectedRoute>} />
             <Route path="/admin/contributions"           element={<ProtectedRoute><AdminContributionsPage /></ProtectedRoute>} />
+            <Route path="/settings"                      element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/runs" replace />} />
           </Routes>

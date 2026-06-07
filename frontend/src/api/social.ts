@@ -77,6 +77,8 @@ export const socialApi = {
     client.get<PublicProfile>(`/api/users/${username}/profile`),
 
   // Subscription
+  isSubscribed: (runId: string) =>
+    client.get<boolean>(`/api/runs/${runId}/subscription`),
   subscribe: (runId: string) =>
     client.post(`/api/runs/${runId}/subscription`),
   unsubscribe: (runId: string) =>

@@ -69,6 +69,10 @@ public class SocialService {
 
     // ── Subscription ────────────────────────────────────────────────────────
 
+    public boolean isSubscribed(UUID userId, UUID runId) {
+        return runSubscriptionRepository.existsByUserIdAndRunId(userId, runId);
+    }
+
     @Transactional
     public void subscribe(UUID userId, UUID runId) {
         if (runSubscriptionRepository.existsByUserIdAndRunId(userId, runId))
