@@ -1098,3 +1098,159 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   color: var(--text-h);
   margin: 0;
 }
+
+/* ── Feed ─────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 4px;
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.feed-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.feed-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.feed-username {
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+}
+.feed-username:hover { text-decoration: underline; }
+.feed-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.feed-event-label {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.feed-pokemon-name {
+  font-size: 14px;
+  color: var(--text-h);
+  margin-bottom: 2px;
+}
+.feed-run-link {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.link-subtle {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+/* ── Notification bell ───────────────────────────────────────── */
+.notif-bell-wrap {
+  position: relative;
+}
+.notif-bell-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+  padding: 0 4px;
+  line-height: 1;
+}
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 999;
+}
+.notif-header {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  color: var(--text-h);
+}
+.notif-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.notif-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background 0.1s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--bg); }
+.notif-item--unread { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.notif-text {
+  font-size: 13px;
+  color: var(--text-h);
+}
+.notif-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Public profile extras ───────────────────────────────────── */
+.verified-badge {
+  color: var(--info);
+  font-size: 14px;
+  margin-left: 4px;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text-muted);
+}

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { NotificationBell } from './NotificationBell';
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
         </div>
         <div className="header-right">
           {action}
+          <NotificationBell />
         </div>
       </header>
 
@@ -64,6 +66,13 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
           >
             <span>🎮</span>
             <span>Runs</span>
+          </Link>
+          <Link
+            to="/feed"
+            className={`nav-tab ${location.pathname === '/feed' ? 'active' : ''}`}
+          >
+            <span>🌐</span>
+            <span>Feed</span>
           </Link>
           <Link
             to="/profile"
