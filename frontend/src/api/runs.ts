@@ -1,0 +1,72 @@
+import { client } from './client';
+import type {
+  RunSummaryResponse,
+  RunDetailResponse,
+  RouteWithEncounterResponse,
+  CaughtPokemonResponse,
+  RunBadgeResponse,
+} from '../types/api';
+
+export const runsApi = {
+  list: () =>
+    client.get<RunSummaryResponse[]>('/api/runs'),
+
+  get: (runId: string) =>
+    client.get<RunDetailResponse>(`/api/runs/${runId}`),
+
+  create: (data: {
+    gameId: number;
+    name: string;
+    gameVersion?: string;
+    randomized: boolean;
+    presetId?: number;
+    visibility: string;
+  }) =>
+    client.post<RunDetailResponse>('/api/runs', data),
+
+  update: (runId: string, data: Partial<{
+    name: string;
+    visibility: string;
+    favorite: boolean;
+    status: string;
+  }>) =>
+    client.patch<RunDetailResponse>(`/api/runs/${runId}`, data),
+
+  delete: (runId: string) =>
+    client.delete(`/api/runs/${runId}`),
+
+  routes: (runId: string) =>
+    client.get<RouteWithEncounterResponse[]>(`/api/runs/${runId}/routes`),
+
+  recordEncounter: (runId: string, data: {
+    routeId: number;
+    outcome: string;
+    pokemonId?: number;
+    nickname?: string;
+    shiny?: boolean;
+    notes?: string;
+  }) =>
+    client.post(`/api/runs/${runId}/encounters`, data),
+
+  team: (runId: string) =>
+    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/team`),
+
+  graveyard: (runId: string) =>
+    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/graveyard`),
+
+  box: (runId: string) =>
+    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/box`),
+
+  updatePokemonStatus: (runId: string, pokemonId: string, data: {
+    status: string;
+    notes?: string;
+    correction?: boolean;
+  }) =>
+    client.patch<CaughtPokemonResponse>(`/api/runs/${runId}/pokemon/${pokemonId}/status`, data),
+
+  badges: (runId: string) =>
+    client.get<RunBadgeResponse[]>(`/api/runs/${runId}/badges`),
+
+  obtainBadge: (runId: string, badgeId: number) =>
+    client.post<RunBadgeResponse>(`/api/runs/${runId}/badges`, { badgeId }),
+};

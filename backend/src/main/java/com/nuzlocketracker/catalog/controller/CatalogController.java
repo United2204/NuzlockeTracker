@@ -1,8 +1,6 @@
 package com.nuzlocketracker.catalog.controller;
 
-import com.nuzlocketracker.catalog.dto.GameResponse;
-import com.nuzlocketracker.catalog.dto.PokemonSearchResponse;
-import com.nuzlocketracker.catalog.dto.RouteResponse;
+import com.nuzlocketracker.catalog.dto.*;
 import com.nuzlocketracker.catalog.service.CatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +23,19 @@ public class CatalogController {
     @GetMapping("/games/{gameId}/routes")
     public ResponseEntity<List<RouteResponse>> listRoutes(@PathVariable Long gameId) {
         return ResponseEntity.ok(catalogService.listRoutesByGame(gameId));
+    }
+
+    @GetMapping("/games/{gameId}/badges")
+    public ResponseEntity<List<BadgeResponse>> listBadges(@PathVariable Long gameId) {
+        return ResponseEntity.ok(catalogService.getBadgesForGame(gameId));
+    }
+
+    @GetMapping("/routes/{routeId}/encounter-suggestions")
+    public ResponseEntity<List<EncounterSuggestionResponse>> encounterSuggestions(
+            @PathVariable Long routeId,
+            @RequestParam(required = false) String gameVersion
+    ) {
+        return ResponseEntity.ok(catalogService.getEncounterSuggestions(routeId, gameVersion));
     }
 
     @GetMapping("/pokemon/search")

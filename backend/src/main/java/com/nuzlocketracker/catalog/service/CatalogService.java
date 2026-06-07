@@ -1,8 +1,7 @@
 package com.nuzlocketracker.catalog.service;
 
-import com.nuzlocketracker.catalog.dto.GameResponse;
-import com.nuzlocketracker.catalog.dto.PokemonSearchResponse;
-import com.nuzlocketracker.catalog.dto.RouteResponse;
+import com.nuzlocketracker.catalog.dto.*;
+import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonRepository;
 import com.nuzlocketracker.catalog.repository.RouteRepository;
@@ -20,6 +19,7 @@ public class CatalogService {
     private final GameRepository gameRepository;
     private final RouteRepository routeRepository;
     private final PokemonRepository pokemonRepository;
+    private final BadgeRepository badgeRepository;
 
     public List<GameResponse> listGames() {
         return gameRepository.findAllByOrderByGenerationAscNameAsc()
@@ -32,6 +32,20 @@ public class CatalogService {
         return routeRepository.findByGameIdOrderByDisplayOrder(gameId)
                 .stream()
                 .map(RouteResponse::from)
+                .toList();
+    }
+
+    public List<BadgeResponse> getBadgesForGame(Long gameId) {
+        return badgeRepository.findByGameIdOrderByDisplayOrderAsc(gameId)
+                .stream()
+                .map(BadgeResponse::from)
+                .toList();
+    }
+
+    public List<EncounterSuggestionResponse> getEncounterSuggestions(Long routeId, String gameVersion) {
+        return routeRepository.findEncounterSuggestions(routeId, gameVersion)
+                .stream()
+                .map(EncounterSuggestionResponse::from)
                 .toList();
     }
 
