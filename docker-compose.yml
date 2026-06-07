@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nuzlocke_db
+    environment:
+      POSTGRES_DB: nuzlocke_tracker_dev
+      POSTGRES_USER: ${DB_USERNAME:-nuzlocke}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nuzlocke}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-nuzlocke} -d nuzlocke_tracker_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mail:
+    image: axllent/mailpit:latest
+    container_name: nuzlocke_mail
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI → http://localhost:8025
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  postgres_data:

@@ -38,6 +38,9 @@ public class CatalogService {
     public List<PokemonSearchResponse> searchPokemon(String query, String lang) {
         if (query == null || query.isBlank()) return List.of();
         String effectiveLang = (lang != null && !lang.isBlank()) ? lang : "en";
-        return pokemonRepository.searchByName(query.trim(), effectiveLang);
+        return pokemonRepository.searchByName(query.trim(), effectiveLang)
+                .stream()
+                .map(PokemonSearchResponse::from)
+                .toList();
     }
 }

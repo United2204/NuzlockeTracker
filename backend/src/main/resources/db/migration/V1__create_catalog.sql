@@ -60,7 +60,7 @@ CREATE TABLE pokemon (
 
 CREATE TABLE pokemon_name (
     pokemon_id  BIGINT       NOT NULL REFERENCES pokemon(id),
-    lang        CHAR(2)      NOT NULL,                    -- ISO 639-1: "en", "es"
+    lang        VARCHAR(2)      NOT NULL,                    -- ISO 639-1: "en", "es"
     name        VARCHAR(100) NOT NULL,
     PRIMARY KEY (pokemon_id, lang)
 );
@@ -91,7 +91,7 @@ CREATE TABLE ability (
 
 CREATE TABLE ability_name (
     ability_id  BIGINT   NOT NULL REFERENCES ability(id),
-    lang        CHAR(2)  NOT NULL,
+    lang        VARCHAR(2)  NOT NULL,
     name        VARCHAR(100) NOT NULL,
     PRIMARY KEY (ability_id, lang)
 );
@@ -118,7 +118,7 @@ CREATE TABLE move (
 
 CREATE TABLE move_name (
     move_id     BIGINT       NOT NULL REFERENCES move(id),
-    lang        CHAR(2)      NOT NULL,
+    lang        VARCHAR(2)      NOT NULL,
     name        VARCHAR(100) NOT NULL,
     PRIMARY KEY (move_id, lang)
 );
@@ -153,7 +153,7 @@ CREATE TABLE item (
 
 CREATE TABLE item_name (
     item_id     BIGINT       NOT NULL REFERENCES item(id),
-    lang        CHAR(2)      NOT NULL,
+    lang        VARCHAR(2)      NOT NULL,
     name        VARCHAR(100) NOT NULL,
     PRIMARY KEY (item_id, lang)
 );

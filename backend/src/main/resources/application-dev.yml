@@ -1,18 +1,26 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/nuzlocke_tracker_dev
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5435/nuzlocke_tracker_dev
+    username: ${DB_USERNAME:nuzlocke}
+    password: ${DB_PASSWORD:nuzlocke}
   jpa:
     show-sql: true
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
 
 app:
   frontend-url: http://localhost:5173
   cors:
     allowed-origins: http://localhost:5173
+
+management:
+  health:
+    mail:
+      enabled: false
 
 logging:
   level:

@@ -66,7 +66,7 @@ CREATE TABLE refresh_token (
 CREATE TABLE user_settings (
     user_id                       UUID        PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
     allow_followers               BOOLEAN     NOT NULL DEFAULT TRUE,
-    language                      CHAR(2),                          -- NULL = usar idioma del navegador
+    language                      VARCHAR(2),                          -- NULL = usar idioma del navegador
     last_seen_notifications_at    TIMESTAMPTZ,
     notification_preferences      JSONB       NOT NULL DEFAULT '{
         "POKEMON_CAPTURED": true,
