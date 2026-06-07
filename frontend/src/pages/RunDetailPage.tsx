@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { Layout } from '../components/Layout';
 import { EncounterModal } from '../components/EncounterModal';
+import { RunSocialSection } from '../components/RunSocialSection';
 import type { RouteWithEncounterResponse } from '../types/api';
 
 const OUTCOME_CONFIG: Record<string, { label: string; color: string }> = {
@@ -195,6 +196,8 @@ export function RunDetailPage() {
           </div>
         ))}
       </div>
+
+      {runId && <RunSocialSection runId={runId} />}
 
       {activeRoute && runId && (
         <EncounterModal

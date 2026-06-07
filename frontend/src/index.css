@@ -1254,3 +1254,96 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   border: 1px solid var(--border, #e2e8f0);
   color: var(--text-muted);
 }
+
+/* ── Social section (comments + reactions in RunDetailPage) ──── */
+.run-social-section {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.social-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+.social-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+/* Reactions */
+.reactions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reaction-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.reaction-btn:hover { background: var(--bg); }
+.reaction-btn--active {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb, 99,102,241),.12);
+}
+.reaction-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+/* Comments */
+.comment-form { margin-bottom: 4px; }
+.comment-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.comment-item:last-child { border-bottom: none; }
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.comment-author {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent);
+}
+.comment-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.comment-content {
+  font-size: 14px;
+  margin: 0 0 4px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.comment-actions {
+  display: flex;
+  gap: 4px;
+}
+.comment-replies {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+  margin-top: 8px;
+}
+/* Error banner */
+.error-banner {
+  background: rgba(239,68,68,.12);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--danger);
+}
