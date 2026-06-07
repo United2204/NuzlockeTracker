@@ -8,6 +8,19 @@ spring:
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
+    username: ''
+    password: ''
+    properties:
+      mail:
+        smtp:
+          auth: false       # Mailpit no requiere autenticación
+          starttls:
+            enable: false
+  mvc:
+    problemdetails:
+      enabled: false  # nuestro GlobalExceptionHandler maneja las validaciones
+  # Para habilitar Google OAuth: agregar GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en .env
+  # y eliminar el bloque autoconfigure.exclude a continuación.
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
@@ -16,6 +29,8 @@ app:
   frontend-url: http://localhost:5173
   cors:
     allowed-origins: http://localhost:5173
+  seed:
+    pokemon: true   # carga gen 1-6 desde PokéAPI al arrancar (solo si la tabla está vacía)
 
 management:
   health:
