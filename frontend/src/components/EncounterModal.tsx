@@ -30,14 +30,18 @@ interface Props {
   onClose: () => void;
 }
 
+const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL']);
+
 export function EncounterModal({ route, runId, onClose }: Props) {
   const [selectedPokemon, setSelectedPokemon] = useState<PokemonSearchResponse | null>(null);
   const [submitError, setSubmitError] = useState('');
   const qc = useQueryClient();
 
-  const { register, handleSubmit, watch, formState: { isSubmitting } } = useForm<FormData>({
+  const isForced = FORCED_CAPTURE_TYPES.has(route.encounterType);
+
+  const { register, handleSubmit, watch, setValue, formState: { isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { shiny: false },
+    defaultValues: { shiny: false, outcome: isForced ? 'CAPTURED' : '' },
   });
 
   const outcome = watch('outcome');
@@ -74,31 +78,36 @@ export function EncounterModal({ route, runId, onClose }: Props) {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="modal-body">
-          <div className="form-group">
-            <label className="form-label">Resultado *</label>
-            <div className="outcome-grid">
-              {OUTCOMES.map(o => (
-                <label key={o.value} style={{ display: 'contents' }}>
-                  <input type="radio" value={o.value} {...register('outcome')} hidden />
-                  <span
-                    className={`outcome-btn${outcome === o.value ? ' selected' : ''}`}
-                    style={outcome === o.value ? { borderColor: o.color, color: o.color } : undefined}
-                    onClick={() => {
-                      const el = document.querySelector(`input[value="${o.value}"]`) as HTMLInputElement | null;
-                      if (el) el.click();
-                    }}
-                  >
-                    {o.label}
-                  </span>
-                </label>
-              ))}
+          {isForced ? (
+            <p className="form-label" style={{ marginBottom: 8, color: '#22c55e' }}>
+              ✅ {route.encounterType === 'STARTER' ? 'Elegí tu Pokémon inicial' : 'Pokémon garantizado'}
+            </p>
+          ) : (
+            <div className="form-group">
+              <label className="form-label">Resultado *</label>
+              <div className="outcome-grid">
+                {OUTCOMES.map(o => (
+                  <label key={o.value} style={{ display: 'contents' }}>
+                    <input type="radio" value={o.value} {...register('outcome')} hidden />
+                    <span
+                      className={`outcome-btn${outcome === o.value ? ' selected' : ''}`}
+                      style={outcome === o.value ? { borderColor: o.color, color: o.color } : undefined}
+                      onClick={() => setValue('outcome', o.value)}
+                    >
+                      {o.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {needsPokemon && (
             <>
               <div className="form-group">
-                <label className="form-label">Pokémon capturado *</label>
+                <label className="form-label">
+                  {route.encounterType === 'STARTER' ? 'Pokémon inicial *' : 'Pokémon capturado *'}
+                </label>
                 <PokemonSearch onSelect={setSelectedPokemon} />
               </div>
               <div className="form-group">
@@ -122,7 +131,7 @@ export function EncounterModal({ route, runId, onClose }: Props) {
               className="form-input"
               rows={2}
               {...register('notes')}
-              placeholder="Ej: murió vs Brock, Onix nivel 14"
+              placeholder="Ej: elegí Charmander"
             />
           </div>
 
@@ -133,7 +142,7 @@ export function EncounterModal({ route, runId, onClose }: Props) {
             className="btn btn-primary"
             disabled={isSubmitting || !outcome}
           >
-            {isSubmitting ? 'Guardando...' : 'Registrar'}
+            {isSubmitting ? 'Guardando...' : isForced ? 'Confirmar' : 'Registrar'}
           </button>
         </form>
       </div>

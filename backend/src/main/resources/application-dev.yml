@@ -28,7 +28,7 @@ spring:
 app:
   frontend-url: http://localhost:5173
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: http://localhost:5173,http://localhost:5174
   seed:
     pokemon: true   # carga gen 1-6 desde PokéAPI al arrancar (solo si la tabla está vacía)
 
