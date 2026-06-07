@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { Layout } from '../components/Layout';
 import { EncounterModal } from '../components/EncounterModal';
@@ -20,13 +20,95 @@ function groupByBadge(routes: RouteWithEncounterResponse[]): Map<string, RouteWi
   for (const r of routes) {
     const key = r.requiredBadgeName ?? 'Sin medalla requerida';
     const group = groups.get(key);
-    if (group) {
-      group.push(r);
-    } else {
-      groups.set(key, [r]);
-    }
+    if (group) group.push(r);
+    else groups.set(key, [r]);
   }
   return groups;
+}
+
+function RunMenu({ runId, runStatus }: { runId: string; runStatus: string }) {
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState<'COMPLETED' | 'ABANDONED' | null>(null);
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (status: string) => runsApi.update(runId, { status }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', runId] });
+      qc.invalidateQueries({ queryKey: ['runs'] });
+      navigate('/runs');
+    },
+  });
+
+  if (runStatus !== 'ACTIVE') return null;
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button className="btn btn-ghost" onClick={() => setOpen(o => !o)}>⋯</button>
+
+      {open && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+            onClick={() => setOpen(false)}
+          />
+          <div style={{
+            position: 'absolute', right: 0, top: '100%', zIndex: 100,
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: 10, padding: 8, minWidth: 180, boxShadow: '0 4px 20px rgba(0,0,0,.4)',
+          }}>
+            <button
+              className="btn btn-ghost btn-full"
+              style={{ textAlign: 'left', color: 'var(--success)' }}
+              onClick={() => { setOpen(false); setConfirm('COMPLETED'); }}
+            >
+              ✅ Completar run
+            </button>
+            <button
+              className="btn btn-ghost btn-full"
+              style={{ textAlign: 'left', color: 'var(--text-muted)' }}
+              onClick={() => { setOpen(false); setConfirm('ABANDONED'); }}
+            >
+              🏳️ Abandonar run
+            </button>
+          </div>
+        </>
+      )}
+
+      {confirm && (
+        <div className="modal-overlay" onClick={() => setConfirm(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                {confirm === 'COMPLETED' ? '✅ Completar run' : '🏳️ Abandonar run'}
+              </h2>
+              <button type="button" className="modal-close" onClick={() => setConfirm(null)} aria-label="Cerrar">✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: 20, color: 'var(--text-muted)' }}>
+                {confirm === 'COMPLETED'
+                  ? '¿Confirmás que terminaste esta run? Se guardará tu Hall of Fame.'
+                  : '¿Seguro que querés abandonar esta run?'}
+              </p>
+              <div className="actions-row">
+                <button
+                  className={`btn ${confirm === 'COMPLETED' ? 'btn-success' : 'btn-danger'}`}
+                  onClick={() => mutation.mutate(confirm)}
+                  disabled={mutation.isPending}
+                >
+                  {mutation.isPending ? 'Guardando...' : 'Confirmar'}
+                </button>
+                <button className="btn btn-ghost" onClick={() => setConfirm(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function RunDetailPage() {
@@ -48,7 +130,12 @@ export function RunDetailPage() {
   const groups = groupByBadge(routes);
 
   return (
-    <Layout title={run?.name ?? 'Run'} back="/runs" runId={runId}>
+    <Layout
+      title={run?.name ?? 'Run'}
+      back="/runs"
+      runId={runId}
+      action={run && runId ? <RunMenu runId={runId} runStatus={run.status} /> : undefined}
+    >
       {run && (
         <div className="run-stats-bar">
           <span>⚔️ {run.activePokemon}</span>

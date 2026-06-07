@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { Layout } from '../components/Layout';
 import { PokemonCard } from '../components/PokemonCard';
-import type { CaughtPokemonResponse } from '../types/api';
+import { PokemonSearch } from '../components/PokemonSearch';
+import type { CaughtPokemonResponse, PokemonSearchResponse } from '../types/api';
 
 type Tab = 'team' | 'box' | 'graveyard';
 
@@ -14,10 +15,73 @@ const TAB_LABELS: Record<Tab, string> = {
   graveyard: '💀 Cementerio',
 };
 
+function EvolveModal({
+  pokemon,
+  runId,
+  onClose,
+}: {
+  pokemon: CaughtPokemonResponse;
+  runId: string;
+  onClose: () => void;
+}) {
+  const [target, setTarget] = useState<PokemonSearchResponse | null>(null);
+  const [error, setError] = useState('');
+  const qc = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: () => runsApi.evolve(runId, pokemon.id, target!.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId] });
+      onClose();
+    },
+    onError: () => setError('Error al evolucionar. Intenta de nuevo.'),
+  });
+
+  function confirm() {
+    if (!target) { setError('Seleccioná la evolución'); return; }
+    mutation.mutate();
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">
+            Evolucionar: {pokemon.nickname ?? pokemon.currentPokemonName}
+          </h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group">
+            <label className="form-label">Evolución *</label>
+            <PokemonSearch onSelect={setTarget} />
+          </div>
+          {target && (
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 12px' }}>
+              → {target.name}
+            </p>
+          )}
+          {error && <p className="form-error">{error}</p>}
+          <button
+            className="btn btn-primary btn-full"
+            onClick={confirm}
+            disabled={mutation.isPending || !target}
+          >
+            {mutation.isPending ? 'Evolucionando...' : 'Confirmar evolución'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TeamPage() {
   const { runId } = useParams<{ runId: string }>();
   const [tab, setTab] = useState<Tab>('team');
   const [selected, setSelected] = useState<CaughtPokemonResponse | null>(null);
+  const [evolving, setEvolving] = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
 
   const teamQ = useQuery({
@@ -101,7 +165,7 @@ export function TeamPage() {
         {selected && (
           <div className="pokemon-actions">
             <p className="pokemon-actions-title">
-              Mover: <strong>{selected.nickname ?? selected.currentPokemonName}</strong>
+              <strong>{selected.nickname ?? selected.currentPokemonName}</strong>
             </p>
             <div className="actions-row">
               {selected.status !== 'ACTIVE' && (
@@ -131,6 +195,14 @@ export function TeamPage() {
                   💀 Muerto
                 </button>
               )}
+              {selected.status !== 'FAINTED' && (
+                <button
+                  className="btn btn-outline"
+                  onClick={() => { setEvolving(selected); setSelected(null); }}
+                >
+                  🧬 Evolucionar
+                </button>
+              )}
               <button className="btn btn-ghost" onClick={() => setSelected(null)}>
                 Cancelar
               </button>
@@ -138,6 +210,14 @@ export function TeamPage() {
           </div>
         )}
       </div>
+
+      {evolving && runId && (
+        <EvolveModal
+          pokemon={evolving}
+          runId={runId}
+          onClose={() => setEvolving(null)}
+        />
+      )}
     </Layout>
   );
 }
