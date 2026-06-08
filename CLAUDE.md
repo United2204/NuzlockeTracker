@@ -517,6 +517,27 @@ CommunityContribution: id, contributorId, status: PENDING/APPROVED/REJECTED/CHAN
 
 ---
 
+## Comandos de desarrollo
+
+```bash
+# Backend (Spring Boot) — puerto 8080
+cd backend && mvn spring-boot:run
+
+# Frontend (React + Vite) — puerto 5173
+cd frontend && npm run dev
+
+# Verificar compilación antes de testear
+cd backend && mvn compile -q
+cd frontend && npx tsc --noEmit
+```
+
+- El backend necesita PostgreSQL corriendo (Docker o local)
+- Variables de entorno sensibles en `backend/.env` (no commitear)
+- Después de cambios en el backend, siempre reiniciar el servidor — Spring Boot no tiene hot-reload para lógica de negocio
+- El frontend tiene hot-reload automático vía Vite
+
+---
+
 ## Convenciones de código
 
 - Arquitectura en capas: Controller → Service → Repository
