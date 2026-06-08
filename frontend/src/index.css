@@ -80,7 +80,7 @@ img    { max-width: 100%; display: block; }
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 150;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -419,6 +419,29 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   font-weight: 500;
 }
 
+.badge-chip--removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-remove-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 50%;
+  opacity: 0.6;
+  transition: opacity .15s, background .15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.badge-remove-btn:hover { opacity: 1; background: rgba(0,0,0,.15); }
+
 /* ─── Route Cards ────────────────────────────────────────────────── */
 .route-group { display: flex; flex-direction: column; gap: 6px; }
 
@@ -587,6 +610,10 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: sticky;
+  bottom: 72px;
+  z-index: 5;
+  margin-top: 12px;
 }
 
 .pokemon-actions-title {
@@ -1177,9 +1204,14 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   font-size: 20px;
   cursor: pointer;
   position: relative;
-  padding: 0 4px;
+  padding: 6px 8px;
   line-height: 1;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  display: flex;
+  align-items: center;
 }
+.notif-bell-btn:hover { background: var(--border); }
 .notif-badge {
   position: absolute;
   top: -4px;
@@ -1203,7 +1235,7 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   width: 300px;
   max-height: 400px;
   overflow-y: auto;
-  background: var(--surface);
+  background: var(--bg-card);
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -1248,11 +1280,6 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   color: var(--info);
   font-size: 14px;
   margin-left: 4px;
-}
-.btn-ghost {
-  background: transparent;
-  border: 1px solid var(--border, #e2e8f0);
-  color: var(--text-muted);
 }
 
 /* ── Social section (comments + reactions in RunDetailPage) ──── */

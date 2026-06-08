@@ -205,6 +205,11 @@ public class RunService {
                 caughtPokemon.setNickname(req.nickname());
                 caughtPokemon.setShiny(req.shiny());
             } else {
+                long activeCount = caughtPokemonRepository.countByRunIdAndStatus(run.getId(), CaughtPokemon.Status.ACTIVE);
+                CaughtPokemon.Status initialStatus = activeCount >= 6
+                        ? CaughtPokemon.Status.BOXED
+                        : CaughtPokemon.Status.ACTIVE;
+
                 caughtPokemon = new CaughtPokemon();
                 caughtPokemon.setRun(run);
                 caughtPokemon.setRouteEncounter(encounter);
@@ -212,12 +217,12 @@ public class RunService {
                 caughtPokemon.setCurrentPokemon(pokemon);
                 caughtPokemon.setNickname(req.nickname());
                 caughtPokemon.setShiny(req.shiny());
-                caughtPokemon.setStatus(CaughtPokemon.Status.ACTIVE);
+                caughtPokemon.setStatus(initialStatus);
             }
             caughtPokemon = caughtPokemonRepository.save(caughtPokemon);
 
             if (existingCp.isEmpty()) {
-                logStatus(caughtPokemon, CaughtPokemon.Status.ACTIVE, null, false);
+                logStatus(caughtPokemon, caughtPokemon.getStatus(), null, false);
                 String pokemonName = resolveName(pokemon.getId());
                 emitEvent(run, RunEvent.EventType.POKEMON_CAPTURED,
                         "{\"pokemonId\":" + pokemon.getId()
@@ -279,6 +284,12 @@ public class RunService {
         logStatus(cp, newStatus, req.notes(), req.correction());
 
         Run run = cp.getRun();
+        if (newStatus == CaughtPokemon.Status.ACTIVE && run.getStatus() == Run.Status.GAME_OVER) {
+            run.setStatus(Run.Status.ACTIVE);
+            run.setEndedAt(null);
+            runRepository.save(run);
+        }
+
         if (newStatus == CaughtPokemon.Status.FAINTED && !req.correction()) {
             String name = resolveName(cp.getCurrentPokemon().getId());
             emitEvent(run, RunEvent.EventType.POKEMON_FAINTED,
@@ -330,23 +341,42 @@ public class RunService {
 
     public RunBadgeResponse obtainBadge(UUID userId, UUID runId, ObtainBadgeRequest req) {
         Run run = requireOwnedRun(userId, runId);
-        if (runBadgeRepository.existsByRunIdAndBadgeId(runId, req.badgeId())) {
-            throw new ConflictException("Badge already obtained");
-        }
 
         Badge badge = badgeRepository.findById(req.badgeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Badge", req.badgeId()));
 
-        RunBadge runBadge = new RunBadge();
-        runBadge.setRun(run);
-        runBadge.setBadge(badge);
-        runBadge = runBadgeRepository.save(runBadge);
+        List<Badge> allGameBadges = badgeRepository.findByGameIdOrderByDisplayOrderAsc(badge.getGame().getId());
 
-        emitEvent(run, RunEvent.EventType.BADGE_OBTAINED,
-                "{\"badgeId\":" + badge.getId() + ",\"badgeName\":\"" + badge.getName() + "\"}");
+        Set<Long> alreadyObtained = runBadgeRepository.findAllByRunIdOrderByObtainedAtAsc(runId)
+                .stream().map(rb -> rb.getBadge().getId()).collect(Collectors.toSet());
+
+        RunBadge primaryBadge = null;
+
+        for (Badge b : allGameBadges) {
+            if (b.getDisplayOrder() <= badge.getDisplayOrder() && !alreadyObtained.contains(b.getId())) {
+                RunBadge rb = new RunBadge();
+                rb.setRun(run);
+                rb.setBadge(b);
+                rb = runBadgeRepository.save(rb);
+                if (b.getId().equals(badge.getId())) {
+                    primaryBadge = rb;
+                    emitEvent(run, RunEvent.EventType.BADGE_OBTAINED,
+                            "{\"badgeId\":" + b.getId() + ",\"badgeName\":\"" + b.getName() + "\"}");
+                }
+            }
+        }
+
+        if (primaryBadge == null) {
+            throw new ConflictException("Badge already obtained");
+        }
+
         touchRunActivity(run);
+        return RunBadgeResponse.from(primaryBadge);
+    }
 
-        return RunBadgeResponse.from(runBadge);
+    public void removeBadge(UUID userId, UUID runId, long badgeId) {
+        requireOwnedRun(userId, runId);
+        runBadgeRepository.deleteByRunIdAndBadgeId(runId, badgeId);
     }
 
     @Transactional(readOnly = true)

@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record RunDetailResponse(
         UUID id,
+        UUID userId,
         String name,
         String slug,
         Long gameId,
@@ -34,6 +35,7 @@ public record RunDetailResponse(
                                          long active, long fainted, long boxed) {
         return new RunDetailResponse(
                 run.getId(),
+                run.getUser().getId(),
                 run.getName(),
                 run.getSlug(),
                 run.getGame().getId(),

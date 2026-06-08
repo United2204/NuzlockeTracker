@@ -11,4 +11,5 @@ public interface RunBadgeRepository extends JpaRepository<RunBadge, Long> {
     List<RunBadge> findAllByRunIdOrderByObtainedAtAsc(UUID runId);
     Optional<RunBadge> findByRunIdAndBadgeId(UUID runId, Long badgeId);
     boolean existsByRunIdAndBadgeId(UUID runId, Long badgeId);
+    void deleteByRunIdAndBadgeId(UUID runId, Long badgeId);
 }

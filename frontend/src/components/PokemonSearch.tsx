@@ -6,13 +6,14 @@ import { typeColor } from '../utils/pokemonTypes';
 interface Props {
   onSelect: (pokemon: PokemonSearchResponse) => void;
   placeholder?: string;
+  initialPokemon?: PokemonSearchResponse | null;
 }
 
-export function PokemonSearch({ onSelect, placeholder = 'Buscar Pokémon...' }: Props) {
-  const [query, setQuery] = useState('');
+export function PokemonSearch({ onSelect, placeholder = 'Buscar Pokémon...', initialPokemon }: Props) {
+  const [query, setQuery] = useState(initialPokemon?.name ?? '');
   const [results, setResults] = useState<PokemonSearchResponse[]>([]);
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<PokemonSearchResponse | null>(null);
+  const [selected, setSelected] = useState<PokemonSearchResponse | null>(initialPokemon ?? null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

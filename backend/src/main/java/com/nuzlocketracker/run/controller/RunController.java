@@ -116,6 +116,12 @@ public class RunController {
         return runService.getBadges(userId(auth), runId);
     }
 
+    @DeleteMapping("/{runId}/badges/{badgeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeBadge(@PathVariable UUID runId, @PathVariable long badgeId, Authentication auth) {
+        runService.removeBadge(userId(auth), runId, badgeId);
+    }
+
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
     private UUID userId(Authentication auth) {

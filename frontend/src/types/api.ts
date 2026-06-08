@@ -83,6 +83,7 @@ export interface RunBadgeResponse {
 
 export interface RunDetailResponse {
   id: string;
+  userId: string;
   name: string;
   slug: string;
   gameId: number;

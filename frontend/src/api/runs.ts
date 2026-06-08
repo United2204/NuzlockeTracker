@@ -72,4 +72,7 @@ export const runsApi = {
 
   obtainBadge: (runId: string, badgeId: number) =>
     client.post<RunBadgeResponse>(`/api/runs/${runId}/badges`, { badgeId }),
+
+  deleteBadge: (runId: string, badgeId: number) =>
+    client.delete(`/api/runs/${runId}/badges/${badgeId}`),
 };

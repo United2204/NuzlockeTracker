@@ -120,6 +120,7 @@ export function TeamPage() {
       qc.invalidateQueries({ queryKey: ['runs', runId] });
       setSelected(null);
     },
+    onError: () => alert('Error al cambiar el estado. Intentá de nuevo.'),
   });
 
   const currentData =

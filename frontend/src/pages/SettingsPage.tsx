@@ -51,7 +51,7 @@ export function SettingsPage() {
               <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>
                 Idioma de la interfaz. Vacío = usar el idioma del navegador.
               </p>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                 {(['', 'es', 'en'] as const).map(lang => (
                   <button
                     key={lang}
@@ -64,6 +64,9 @@ export function SettingsPage() {
                   </button>
                 ))}
               </div>
+              <p style={{ color: 'var(--warning)', fontSize: 12 }}>
+                ⚠️ El soporte multiidioma está en desarrollo. La preferencia se guarda pero la interfaz aún no cambia.
+              </p>
             </section>
 
             {/* Allow followers */}
