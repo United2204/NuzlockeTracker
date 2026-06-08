@@ -19,6 +19,7 @@ import { MyContributionsPage } from './pages/MyContributionsPage';
 import { ResubmitContributionPage } from './pages/ResubmitContributionPage';
 import { AdminContributionsPage } from './pages/AdminContributionsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 import { useSyncFlush } from './hooks/useSyncFlush';
 
 const queryClient = new QueryClient({
@@ -40,9 +41,10 @@ function App() {
           <OfflineBanner />
           <SyncManager />
           <Routes>
-            <Route path="/login"        element={<LoginPage />} />
-            <Route path="/register"     element={<RegisterPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/login"           element={<LoginPage />} />
+            <Route path="/register"        element={<RegisterPage />} />
+            <Route path="/verify-email"    element={<VerifyEmailPage />} />
+            <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
             <Route path="/runs"         element={<ProtectedRoute><RunsPage /></ProtectedRoute>} />
             <Route path="/runs/new"     element={<ProtectedRoute><NewRunPage /></ProtectedRoute>} />
