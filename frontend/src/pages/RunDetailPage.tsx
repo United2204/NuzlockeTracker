@@ -442,6 +442,10 @@ export function RunDetailPage() {
           activePokemonCount={run?.activePokemon ?? 0}
           nicknameRequired={run?.rules?.find(r => r.ruleType === 'NICKNAME_REQUIRED')?.enabled ?? false}
           firstEncounterOnly={run?.rules?.find(r => r.ruleType === 'FIRST_ENCOUNTER_ONLY')?.enabled ?? false}
+          speciesClauseEnabled={run?.rules?.find(r => r.ruleType === 'SPECIES_CLAUSE')?.enabled ?? false}
+          caughtChainIds={routes
+            .filter(r => r.routeId !== activeRoute.routeId && r.outcome === 'CAPTURED' && r.caughtPokemon?.chainId != null)
+            .map(r => r.caughtPokemon!.chainId as number)}
           onClose={() => setActiveRoute(null)}
         />
       )}

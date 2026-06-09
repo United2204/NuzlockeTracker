@@ -45,4 +45,12 @@ public class CatalogController {
     ) {
         return ResponseEntity.ok(catalogService.searchPokemon(q, lang));
     }
+
+    @GetMapping("/pokemon/{pokemonId}/evolutions")
+    public ResponseEntity<List<PokemonSearchResponse>> getEvolutions(
+            @PathVariable Long pokemonId,
+            @RequestParam(defaultValue = "en") String lang
+    ) {
+        return ResponseEntity.ok(catalogService.getEvolutionChain(pokemonId, lang));
+    }
 }

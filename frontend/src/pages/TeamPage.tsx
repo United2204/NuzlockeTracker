@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
+import { catalogApi } from '../api/catalog';
 import { Layout } from '../components/Layout';
 import { PokemonCard } from '../components/PokemonCard';
 import { PokemonSearch } from '../components/PokemonSearch';
 import { DamageCalcModal } from '../components/DamageCalcModal';
+import { typeColor } from '../utils/pokemonTypes';
 import type { CaughtPokemonResponse, PokemonSearchResponse } from '../types/api';
 
 type Tab = 'team' | 'box' | 'graveyard';
@@ -26,8 +28,14 @@ function EvolveModal({
   onClose: () => void;
 }) {
   const [target, setTarget] = useState<PokemonSearchResponse | null>(null);
+  const [showFreeSearch, setShowFreeSearch] = useState(false);
   const [error, setError] = useState('');
   const qc = useQueryClient();
+
+  const { data: evolutions = [], isLoading: loadingEvolutions } = useQuery({
+    queryKey: ['pokemon', pokemon.currentPokemonId, 'evolutions'],
+    queryFn: () => catalogApi.evolutionChain(pokemon.currentPokemonId).then(r => r.data),
+  });
 
   const mutation = useMutation({
     mutationFn: () => runsApi.evolve(runId, pokemon.id, target!.id),
@@ -55,18 +63,71 @@ function EvolveModal({
           <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
         <div className="modal-body">
-          <div className="form-group">
-            <label className="form-label">Evolución *</label>
-            <PokemonSearch onSelect={setTarget} />
-          </div>
-          {target && (
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 12px' }}>
-              → {target.name}
-            </p>
+          {loadingEvolutions ? (
+            <div className="spinner" style={{ margin: '24px auto' }} />
+          ) : showFreeSearch ? (
+            <>
+              <div className="form-group">
+                <label className="form-label">Evolución *</label>
+                <PokemonSearch onSelect={setTarget} />
+              </div>
+              {target && (
+                <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 12px' }}>
+                  → {target.name}
+                </p>
+              )}
+            </>
+          ) : evolutions.length > 0 ? (
+            <>
+              <label className="form-label">Elegí la evolución</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                {evolutions.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`btn btn-ghost btn-full${target?.id === p.id ? ' btn-primary' : ''}`}
+                    style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}
+                    onClick={() => setTarget(p)}
+                  >
+                    {p.spriteUrl && <img src={p.spriteUrl} alt={p.name} style={{ width: 32, height: 32 }} />}
+                    <span style={{ fontWeight: 500 }}>{p.name}</span>
+                    <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+                      {p.types.map(t => (
+                        <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
+                      ))}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ marginTop: 12, fontSize: 13 }}
+                onClick={() => { setTarget(null); setShowFreeSearch(true); }}
+              >
+                No está en la lista (ROM hack / fangame)
+              </button>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>
+                Este Pokémon no tiene evoluciones registradas.
+              </p>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ fontSize: 13 }}
+                onClick={() => setShowFreeSearch(true)}
+              >
+                Buscar manualmente (ROM hack / fangame)
+              </button>
+            </div>
           )}
+
           {error && <p className="form-error">{error}</p>}
           <button
             className="btn btn-primary btn-full"
+            style={{ marginTop: 16 }}
             onClick={confirm}
             disabled={mutation.isPending || !target}
           >
@@ -84,6 +145,8 @@ export function TeamPage() {
   const [selected, setSelected] = useState<CaughtPokemonResponse | null>(null);
   const [evolving, setEvolving] = useState<CaughtPokemonResponse | null>(null);
   const [calcTarget, setCalcTarget] = useState<CaughtPokemonResponse | null>(null);
+  const [pendingToTeam, setPendingToTeam] = useState<CaughtPokemonResponse | null>(null);
+  const [swapTarget, setSwapTarget] = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
 
   const runQ = useQuery({
@@ -137,6 +200,33 @@ export function TeamPage() {
     setSelected(prev => prev?.id === p.id ? null : p);
   }
 
+  async function confirmSwapToTeam() {
+    if (!pendingToTeam || !swapTarget) return;
+    try {
+      await runsApi.updatePokemonStatus(runId!, swapTarget.id, { status: 'BOXED' });
+      await runsApi.updatePokemonStatus(runId!, pendingToTeam.id, { status: 'ACTIVE' });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'graveyard'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId] });
+    } catch {
+      alert('Error al hacer el cambio. Intentá de nuevo.');
+    } finally {
+      setPendingToTeam(null);
+      setSwapTarget(null);
+    }
+  }
+
+  function handleMoveToTeam(pokemon: CaughtPokemonResponse) {
+    const teamCount = teamQ.data?.length ?? 0;
+    if (teamCount >= 6) {
+      setPendingToTeam(pokemon);
+      setSelected(null);
+    } else {
+      statusMutation.mutate({ pokemonId: pokemon.id, status: 'ACTIVE' });
+    }
+  }
+
   return (
     <Layout title="Equipo" runId={runId}>
       <div className="tab-bar">
@@ -180,7 +270,7 @@ export function TeamPage() {
               {selected.status !== 'ACTIVE' && (
                 <button
                   className="btn btn-success"
-                  onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'ACTIVE' })}
+                  onClick={() => handleMoveToTeam(selected)}
                   disabled={statusMutation.isPending}
                 >
                   ⚔️ Equipo
@@ -241,6 +331,43 @@ export function TeamPage() {
           attacker={calcTarget}
           onClose={() => setCalcTarget(null)}
         />
+      )}
+
+      {pendingToTeam && (
+        <div className="modal-overlay" style={{ zIndex: 210 }} onClick={() => { setPendingToTeam(null); setSwapTarget(null); }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">⚔️ Equipo lleno</h2>
+              <button type="button" className="modal-close" onClick={() => { setPendingToTeam(null); setSwapTarget(null); }} aria-label="Cerrar">✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>
+                Elegí quién va al box para hacerle lugar a <strong>{pendingToTeam.nickname ?? pendingToTeam.currentPokemonName}</strong>:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {teamQ.data?.map(p => (
+                  <button
+                    key={p.id}
+                    className={`btn btn-ghost btn-full${swapTarget?.id === p.id ? ' btn-primary' : ''}`}
+                    style={{ textAlign: 'left' }}
+                    onClick={() => setSwapTarget(prev => prev?.id === p.id ? null : p)}
+                  >
+                    {p.nickname ?? p.currentPokemonName}
+                  </button>
+                ))}
+              </div>
+              {swapTarget && (
+                <button
+                  className="btn btn-primary btn-full"
+                  style={{ marginTop: 12 }}
+                  onClick={confirmSwapToTeam}
+                >
+                  ✅ Confirmar — {swapTarget.nickname ?? swapTarget.currentPokemonName} va al box
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </Layout>
   );

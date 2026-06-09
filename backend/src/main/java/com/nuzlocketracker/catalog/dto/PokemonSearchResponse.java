@@ -13,7 +13,8 @@ public record PokemonSearchResponse(
         List<String> types,
         String spriteUrl,
         String variant,
-        String name
+        String name,
+        Long chainId
 ) {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final TypeReference<List<String>> LIST_STRING = new TypeReference<>() {};
@@ -27,7 +28,7 @@ public record PokemonSearchResponse(
         }
         return new PokemonSearchResponse(
                 p.getId(), p.getSpeciesId(), p.getNationalDexNumber(),
-                types, p.getSpriteUrl(), p.getVariant(), p.getName()
+                types, p.getSpriteUrl(), p.getVariant(), p.getName(), p.getChainId()
         );
     }
 }

@@ -103,6 +103,14 @@ public class PokeApiDataLoader implements ApplicationRunner {
 
         long chainId = extractLastPathSegment(speciesDto.evolutionChain().url());
 
+        Long evolvesFromPokemonId = null;
+        if (speciesDto.evolvesFromSpecies() != null) {
+            long evolvesFromDex = extractLastPathSegment(speciesDto.evolvesFromSpecies().url());
+            evolvesFromPokemonId = pokemonRepository.findByNationalDexNumber((short) evolvesFromDex)
+                    .map(Pokemon::getId)
+                    .orElse(null);
+        }
+
         // Guardar Pokemon con JPA para obtener el ID generado
         Pokemon pokemon = new Pokemon();
         pokemon.setSpeciesId((long) dexNum);
@@ -110,6 +118,7 @@ public class PokeApiDataLoader implements ApplicationRunner {
         pokemon.setTypes(types);
         pokemon.setSpriteUrl(pokemonDto.sprites().frontDefault());
         pokemon.setFromFangame(false);
+        pokemon.setEvolvesFromPokemonId(evolvesFromPokemonId);
         Long pokemonId = pokemonRepository.save(pokemon).getId();
 
         // Usar JDBC para el resto: evita el problema de entidades detached con @MapsId

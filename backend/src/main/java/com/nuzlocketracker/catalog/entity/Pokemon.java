@@ -39,4 +39,7 @@ public class Pokemon {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")
     private Game game;
+
+    @Column(name = "evolves_from_pokemon_id")
+    private Long evolvesFromPokemonId;
 }

@@ -30,6 +30,8 @@ interface Props {
   activePokemonCount: number;
   nicknameRequired?: boolean;
   firstEncounterOnly?: boolean;
+  speciesClauseEnabled?: boolean;
+  caughtChainIds?: number[];
   onClose: () => void;
 }
 
@@ -37,7 +39,7 @@ const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL']);
 
 const TERMINAL_OUTCOMES = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER', 'NOT_FOUND']);
 
-export function EncounterModal({ route, runId, activePokemonCount, nicknameRequired, firstEncounterOnly, onClose }: Props) {
+export function EncounterModal({ route, runId, activePokemonCount, nicknameRequired, firstEncounterOnly, speciesClauseEnabled, caughtChainIds, onClose }: Props) {
   const existingPokemon: PokemonSearchResponse | null = route.caughtPokemon ? {
     id: route.caughtPokemon.currentPokemonId,
     name: route.caughtPokemon.currentPokemonName,
@@ -57,6 +59,9 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
   const qc = useQueryClient();
 
   const teamFull = activePokemonCount >= 6;
+  const speciesConflict = speciesClauseEnabled &&
+    selectedPokemon?.chainId != null &&
+    (caughtChainIds?.includes(selectedPokemon.chainId) ?? false);
   const showSwapModal = pendingData !== null;
 
   const { data: teamMembers = [] } = useQuery({
@@ -97,8 +102,13 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
       await qc.invalidateQueries({ queryKey: ['runs', runId] });
       await qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
       onClose();
-    } catch {
-      setSubmitError('Error al registrar el encuentro. Intenta de nuevo.');
+    } catch (err: unknown) {
+      let msg = 'Error al registrar el encuentro. Intenta de nuevo.';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const res = (err as { response?: { data?: { detail?: string; title?: string } } }).response;
+        msg = res?.data?.detail ?? res?.data?.title ?? msg;
+      }
+      setSubmitError(msg);
       setPendingData(null);
     }
   }
@@ -113,7 +123,7 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
       return;
     }
     setSubmitError('');
-    if (data.outcome === 'CAPTURED' && teamFull) {
+    if (data.outcome === 'CAPTURED' && teamFull && !isEditing) {
       setPendingData(data);
       return;
     }
@@ -199,6 +209,15 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
                 placeholder="Ej: elegí Charmander"
               />
             </div>
+
+            {speciesConflict && (
+              <div style={{
+                background: 'rgba(245,158,11,.12)', border: '1px solid #f59e0b',
+                borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#f59e0b',
+              }}>
+                ⚠️ Species Clause: ya tenés un Pokémon de la misma línea evolutiva en esta run.
+              </div>
+            )}
 
             {submitError && <p className="form-error">{submitError}</p>}
 

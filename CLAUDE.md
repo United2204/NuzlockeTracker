@@ -520,10 +520,13 @@ CommunityContribution: id, contributorId, status: PENDING/APPROVED/REJECTED/CHAN
 ## Comandos de desarrollo
 
 ```bash
-# Backend (Spring Boot) — puerto 8080
-cd backend && mvn spring-boot:run
+# 1. Base de datos y mail (Docker)
+docker compose up -d db mail
 
-# Frontend (React + Vite) — puerto 5173
+# 2. Backend (Spring Boot) — puerto 8080
+cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# 3. Frontend (React + Vite) — puerto 5173
 cd frontend && npm run dev
 
 # Verificar compilación antes de testear
@@ -531,8 +534,8 @@ cd backend && mvn compile -q
 cd frontend && npx tsc --noEmit
 ```
 
-- El backend necesita PostgreSQL corriendo (Docker o local)
-- Variables de entorno sensibles en `backend/.env` (no commitear)
+- DB: PostgreSQL en Docker puerto 5435 (user: nuzlocke, pass: nuzlocke, db: nuzlocke_tracker_dev)
+- Mail UI: [http://localhost:8025](http://localhost:8025) (Mailpit)
 - Después de cambios en el backend, siempre reiniciar el servidor — Spring Boot no tiene hot-reload para lógica de negocio
 - El frontend tiene hot-reload automático vía Vite
 

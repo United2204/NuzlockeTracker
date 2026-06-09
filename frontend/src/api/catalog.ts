@@ -10,4 +10,7 @@ export const catalogApi = {
 
   searchPokemon: (q: string, lang = 'en') =>
     client.get<PokemonSearchResponse[]>('/api/catalog/pokemon/search', { params: { q, lang } }),
+
+  evolutionChain: (pokemonId: number, lang = 'en') =>
+    client.get<PokemonSearchResponse[]>(`/api/catalog/pokemon/${pokemonId}/evolutions`, { params: { lang } }),
 };

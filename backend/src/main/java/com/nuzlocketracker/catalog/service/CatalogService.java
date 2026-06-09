@@ -57,4 +57,12 @@ public class CatalogService {
                 .map(PokemonSearchResponse::from)
                 .toList();
     }
+
+    public List<PokemonSearchResponse> getEvolutionChain(Long pokemonId, String lang) {
+        String effectiveLang = (lang != null && !lang.isBlank()) ? lang : "en";
+        return pokemonRepository.findDirectEvolutions(pokemonId, effectiveLang)
+                .stream()
+                .map(PokemonSearchResponse::from)
+                .toList();
+    }
 }

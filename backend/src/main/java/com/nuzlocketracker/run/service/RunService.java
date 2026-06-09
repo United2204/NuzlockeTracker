@@ -417,7 +417,7 @@ public class RunService {
         enabled.put(RunRule.RuleType.FIRST_ENCOUNTER_ONLY, !isLibre);
         enabled.put(RunRule.RuleType.PERMADEATH, !isLibre);
         enabled.put(RunRule.RuleType.NICKNAME_REQUIRED, !isLibre);
-        enabled.put(RunRule.RuleType.SPECIES_CLAUSE, false);
+        enabled.put(RunRule.RuleType.SPECIES_CLAUSE, !isLibre);
         enabled.put(RunRule.RuleType.DUPLICATE_CLAUSE, false);
         enabled.put(RunRule.RuleType.ITEM_CLAUSE, isHardcore);
         enabled.put(RunRule.RuleType.REGIONAL_VARIANT_CLAUSE, false);
@@ -469,7 +469,8 @@ public class RunService {
     }
 
     private CaughtPokemonResponse toCaughtPokemonResponse(CaughtPokemon cp) {
-        return CaughtPokemonResponse.from(cp, resolveName(cp.getCurrentPokemon().getId()));
+        Long chainId = pokemonRepository.findChainId(cp.getOriginalPokemon().getId()).orElse(null);
+        return CaughtPokemonResponse.from(cp, resolveName(cp.getCurrentPokemon().getId()), chainId);
     }
 
     private void logStatus(CaughtPokemon cp, CaughtPokemon.Status status, String notes, boolean correction) {

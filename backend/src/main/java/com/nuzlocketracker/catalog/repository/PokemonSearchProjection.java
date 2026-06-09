@@ -8,4 +8,5 @@ public interface PokemonSearchProjection {
     String getSpriteUrl();
     String getVariant();
     String getName();
+    Long getChainId();
 }

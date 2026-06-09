@@ -48,6 +48,7 @@ export interface PokemonSearchResponse {
   spriteUrl: string | null;
   variant: string | null;
   name: string;
+  chainId: number | null;
 }
 
 export interface RunSummaryResponse {
@@ -118,6 +119,7 @@ export interface CaughtPokemonResponse {
   caughtAt: string;
   routeId: number;
   routeName: string;
+  chainId: number | null;
 }
 
 export interface RouteWithEncounterResponse {

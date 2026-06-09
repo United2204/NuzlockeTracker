@@ -53,7 +53,8 @@ public class PokeApiDto {
     public record Species(
             int id,
             List<LocalizedName> names,
-            @JsonProperty("evolution_chain") ChainRef evolutionChain
+            @JsonProperty("evolution_chain") ChainRef evolutionChain,
+            @JsonProperty("evolves_from_species") SpeciesRef evolvesFromSpecies
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
