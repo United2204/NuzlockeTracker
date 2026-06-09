@@ -15,6 +15,11 @@ app:
     pokemon: false
     evolutions: false
 
+management:
+  health:
+    mail:
+      enabled: false
+
 logging:
   level:
     com.nuzlocketracker: INFO
