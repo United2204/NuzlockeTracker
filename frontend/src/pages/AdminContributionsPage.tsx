@@ -88,7 +88,7 @@ function ReviewPanel({ c, onDone }: { c: Contribution; onDone: () => void }) {
 }
 
 export function AdminContributionsPage() {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [, setSelected] = useState<number | null>(null);
 
   const { data: pending = [], isLoading } = useQuery({
     queryKey: ['admin', 'contributions', 'pending'],

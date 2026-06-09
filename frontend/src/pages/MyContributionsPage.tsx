@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { contributionsApi, type Contribution } from '../api/contributions';
 import { Layout } from '../components/Layout';
 import { useState } from 'react';
