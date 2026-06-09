@@ -70,6 +70,9 @@ export const runsApi = {
   evolve: (runId: string, pokemonId: string, targetPokemonId: number) =>
     client.patch<CaughtPokemonResponse>(`/api/runs/${runId}/pokemon/${pokemonId}/evolve`, { targetPokemonId }),
 
+  devolve: (runId: string, pokemonId: string) =>
+    client.patch<CaughtPokemonResponse>(`/api/runs/${runId}/pokemon/${pokemonId}/devolve`, {}),
+
   badges: (runId: string) =>
     client.get<RunBadgeResponse[]>(`/api/runs/${runId}/badges`),
 

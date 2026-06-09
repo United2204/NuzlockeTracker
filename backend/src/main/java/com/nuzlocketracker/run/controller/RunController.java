@@ -101,6 +101,13 @@ public class RunController {
         return runService.evolvePokemon(userId(auth), runId, pokemonId, req);
     }
 
+    @PatchMapping("/{runId}/pokemon/{pokemonId}/devolve")
+    public CaughtPokemonResponse devolvePokemon(@PathVariable UUID runId,
+                                                 @PathVariable UUID pokemonId,
+                                                 Authentication auth) {
+        return runService.devolvePokemon(userId(auth), runId, pokemonId);
+    }
+
     // ─── Medallas ──────────────────────────────────────────────────────────────
 
     @PostMapping("/{runId}/badges")

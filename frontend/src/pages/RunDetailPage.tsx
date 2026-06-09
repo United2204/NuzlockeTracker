@@ -63,6 +63,7 @@ function RunMenu({
   onVisibilityModal: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const close = (e: Event) => {
@@ -93,6 +94,13 @@ function RunMenu({
             background: 'var(--bg-card)', border: '1px solid var(--border)',
             borderRadius: 10, padding: 8, minWidth: 200, boxShadow: '0 4px 20px rgba(0,0,0,.4)',
           }}>
+            <button
+              className="btn btn-ghost btn-full"
+              style={{ textAlign: 'left' }}
+              onClick={() => { setOpen(false); navigate(`/runs/${runId}/stats`); }}
+            >
+              📊 Estadísticas
+            </button>
             <button
               className="btn btn-ghost btn-full"
               style={{ textAlign: 'left' }}

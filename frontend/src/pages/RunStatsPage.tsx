@@ -101,6 +101,14 @@ export function RunStatsPage() {
                 <StatCard label="Fallidas"   value={data.routesFailed}   color="var(--danger)" />
                 <StatCard label="Pendientes" value={data.routesPending}  color="var(--text-muted)" />
               </div>
+              {data.routesAttempted > 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
+                  Tasa de captura:{' '}
+                  <strong style={{ color: 'var(--success)' }}>
+                    {Math.round((data.routesCaptured / data.routesAttempted) * 100)}%
+                  </strong>
+                </p>
+              )}
             </section>
 
             {/* Equipo */}

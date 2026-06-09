@@ -186,6 +186,17 @@ export function TeamPage() {
     onError: () => alert('Error al cambiar el estado. Intentá de nuevo.'),
   });
 
+  const devolveMutation = useMutation({
+    mutationFn: (pokemonId: string) => runsApi.devolve(runId!, pokemonId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'graveyard'] });
+      setSelected(null);
+    },
+    onError: () => alert('Error al revertir la evolución. Intentá de nuevo.'),
+  });
+
   const currentData =
     tab === 'team'      ? teamQ.data :
     tab === 'box'       ? boxQ.data  :
@@ -300,6 +311,16 @@ export function TeamPage() {
                   onClick={() => { setEvolving(selected); setSelected(null); }}
                 >
                   🧬 Evolucionar
+                </button>
+              )}
+              {selected.currentPokemonId !== selected.originalPokemonId && (
+                <button
+                  className="btn btn-ghost"
+                  style={{ fontSize: 13 }}
+                  onClick={() => devolveMutation.mutate(selected.id)}
+                  disabled={devolveMutation.isPending}
+                >
+                  ↩️ Revertir evolución
                 </button>
               )}
               <button

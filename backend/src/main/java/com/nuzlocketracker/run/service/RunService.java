@@ -364,6 +364,21 @@ public class RunService {
         return toCaughtPokemonResponse(cp);
     }
 
+    public CaughtPokemonResponse devolvePokemon(UUID userId, UUID runId, UUID pokemonId) {
+        requireOwnedRun(userId, runId);
+        CaughtPokemon cp = caughtPokemonRepository.findById(pokemonId)
+                .filter(p -> p.getRun().getId().equals(runId))
+                .orElseThrow(() -> new ResourceNotFoundException("CaughtPokemon", pokemonId));
+
+        if (cp.getCurrentPokemon().getId().equals(cp.getOriginalPokemon().getId())) {
+            return toCaughtPokemonResponse(cp);
+        }
+
+        cp.setCurrentPokemon(cp.getOriginalPokemon());
+        cp = caughtPokemonRepository.save(cp);
+        return toCaughtPokemonResponse(cp);
+    }
+
     // ─── Medallas ──────────────────────────────────────────────────────────────
 
     public RunBadgeResponse obtainBadge(UUID userId, UUID runId, ObtainBadgeRequest req) {
