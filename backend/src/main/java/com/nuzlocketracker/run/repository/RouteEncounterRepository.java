@@ -15,6 +15,8 @@ public interface RouteEncounterRepository extends JpaRepository<RouteEncounter, 
 
     Optional<RouteEncounter> findByRunIdAndRouteIdAndDeletedAtIsNull(UUID runId, Long routeId);
 
+    List<RouteEncounter> findAllByRunIdAndRouteIdAndDeletedAtIsNullOrderByCreatedAtAsc(UUID runId, Long routeId);
+
     @Query("SELECT COUNT(re) FROM RouteEncounter re WHERE re.run.id = :runId AND re.outcome = :outcome AND re.deletedAt IS NULL")
     long countByRunIdAndOutcome(@Param("runId") UUID runId, @Param("outcome") RouteEncounter.Outcome outcome);
 

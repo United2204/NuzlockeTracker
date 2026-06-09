@@ -7,5 +7,6 @@ public record UpdateRunRequest(
         String visibility,   // PUBLIC, FOLLOWERS_ONLY, PRIVATE
         String status,       // COMPLETED, ABANDONED (GAME_OVER es automático)
         Boolean favorite,
+        Boolean archived,
         Integer displayOrder
 ) {}

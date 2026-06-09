@@ -9,7 +9,9 @@ import { Layout } from '../components/Layout';
 import { EncounterModal } from '../components/EncounterModal';
 import { RunSocialSection } from '../components/RunSocialSection';
 import { AuthContext } from '../contexts/AuthContext';
-import type { RouteWithEncounterResponse, RunDetailResponse } from '../types/api';
+import type { RouteWithEncounterResponse, RouteEncounterSlot, RunDetailResponse } from '../types/api';
+
+type ActiveEncounter = { route: RouteWithEncounterResponse; slot: RouteEncounterSlot | null };
 
 const OUTCOME_CONFIG: Record<string, { label: string; color: string }> = {
   PENDING:           { label: 'Pendiente',     color: '#6b7280' },
@@ -233,7 +235,7 @@ export function RunDetailPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [activeRoute, setActiveRoute] = useState<RouteWithEncounterResponse | null>(null);
+  const [activeEncounter, setActiveEncounter] = useState<ActiveEncounter | null>(null);
   const [badgeModal, setBadgeModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'COMPLETED' | 'ABANDONED' | null>(null);
   const [visModal, setVisModal] = useState(false);
@@ -272,6 +274,12 @@ export function RunDetailPage() {
       setVisModal(false);
     },
   });
+
+  const maxCatches = (() => {
+    const rule = run?.rules?.find(r => r.ruleType === 'MAX_CATCHES_PER_ROUTE' && r.enabled);
+    if (!rule?.value) return 1;
+    try { return JSON.parse(rule.value).max ?? 1; } catch { return 1; }
+  })();
 
   const groups = groupByBadge(routes);
 
@@ -401,28 +409,84 @@ export function RunDetailPage() {
           <div key={badge} className="route-group">
             <h3 className="route-group-title">🏅 {badge}</h3>
             {groupRoutes.map(route => {
-              const cfg = OUTCOME_CONFIG[route.outcome] ?? OUTCOME_CONFIG['PENDING'];
+              const slots      = route.slots;
+              const hasSlots   = slots.length > 0;
+              // outcome representativo: último slot, o PENDING si no hay ninguno
+              const lastSlot   = hasSlots ? slots[slots.length - 1] : null;
+              const displayOutcome = lastSlot?.outcome ?? 'PENDING';
+              const cfg        = OUTCOME_CONFIG[displayOutcome] ?? OUTCOME_CONFIG['PENDING'];
+              const allTerminal = hasSlots && slots.every(s =>
+                ['CAPTURED','FAILED','DIED_IN_ENCOUNTER','NOT_FOUND'].includes(s.outcome)
+              );
+              const canAddSlot = run?.status === 'ACTIVE' && maxCatches > 1
+                && slots.length < maxCatches && allTerminal;
+
               return (
-                <button
-                  key={route.routeId}
-                  className="route-card"
-                  onClick={() => setActiveRoute(route)}
-                >
-                  <div className="route-card-left">
-                    <span className="route-name">{route.routeName}</span>
-                    <span className="route-type">{ENCOUNTER_TYPE_LABELS[route.encounterType] ?? route.encounterType}</span>
-                  </div>
-                  <div className="route-card-right">
-                    {route.caughtPokemon && (
-                      <span className="route-pokemon">
-                        {route.caughtPokemon.nickname ?? route.caughtPokemon.currentPokemonName}
+                <div key={route.routeId} style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                  <button
+                    className="route-card"
+                    style={{ flex: 1 }}
+                    onClick={() => setActiveEncounter({ route, slot: lastSlot })}
+                  >
+                    <div className="route-card-left">
+                      <span className="route-name">{route.routeName}</span>
+                      <span className="route-type">{ENCOUNTER_TYPE_LABELS[route.encounterType] ?? route.encounterType}</span>
+                    </div>
+                    <div className="route-card-right">
+                      {/* sprites de pokémon capturados */}
+                      <span style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        {slots
+                          .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon)
+                          .map(s => {
+                            const cp = s.caughtPokemon!;
+                            const label = cp.nickname ?? cp.currentPokemonName;
+                            return cp.currentPokemonSpriteUrl ? (
+                              <img
+                                key={s.id}
+                                src={cp.currentPokemonSpriteUrl}
+                                alt={label}
+                                title={label}
+                                style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain' }}
+                              />
+                            ) : (
+                              <span key={s.id} className="route-pokemon">{label}</span>
+                            );
+                          })}
                       </span>
-                    )}
-                    <span className="outcome-tag" style={{ color: cfg.color }}>
-                      {cfg.label}
-                    </span>
-                  </div>
-                </button>
+                      {maxCatches > 1 && hasSlots ? (
+                        // múltiples slots: mostrar cada uno como chip pequeño
+                        <span style={{ display: 'flex', gap: 3 }}>
+                          {slots.map(s => {
+                            const c = OUTCOME_CONFIG[s.outcome] ?? OUTCOME_CONFIG['PENDING'];
+                            return (
+                              <span
+                                key={s.id}
+                                style={{ fontSize: 10, color: c.color, border: `1px solid ${c.color}`,
+                                  borderRadius: 4, padding: '1px 4px', cursor: 'pointer' }}
+                                onClick={e => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
+                              >
+                                {c.label}
+                              </span>
+                            );
+                          })}
+                        </span>
+                      ) : (
+                        <span className="outcome-tag" style={{ color: cfg.color }}>{cfg.label}</span>
+                      )}
+                    </div>
+                  </button>
+
+                  {canAddSlot && (
+                    <button
+                      className="btn btn-ghost"
+                      style={{ padding: '0 10px', fontSize: 18, alignSelf: 'center', flexShrink: 0 }}
+                      title="Agregar otro encuentro"
+                      onClick={() => setActiveEncounter({ route, slot: null })}
+                    >
+                      +
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -435,18 +499,22 @@ export function RunDetailPage() {
         <BadgeModal run={run} onClose={() => setBadgeModal(false)} />
       )}
 
-      {activeRoute && runId && (
+      {activeEncounter && runId && (
         <EncounterModal
-          route={activeRoute}
+          route={activeEncounter.route}
+          slot={activeEncounter.slot}
           runId={runId}
           activePokemonCount={run?.activePokemon ?? 0}
           nicknameRequired={run?.rules?.find(r => r.ruleType === 'NICKNAME_REQUIRED')?.enabled ?? false}
           firstEncounterOnly={run?.rules?.find(r => r.ruleType === 'FIRST_ENCOUNTER_ONLY')?.enabled ?? false}
           speciesClauseEnabled={run?.rules?.find(r => r.ruleType === 'SPECIES_CLAUSE')?.enabled ?? false}
           caughtChainIds={routes
-            .filter(r => r.routeId !== activeRoute.routeId && r.outcome === 'CAPTURED' && r.caughtPokemon?.chainId != null)
-            .map(r => r.caughtPokemon!.chainId as number)}
-          onClose={() => setActiveRoute(null)}
+            .filter(r => r.routeId !== activeEncounter.route.routeId)
+            .flatMap(r => r.slots
+              .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon?.chainId != null)
+              .map(s => s.caughtPokemon!.chainId as number)
+            )}
+          onClose={() => setActiveEncounter(null)}
         />
       )}
 

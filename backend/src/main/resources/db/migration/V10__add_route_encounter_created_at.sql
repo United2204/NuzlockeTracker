@@ -1,0 +1,2 @@
+ALTER TABLE route_encounter
+    ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();

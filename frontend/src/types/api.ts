@@ -62,6 +62,7 @@ export interface RunSummaryResponse {
   status: string;
   visibility: string;
   favorite: boolean;
+  archived: boolean;
   displayOrder: number;
   activePokemon: number;
   faintedPokemon: number;
@@ -122,6 +123,14 @@ export interface CaughtPokemonResponse {
   chainId: number | null;
 }
 
+export interface RouteEncounterSlot {
+  id: string;
+  outcome: string;
+  caughtPokemon: CaughtPokemonResponse | null;
+  notes: string | null;
+  encounteredAt: string | null;
+}
+
 export interface RouteWithEncounterResponse {
   routeId: number;
   routeName: string;
@@ -129,9 +138,5 @@ export interface RouteWithEncounterResponse {
   routeOrder: number;
   requiredBadgeId: number | null;
   requiredBadgeName: string | null;
-  encounterId: string | null;
-  outcome: string;
-  caughtPokemon: CaughtPokemonResponse | null;
-  notes: string | null;
-  encounteredAt: string | null;
+  slots: RouteEncounterSlot[];
 }

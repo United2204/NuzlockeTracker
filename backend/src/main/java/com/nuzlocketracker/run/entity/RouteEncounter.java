@@ -39,6 +39,9 @@ public class RouteEncounter {
     @Column(name = "encountered_at")
     private OffsetDateTime encounteredAt;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
@@ -48,7 +51,8 @@ public class RouteEncounter {
     @PrePersist
     void prePersist() {
         if (id == null) id = UUID.randomUUID();
-        updatedAt = OffsetDateTime.now();
+        createdAt = OffsetDateTime.now();
+        updatedAt = createdAt;
     }
 
     @PreUpdate

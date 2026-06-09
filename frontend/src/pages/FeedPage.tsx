@@ -72,15 +72,15 @@ export function FeedPage() {
   return (
     <Layout title="Feed">
       <div className="page-content">
-        <div className="tab-bar">
+        <div className="segment-bar">
           <button
-            className={`tab-btn ${tab === 'public' ? 'active' : ''}`}
+            className={`segment-btn ${tab === 'public' ? 'active' : ''}`}
             onClick={() => setTab('public')}
           >
             Global
           </button>
           <button
-            className={`tab-btn ${tab === 'following' ? 'active' : ''}`}
+            className={`segment-btn ${tab === 'following' ? 'active' : ''}`}
             onClick={() => setTab('following')}
           >
             Siguiendo

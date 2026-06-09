@@ -68,7 +68,7 @@ public class RunService {
         }
 
         run = runRepository.save(run);
-        applyPresetRules(run, preset);
+        applyPresetRules(run, preset, req.rulesOverride());
 
         return buildDetail(run);
     }
@@ -116,6 +116,7 @@ public class RunService {
             } catch (IllegalArgumentException ignored) {}
         }
         if (req.favorite() != null) run.setFavorite(req.favorite());
+        if (req.archived() != null) run.setArchived(req.archived());
         if (req.displayOrder() != null) run.setDisplayOrder(req.displayOrder());
 
         run = runRepository.save(run);
@@ -135,20 +136,24 @@ public class RunService {
         Run run = requireOwnedRun(userId, runId);
         List<Route> routes = routeRepository.findByGameIdOrderByDisplayOrder(run.getGame().getId());
 
-        Map<Long, RouteEncounter> encountersByRouteId = routeEncounterRepository
+        Map<Long, List<RouteEncounter>> encountersByRouteId = routeEncounterRepository
                 .findAllByRunIdAndDeletedAtIsNull(runId).stream()
-                .collect(Collectors.toMap(e -> e.getRoute().getId(), e -> e));
+                .collect(Collectors.groupingBy(e -> e.getRoute().getId()));
 
-        Map<UUID, CaughtPokemon> pokemonByEncounterId = caughtPokemonRepository
+        Map<UUID, CaughtPokemonResponse> cpByEncounterId = caughtPokemonRepository
                 .findAllByRunId(runId).stream()
-                .collect(Collectors.toMap(cp -> cp.getRouteEncounter().getId(), cp -> cp));
+                .collect(Collectors.toMap(
+                        cp -> cp.getRouteEncounter().getId(),
+                        this::toCaughtPokemonResponse
+                ));
 
         return routes.stream().map(route -> {
-            RouteEncounter enc = encountersByRouteId.get(route.getId());
-            if (enc == null) return RouteWithEncounterResponse.noEncounter(route);
-            CaughtPokemon cp = pokemonByEncounterId.get(enc.getId());
-            CaughtPokemonResponse cpResp = cp != null ? toCaughtPokemonResponse(cp) : null;
-            return RouteWithEncounterResponse.withEncounter(route, enc, cpResp);
+            List<RouteEncounter> encs = encountersByRouteId.getOrDefault(route.getId(), List.of());
+            // orden cronológico por createdAt
+            List<RouteEncounter> sorted = encs.stream()
+                    .sorted(java.util.Comparator.comparing(RouteEncounter::getCreatedAt))
+                    .toList();
+            return RouteWithEncounterResponse.build(route, sorted, cpByEncounterId);
         }).toList();
     }
 
@@ -172,14 +177,36 @@ public class RunService {
         Route route = routeRepository.findById(req.routeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Route", req.routeId()));
 
-        RouteEncounter encounter = routeEncounterRepository
-                .findByRunIdAndRouteIdAndDeletedAtIsNull(runId, req.routeId())
-                .orElseGet(() -> {
-                    RouteEncounter e = new RouteEncounter();
-                    e.setRun(run);
-                    e.setRoute(route);
-                    return e;
-                });
+        int maxCatches = resolveMaxCatches(runId);
+
+        RouteEncounter encounter;
+        if (req.encounterId() != null) {
+            // editar slot específico
+            encounter = routeEncounterRepository.findById(req.encounterId())
+                    .orElseThrow(() -> new ResourceNotFoundException("RouteEncounter", req.encounterId()));
+        } else {
+            // buscar slot libre o crear uno nuevo
+            List<RouteEncounter> existing = routeEncounterRepository
+                    .findAllByRunIdAndRouteIdAndDeletedAtIsNullOrderByCreatedAtAsc(runId, req.routeId());
+
+            encounter = existing.stream()
+                    .filter(e -> e.getOutcome() == RouteEncounter.Outcome.PENDING
+                              || e.getOutcome() == RouteEncounter.Outcome.DEFERRED)
+                    .findFirst()
+                    .orElseGet(() -> {
+                        long used = existing.stream()
+                                .filter(e -> e.getOutcome() != RouteEncounter.Outcome.PENDING
+                                          && e.getOutcome() != RouteEncounter.Outcome.DEFERRED)
+                                .count();
+                        if (used >= maxCatches) {
+                            throw new ConflictException("Límite de capturas por ruta alcanzado (" + maxCatches + ")");
+                        }
+                        RouteEncounter e = new RouteEncounter();
+                        e.setRun(run);
+                        e.setRoute(route);
+                        return e;
+                    });
+        }
 
         Optional<CaughtPokemon> existingCp = encounter.getId() != null
                 ? caughtPokemonRepository.findByRouteEncounterId(encounter.getId())
@@ -408,24 +435,36 @@ public class RunService {
         return RunDetailResponse.from(run, rules, badges, active, fainted, boxed);
     }
 
-    private void applyPresetRules(Run run, RulePreset preset) {
+    private void applyPresetRules(Run run, RulePreset preset,
+                                   List<CreateRunRequest.RuleOverride> overrides) {
         String presetName = preset != null ? preset.getName() : "Clásico";
         boolean isHardcore = "Hardcore".equals(presetName);
-        boolean isLibre = "Libre".equals(presetName);
+        boolean isLibre    = "Libre".equals(presetName);
 
         Map<RunRule.RuleType, Boolean> enabled = new LinkedHashMap<>();
-        enabled.put(RunRule.RuleType.FIRST_ENCOUNTER_ONLY, !isLibre);
-        enabled.put(RunRule.RuleType.PERMADEATH, !isLibre);
-        enabled.put(RunRule.RuleType.NICKNAME_REQUIRED, !isLibre);
-        enabled.put(RunRule.RuleType.SPECIES_CLAUSE, !isLibre);
-        enabled.put(RunRule.RuleType.DUPLICATE_CLAUSE, false);
-        enabled.put(RunRule.RuleType.ITEM_CLAUSE, isHardcore);
+        enabled.put(RunRule.RuleType.FIRST_ENCOUNTER_ONLY,    !isLibre);
+        enabled.put(RunRule.RuleType.PERMADEATH,              !isLibre);
+        enabled.put(RunRule.RuleType.NICKNAME_REQUIRED,       false);   // siempre opcional
+        enabled.put(RunRule.RuleType.SPECIES_CLAUSE,          !isLibre);
+        enabled.put(RunRule.RuleType.DUPLICATE_CLAUSE,        false);
+        enabled.put(RunRule.RuleType.ITEM_CLAUSE,             isHardcore);
         enabled.put(RunRule.RuleType.REGIONAL_VARIANT_CLAUSE, false);
-        enabled.put(RunRule.RuleType.LEVEL_CAP, isHardcore);
-        enabled.put(RunRule.RuleType.MAX_CATCHES_PER_ROUTE, false);
+        enabled.put(RunRule.RuleType.LEVEL_CAP,               isHardcore);
+        enabled.put(RunRule.RuleType.MAX_CATCHES_PER_ROUTE,   false);
 
         Map<RunRule.RuleType, String> values = new HashMap<>();
         if (isHardcore) values.put(RunRule.RuleType.LEVEL_CAP, "{\"modifierPercent\":0}");
+
+        // aplicar overrides del usuario encima de los defaults del preset
+        if (overrides != null) {
+            for (CreateRunRequest.RuleOverride ov : overrides) {
+                try {
+                    RunRule.RuleType type = RunRule.RuleType.valueOf(ov.ruleType());
+                    enabled.put(type, ov.enabled());
+                    if (ov.value() != null) values.put(type, ov.value());
+                } catch (IllegalArgumentException ignored) {}
+            }
+        }
 
         List<RunRule> rules = enabled.entrySet().stream().map(entry -> {
             RunRule rule = new RunRule();
@@ -437,6 +476,21 @@ public class RunService {
         }).toList();
 
         runRuleRepository.saveAll(rules);
+    }
+
+    private int resolveMaxCatches(UUID runId) {
+        return runRuleRepository.findAllByRunId(runId).stream()
+                .filter(r -> r.getRuleType() == RunRule.RuleType.MAX_CATCHES_PER_ROUTE && r.isEnabled())
+                .findFirst()
+                .map(r -> {
+                    if (r.getValue() != null) {
+                        java.util.regex.Matcher m = java.util.regex.Pattern
+                                .compile("\"max\"\\s*:\\s*(\\d+)").matcher(r.getValue());
+                        if (m.find()) return Integer.parseInt(m.group(1));
+                    }
+                    return 1;
+                })
+                .orElse(1);
     }
 
     private RulePreset resolvePreset(Long presetId) {

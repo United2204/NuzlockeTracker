@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { RouteWithEncounterResponse, PokemonSearchResponse, CaughtPokemonResponse } from '../types/api';
+import type { RouteWithEncounterResponse, RouteEncounterSlot, PokemonSearchResponse, CaughtPokemonResponse } from '../types/api';
 import { PokemonSearch } from './PokemonSearch';
 import { runsApi } from '../api/runs';
 
@@ -26,6 +26,7 @@ type FormData = z.infer<typeof schema>;
 
 interface Props {
   route: RouteWithEncounterResponse;
+  slot: RouteEncounterSlot | null;   // null = slot nuevo
   runId: string;
   activePokemonCount: number;
   nicknameRequired?: boolean;
@@ -36,29 +37,34 @@ interface Props {
 }
 
 const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL']);
+const TERMINAL_OUTCOMES    = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER', 'NOT_FOUND']);
 
-const TERMINAL_OUTCOMES = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER', 'NOT_FOUND']);
-
-export function EncounterModal({ route, runId, activePokemonCount, nicknameRequired, firstEncounterOnly, speciesClauseEnabled, caughtChainIds, onClose }: Props) {
-  const existingPokemon: PokemonSearchResponse | null = route.caughtPokemon ? {
-    id: route.caughtPokemon.currentPokemonId,
-    name: route.caughtPokemon.currentPokemonName,
-    speciesId: 0,
+export function EncounterModal({
+  route, slot, runId, activePokemonCount,
+  nicknameRequired, firstEncounterOnly, speciesClauseEnabled,
+  caughtChainIds, onClose,
+}: Props) {
+  const existingPokemon: PokemonSearchResponse | null = slot?.caughtPokemon ? {
+    id:               slot.caughtPokemon.currentPokemonId,
+    name:             slot.caughtPokemon.currentPokemonName,
+    speciesId:        0,
     nationalDexNumber: null,
-    types: route.caughtPokemon.currentPokemonTypes,
-    spriteUrl: route.caughtPokemon.currentPokemonSpriteUrl,
-    variant: null,
+    types:            slot.caughtPokemon.currentPokemonTypes,
+    spriteUrl:        slot.caughtPokemon.currentPokemonSpriteUrl,
+    variant:          null,
+    chainId:          slot.caughtPokemon.chainId,
   } : null;
 
-  const isEditing = TERMINAL_OUTCOMES.has(route.outcome);
+  const isEditing = slot !== null && TERMINAL_OUTCOMES.has(slot.outcome);
+  const isForced  = FORCED_CAPTURE_TYPES.has(route.encounterType);
 
   const [selectedPokemon, setSelectedPokemon] = useState<PokemonSearchResponse | null>(existingPokemon);
-  const [submitError, setSubmitError] = useState('');
-  const [pendingData, setPendingData] = useState<FormData | null>(null);
-  const [memberToBox, setMemberToBox] = useState<CaughtPokemonResponse | null>(null);
+  const [submitError, setSubmitError]         = useState('');
+  const [pendingData, setPendingData]         = useState<FormData | null>(null);
+  const [memberToBox, setMemberToBox]         = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
 
-  const teamFull = activePokemonCount >= 6;
+  const teamFull      = activePokemonCount >= 6;
   const speciesConflict = speciesClauseEnabled &&
     selectedPokemon?.chainId != null &&
     (caughtChainIds?.includes(selectedPokemon.chainId) ?? false);
@@ -66,23 +72,21 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
 
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['runs', runId, 'team'],
-    queryFn: () => runsApi.team(runId).then(r => r.data),
-    enabled: showSwapModal,
+    queryFn:  () => runsApi.team(runId).then(r => r.data),
+    enabled:  showSwapModal,
   });
-
-  const isForced = FORCED_CAPTURE_TYPES.has(route.encounterType);
 
   const { register, handleSubmit, watch, setValue, formState: { isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      shiny: route.caughtPokemon?.shiny ?? false,
-      outcome: isForced ? 'CAPTURED' : (isEditing ? route.outcome : ''),
-      notes: route.notes ?? '',
-      nickname: route.caughtPokemon?.nickname ?? '',
+      shiny:   slot?.caughtPokemon?.shiny ?? false,
+      outcome: isForced ? 'CAPTURED' : (isEditing ? slot!.outcome : ''),
+      notes:   slot?.notes ?? '',
+      nickname: slot?.caughtPokemon?.nickname ?? '',
     },
   });
 
-  const outcome = watch('outcome');
+  const outcome    = watch('outcome');
   const needsPokemon = outcome === 'CAPTURED';
 
   async function doSubmit(data: FormData, swap: CaughtPokemonResponse | null | 'box') {
@@ -91,12 +95,13 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
         await runsApi.updatePokemonStatus(runId, swap.id, { status: 'BOXED' });
       }
       await runsApi.recordEncounter(runId, {
-        routeId:   route.routeId,
-        outcome:   data.outcome,
-        pokemonId: selectedPokemon?.id,
-        nickname:  data.nickname || undefined,
-        shiny:     data.shiny,
-        notes:     data.notes || undefined,
+        routeId:     route.routeId,
+        outcome:     data.outcome,
+        encounterId: slot?.id,          // null = nuevo slot, string = editar existente
+        pokemonId:   selectedPokemon?.id,
+        nickname:    data.nickname || undefined,
+        shiny:       data.shiny,
+        notes:       data.notes || undefined,
       });
       await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
       await qc.invalidateQueries({ queryKey: ['runs', runId] });
@@ -153,6 +158,7 @@ export function EncounterModal({ route, runId, activePokemonCount, nicknameRequi
                 )}
               </div>
             )}
+
             {isForced ? (
               <p className="form-label" style={{ marginBottom: 8, color: '#22c55e' }}>
                 ✅ {route.encounterType === 'STARTER' ? 'Elegí tu Pokémon inicial' : 'Pokémon garantizado'}

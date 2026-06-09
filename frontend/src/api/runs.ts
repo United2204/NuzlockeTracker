@@ -21,6 +21,7 @@ export const runsApi = {
     randomized: boolean;
     presetId?: number;
     visibility: string;
+    rulesOverride?: { ruleType: string; enabled: boolean; value: string | null }[];
   }) =>
     client.post<RunDetailResponse>('/api/runs', data),
 
@@ -28,6 +29,7 @@ export const runsApi = {
     name: string;
     visibility: string;
     favorite: boolean;
+    archived: boolean;
     status: string;
   }>) =>
     client.patch<RunDetailResponse>(`/api/runs/${runId}`, data),
@@ -41,6 +43,7 @@ export const runsApi = {
   recordEncounter: (runId: string, data: {
     routeId: number;
     outcome: string;
+    encounterId?: string;
     pokemonId?: number;
     nickname?: string;
     shiny?: boolean;

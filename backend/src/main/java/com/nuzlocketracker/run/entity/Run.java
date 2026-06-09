@@ -58,6 +58,9 @@ public class Run {
     @Column(name = "is_favorite", nullable = false)
     private boolean favorite = false;
 
+    @Column(name = "is_archived", nullable = false)
+    private boolean archived = false;
+
     @Column(name = "display_order", nullable = false)
     private int displayOrder = 0;
 
