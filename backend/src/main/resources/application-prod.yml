@@ -1,6 +1,19 @@
 spring:
   jpa:
     show-sql: false
+  mail:
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: false
+          ssl:
+            enable: true
+
+app:
+  seed:
+    pokemon: false
+    evolutions: false
 
 logging:
   level:
