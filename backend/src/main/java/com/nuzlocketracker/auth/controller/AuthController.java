@@ -48,6 +48,12 @@ public class AuthController {
         authService.logout(request.refreshToken());
     }
 
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void resendVerification(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.resendVerification(request.email());
+    }
+
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
+import { authApi } from '../api/auth';
 
 const GOOGLE_OAUTH_URL =
   (import.meta.env.VITE_API_URL ?? 'http://localhost:8080') + '/oauth2/authorization/google';
@@ -22,6 +23,8 @@ export function LoginPage() {
   const [error, setError] = useState(
     searchParams.get('error') === 'oauth' ? 'No se pudo iniciar sesión con Google. Intentá de nuevo.' : ''
   );
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
 
   const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -29,12 +32,31 @@ export function LoginPage() {
 
   async function onSubmit(data: FormData) {
     setError('');
+    setUnverifiedEmail('');
     try {
       await login(data.email, data.password);
       navigate('/runs');
-    } catch {
-      setError('Email o contraseña incorrectos');
+    } catch (err: unknown) {
+      let detail = '';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const res = (err as { response?: { data?: { detail?: string } } }).response;
+        detail = res?.data?.detail ?? '';
+      }
+      if (detail.toLowerCase().includes('not verified')) {
+        setUnverifiedEmail(data.email);
+        setError('Tu email no está verificado. Revisá tu bandeja de entrada.');
+      } else {
+        setError('Email o contraseña incorrectos');
+      }
     }
+  }
+
+  async function handleResend() {
+    setResendStatus('sending');
+    try {
+      await authApi.resendVerification(unverifiedEmail);
+    } catch { /* silently fail — backend always responds 202 */ }
+    setResendStatus('sent');
   }
 
   return (
@@ -90,6 +112,20 @@ export function LoginPage() {
           </div>
 
           {error && <p className="form-error">{error}</p>}
+
+          {unverifiedEmail && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-full"
+              style={{ fontSize: 13 }}
+              onClick={handleResend}
+              disabled={resendStatus !== 'idle'}
+            >
+              {resendStatus === 'sending' ? 'Enviando...'
+                : resendStatus === 'sent' ? '✅ Email reenviado — revisá tu bandeja'
+                : '📧 Reenviar email de verificación'}
+            </button>
+          )}
 
           <button type="submit" className="btn btn-primary btn-full" disabled={isSubmitting}>
             {isSubmitting ? 'Iniciando...' : 'Iniciar sesión'}

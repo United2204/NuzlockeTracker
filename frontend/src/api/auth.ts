@@ -17,6 +17,9 @@ export const authApi = {
   verifyEmail: (verifyToken: string) =>
     client.get(`/api/auth/verify-email?token=${verifyToken}`),
 
+  resendVerification: (email: string) =>
+    client.post('/api/auth/resend-verification', { email }),
+
   forgotPassword: (email: string) =>
     client.post('/api/auth/forgot-password', { email }),
 

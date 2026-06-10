@@ -71,6 +71,24 @@ public class AuthService {
         emailService.sendVerificationEmail(user.getEmail(), rawToken);
     }
 
+    public void resendVerification(String email) {
+        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
+            if (user.isEmailVerified()) return;
+
+            emailVerificationTokenRepository.deleteByUser(user);
+
+            String rawToken = UUID.randomUUID().toString();
+            EmailVerificationToken evToken = new EmailVerificationToken();
+            evToken.setUser(user);
+            evToken.setTokenHash(hashToken(rawToken));
+            evToken.setExpiresAt(OffsetDateTime.now().plusHours(24));
+            emailVerificationTokenRepository.save(evToken);
+
+            emailService.sendVerificationEmail(user.getEmail(), rawToken);
+        });
+        // Silently succeed — don't leak whether the email exists
+    }
+
     @Transactional(readOnly = true)
     public boolean isEmailTaken(String email) {
         return userRepository.existsByEmail(email.toLowerCase().trim());
