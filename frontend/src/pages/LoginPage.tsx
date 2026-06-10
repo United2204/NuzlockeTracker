@@ -133,6 +133,7 @@ export function LoginPage() {
         </form>
 
         <div className="auth-links">
+          <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
           <Link to="/register">¿No tenés cuenta? Registrate</Link>
         </div>
       </div>

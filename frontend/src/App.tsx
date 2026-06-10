@@ -20,6 +20,8 @@ import { ResubmitContributionPage } from './pages/ResubmitContributionPage';
 import { AdminContributionsPage } from './pages/AdminContributionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { useSyncFlush } from './hooks/useSyncFlush';
 
 const queryClient = new QueryClient({
@@ -44,6 +46,8 @@ function App() {
             <Route path="/login"           element={<LoginPage />} />
             <Route path="/register"        element={<RegisterPage />} />
             <Route path="/verify-email"    element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password"  element={<ResetPasswordPage />} />
             <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
             <Route path="/runs"              element={<RunsPage />} />
