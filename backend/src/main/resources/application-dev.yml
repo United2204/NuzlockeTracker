@@ -29,6 +29,8 @@ app:
   jwt:
     secret: 0IYUs21tmapPMG9MN5Qdh/bMmQkdMtgKYjxlSQRb/iA=
   frontend-url: http://localhost:5173
+  mail:
+    from: nuzlocke@localhost.dev
   cors:
     allowed-origins: http://localhost:5173,http://localhost:5174
   seed:

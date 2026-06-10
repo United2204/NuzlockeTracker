@@ -17,6 +17,9 @@ public class EmailService {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Value("${app.mail.from}")
+    private String fromAddress;
+
     public void sendVerificationEmail(String toEmail, String rawToken) {
         String link = frontendUrl + "/verify-email?token=" + rawToken;
         sendEmail(toEmail,
@@ -36,6 +39,7 @@ public class EmailService {
     private void sendEmail(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromAddress);
             message.setTo(to);
             message.setSubject(subject);
             message.setText(text);
