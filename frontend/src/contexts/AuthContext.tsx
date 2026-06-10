@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
+import { migrateGuestData } from '../hooks/useGuestMigration';
 import { token } from '../utils/token';
 import type { MeResponse } from '../types/api';
 
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token.set(res.data.access_token, res.data.refresh_token);
     const me = await authApi.me();
     setUser(me.data);
+    migrateGuestData().catch(() => { /* guest data stays in IndexedDB if migration fails */ });
   }, []);
 
   return (

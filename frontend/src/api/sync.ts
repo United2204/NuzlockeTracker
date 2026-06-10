@@ -1,5 +1,11 @@
 import { client } from './client';
 
+export interface SyncRulePayload {
+  ruleType: string;
+  enabled: boolean;
+  value: string | null;
+}
+
 export interface SyncRunPayload {
   id: string;
   gameId: number;
@@ -10,7 +16,9 @@ export interface SyncRunPayload {
   status: string;
   visibility: string;
   favorite: boolean;
+  archived: boolean;
   displayOrder: number;
+  rules: SyncRulePayload[];
 }
 
 export interface SyncEncounterPayload {

@@ -11,9 +11,11 @@ import com.nuzlocketracker.common.exception.ResourceNotFoundException;
 import com.nuzlocketracker.run.entity.CaughtPokemon;
 import com.nuzlocketracker.run.entity.RouteEncounter;
 import com.nuzlocketracker.run.entity.Run;
+import com.nuzlocketracker.run.entity.RunRule;
 import com.nuzlocketracker.run.repository.CaughtPokemonRepository;
 import com.nuzlocketracker.run.repository.RouteEncounterRepository;
 import com.nuzlocketracker.run.repository.RunRepository;
+import com.nuzlocketracker.run.repository.RunRuleRepository;
 import com.nuzlocketracker.sync.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,8 @@ public class SyncService {
     private final GameRepository          gameRepository;
     private final RouteRepository         routeRepository;
     private final PokemonRepository       pokemonRepository;
-    private final RunRepository           runRepository;
+    private final RunRepository            runRepository;
+    private final RunRuleRepository        runRuleRepository;
     private final RouteEncounterRepository encounterRepository;
     private final CaughtPokemonRepository  caughtPokemonRepository;
 
@@ -62,6 +65,7 @@ public class SyncService {
             run.setGameVersion(dto.gameVersion());
             run.setRandomized(dto.randomized());
             run.setFavorite(dto.favorite());
+            run.setArchived(dto.archived());
             run.setDisplayOrder(dto.displayOrder());
 
             if (dto.status() != null) {
@@ -74,6 +78,20 @@ public class SyncService {
             }
 
             runRepository.save(run);
+
+            if (dto.rules() != null) {
+                for (SyncRuleDto ruleDto : dto.rules()) {
+                    try {
+                        RunRule rule = new RunRule();
+                        rule.setRun(run);
+                        rule.setRuleType(RunRule.RuleType.valueOf(ruleDto.ruleType()));
+                        rule.setEnabled(ruleDto.enabled());
+                        rule.setValue(ruleDto.value());
+                        runRuleRepository.save(rule);
+                    } catch (IllegalArgumentException ignored) {}
+                }
+            }
+
             runsCreated++;
         }
 
