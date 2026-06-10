@@ -24,9 +24,21 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+export interface GuestEncounterSaveData {
+  routeId: number;
+  routeName: string;
+  outcome: string;
+  encounterId?: string;
+  pokemon?: PokemonSearchResponse;
+  nickname?: string;
+  shiny?: boolean;
+  notes?: string;
+  swapPokemonId?: string;
+}
+
 interface Props {
   route: RouteWithEncounterResponse;
-  slot: RouteEncounterSlot | null;   // null = slot nuevo
+  slot: RouteEncounterSlot | null;
   runId: string;
   activePokemonCount: number;
   nicknameRequired?: boolean;
@@ -34,6 +46,10 @@ interface Props {
   speciesClauseEnabled?: boolean;
   caughtChainIds?: number[];
   onClose: () => void;
+  /** When provided, replaces the internal API call — used for guest mode */
+  onSave?: (data: GuestEncounterSaveData) => Promise<void>;
+  /** Team members to show in the swap modal — used for guest mode */
+  guestTeamMembers?: CaughtPokemonResponse[];
 }
 
 const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL']);
@@ -42,7 +58,7 @@ const TERMINAL_OUTCOMES    = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER',
 export function EncounterModal({
   route, slot, runId, activePokemonCount,
   nicknameRequired, firstEncounterOnly, speciesClauseEnabled,
-  caughtChainIds, onClose,
+  caughtChainIds, onClose, onSave, guestTeamMembers,
 }: Props) {
   const existingPokemon: PokemonSearchResponse | null = slot?.caughtPokemon ? {
     id:               slot.caughtPokemon.currentPokemonId,
@@ -64,17 +80,20 @@ export function EncounterModal({
   const [memberToBox, setMemberToBox]         = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
 
-  const teamFull      = activePokemonCount >= 6;
+  const teamFull       = activePokemonCount >= 6;
   const speciesConflict = speciesClauseEnabled &&
     selectedPokemon?.chainId != null &&
     (caughtChainIds?.includes(selectedPokemon.chainId) ?? false);
-  const showSwapModal = pendingData !== null;
+  const showSwapModal  = pendingData !== null;
 
-  const { data: teamMembers = [] } = useQuery({
+  // API team query — only used when no guestTeamMembers provided
+  const { data: apiTeamMembers = [] } = useQuery({
     queryKey: ['runs', runId, 'team'],
     queryFn:  () => runsApi.team(runId).then(r => r.data),
-    enabled:  showSwapModal,
+    enabled:  showSwapModal && !onSave,
   });
+
+  const teamMembers = guestTeamMembers ?? apiTeamMembers;
 
   const { register, handleSubmit, watch, setValue, formState: { isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -86,26 +105,40 @@ export function EncounterModal({
     },
   });
 
-  const outcome    = watch('outcome');
+  const outcome     = watch('outcome');
   const needsPokemon = outcome === 'CAPTURED';
 
   async function doSubmit(data: FormData, swap: CaughtPokemonResponse | null | 'box') {
     try {
-      if (swap && swap !== 'box') {
-        await runsApi.updatePokemonStatus(runId, swap.id, { status: 'BOXED' });
+      if (onSave) {
+        await onSave({
+          routeId:     route.routeId,
+          routeName:   route.routeName,
+          outcome:     data.outcome,
+          encounterId: slot?.id,
+          pokemon:     selectedPokemon ?? undefined,
+          nickname:    data.nickname || undefined,
+          shiny:       data.shiny,
+          notes:       data.notes || undefined,
+          swapPokemonId: swap && swap !== 'box' ? swap.id : undefined,
+        });
+      } else {
+        if (swap && swap !== 'box') {
+          await runsApi.updatePokemonStatus(runId, swap.id, { status: 'BOXED' });
+        }
+        await runsApi.recordEncounter(runId, {
+          routeId:     route.routeId,
+          outcome:     data.outcome,
+          encounterId: slot?.id,
+          pokemonId:   selectedPokemon?.id,
+          nickname:    data.nickname || undefined,
+          shiny:       data.shiny,
+          notes:       data.notes || undefined,
+        });
+        await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
+        await qc.invalidateQueries({ queryKey: ['runs', runId] });
+        await qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
       }
-      await runsApi.recordEncounter(runId, {
-        routeId:     route.routeId,
-        outcome:     data.outcome,
-        encounterId: slot?.id,          // null = nuevo slot, string = editar existente
-        pokemonId:   selectedPokemon?.id,
-        nickname:    data.nickname || undefined,
-        shiny:       data.shiny,
-        notes:       data.notes || undefined,
-      });
-      await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
-      await qc.invalidateQueries({ queryKey: ['runs', runId] });
-      await qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
       onClose();
     } catch (err: unknown) {
       let msg = 'Error al registrar el encuentro. Intenta de nuevo.';

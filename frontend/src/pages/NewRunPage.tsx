@@ -5,7 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { catalogApi } from '../api/catalog';
 import { runsApi } from '../api/runs';
+import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
+import { useAuth } from '../hooks/useAuth';
 import type { GameResponse } from '../types/api';
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
@@ -74,6 +76,7 @@ type FormData = z.infer<typeof schema>;
 
 export function NewRunPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [games, setGames] = useState<GameResponse[]>([]);
   const [selectedGame, setSelectedGame] = useState<GameResponse | null>(null);
   const [submitError, setSubmitError] = useState('');
@@ -124,16 +127,33 @@ export function NewRunPage() {
           return { ruleType, enabled: r.enabled, value };
         });
 
-      const res = await runsApi.create({
-        gameId:      parseInt(data.gameId, 10),
-        name:        data.name,
-        gameVersion: data.gameVersion || undefined,
-        randomized:  data.randomized ?? false,
-        visibility:  data.visibility ?? 'PRIVATE',
-        presetId:    selectedPreset,
-        rulesOverride,
-      });
-      navigate(`/runs/${res.data.id}`);
+      const game = games.find(g => g.id === parseInt(data.gameId, 10));
+
+      let runId: string;
+      if (user) {
+        const res = await runsApi.create({
+          gameId:      parseInt(data.gameId, 10),
+          name:        data.name,
+          gameVersion: data.gameVersion || undefined,
+          randomized:  data.randomized ?? false,
+          visibility:  data.visibility ?? 'PRIVATE',
+          presetId:    selectedPreset,
+          rulesOverride,
+        });
+        runId = res.data.id;
+      } else {
+        const res = await guestStore.createRun({
+          gameId:      parseInt(data.gameId, 10),
+          gameName:    game?.name ?? '',
+          gameVersion: data.gameVersion || undefined,
+          name:        data.name,
+          randomized:  data.randomized ?? false,
+          rules:       rulesOverride,
+        });
+        runId = res.id;
+      }
+
+      navigate(`/runs/${runId}`);
     } catch {
       setSubmitError('Error al crear la run. Intenta de nuevo.');
     }
@@ -285,15 +305,17 @@ export function NewRunPage() {
             )}
           </div>
 
-          {/* Visibilidad */}
-          <div className="form-group">
-            <label className="form-label">Visibilidad</label>
-            <select className="form-input" {...register('visibility')}>
-              <option value="PRIVATE">🔒 Privada</option>
-              <option value="PUBLIC">🌍 Pública</option>
-              <option value="FOLLOWERS_ONLY">👥 Solo seguidores</option>
-            </select>
-          </div>
+          {/* Visibilidad — solo para usuarios con cuenta */}
+          {user && (
+            <div className="form-group">
+              <label className="form-label">Visibilidad</label>
+              <select className="form-input" {...register('visibility')}>
+                <option value="PRIVATE">🔒 Privada</option>
+                <option value="PUBLIC">🌍 Pública</option>
+                <option value="FOLLOWERS_ONLY">👥 Solo seguidores</option>
+              </select>
+            </div>
+          )}
 
           <div className="form-check">
             <input type="checkbox" id="randomized" {...register('randomized')} />

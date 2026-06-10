@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
+import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 
@@ -24,18 +25,32 @@ export function RunsPage() {
   const qc = useQueryClient();
   const [showArchived, setShowArchived] = useState(false);
 
-  const { data = [], isLoading } = useQuery({
+  const apiQuery = useQuery({
     queryKey: ['runs'],
     queryFn: () => runsApi.list().then(r => r.data),
+    enabled: !!user,
   });
+
+  const guestQuery = useQuery({
+    queryKey: ['guest', 'runs'],
+    queryFn: () => guestStore.listRuns(),
+    enabled: !user,
+  });
+
+  const { data = [], isLoading } = user ? apiQuery : guestQuery;
 
   const archiveMut = useMutation({
     mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
-      runsApi.update(id, { archived }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['runs'] }),
+      user
+        ? runsApi.update(id, { archived })
+        : guestStore.updateRun(id, { archived }),
+    onSuccess: () => {
+      if (user) qc.invalidateQueries({ queryKey: ['runs'] });
+      else qc.invalidateQueries({ queryKey: ['guest', 'runs'] });
+    },
   });
 
-  const visible = data.filter(r => !r.archived);
+  const visible  = data.filter(r => !r.archived);
   const archived = data.filter(r => r.archived);
 
   const sorted = [
@@ -45,16 +60,30 @@ export function RunsPage() {
 
   return (
     <Layout
-      title={`@${user?.username ?? '...'}`}
-      action={
+      title={user ? `@${user.username}` : 'Mis Runs'}
+      action={user ? (
         <button className="btn btn-ghost" onClick={logout}>Salir</button>
-      }
+      ) : undefined}
     >
       <div className="page-content">
         <div className="page-header">
           <h2>Mis Runs</h2>
           <Link to="/runs/new" className="btn btn-primary">+ Nueva</Link>
         </div>
+
+        {!user && (
+          <div style={{
+            background: 'var(--accent-bg)', border: '1px solid var(--accent)',
+            borderRadius: 10, padding: '12px 16px', marginBottom: 16,
+            fontSize: 13, color: 'var(--text-muted)',
+          }}>
+            Tus runs se guardan en este dispositivo.{' '}
+            <Link to="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>
+              Creá una cuenta
+            </Link>{' '}
+            para sincronizarlas en la nube y acceder desde cualquier lugar.
+          </div>
+        )}
 
         {isLoading && <div className="spinner" style={{ margin: '48px auto' }} />}
 

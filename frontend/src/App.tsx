@@ -46,10 +46,10 @@ function App() {
             <Route path="/verify-email"    element={<VerifyEmailPage />} />
             <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
-            <Route path="/runs"         element={<ProtectedRoute><RunsPage /></ProtectedRoute>} />
-            <Route path="/runs/new"     element={<ProtectedRoute><NewRunPage /></ProtectedRoute>} />
-            <Route path="/runs/:runId"  element={<ProtectedRoute><RunDetailPage /></ProtectedRoute>} />
-            <Route path="/runs/:runId/team"  element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+            <Route path="/runs"              element={<RunsPage />} />
+            <Route path="/runs/new"          element={<NewRunPage />} />
+            <Route path="/runs/:runId"       element={<RunDetailPage />} />
+            <Route path="/runs/:runId/team"  element={<TeamPage />} />
             <Route path="/runs/:runId/stats" element={<ProtectedRoute><RunStatsPage /></ProtectedRoute>} />
             <Route path="/profile"           element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/feed"              element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />

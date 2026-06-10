@@ -1,5 +1,5 @@
 import { client } from './client';
-import type { GameResponse, BadgeResponse, PokemonSearchResponse } from '../types/api';
+import type { GameResponse, BadgeResponse, RouteResponse, PokemonSearchResponse } from '../types/api';
 
 export const catalogApi = {
   games: () =>
@@ -7,6 +7,9 @@ export const catalogApi = {
 
   badges: (gameId: number) =>
     client.get<BadgeResponse[]>(`/api/catalog/games/${gameId}/badges`),
+
+  routes: (gameId: number) =>
+    client.get<RouteResponse[]>(`/api/catalog/games/${gameId}/routes`),
 
   searchPokemon: (q: string, lang = 'en') =>
     client.get<PokemonSearchResponse[]>('/api/catalog/pokemon/search', { params: { q, lang } }),

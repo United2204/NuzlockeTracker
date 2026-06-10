@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { catalogApi } from '../api/catalog';
+import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { PokemonCard } from '../components/PokemonCard';
 import { PokemonSearch } from '../components/PokemonSearch';
 import { DamageCalcModal } from '../components/DamageCalcModal';
 import { typeColor } from '../utils/pokemonTypes';
-import type { CaughtPokemonResponse, PokemonSearchResponse } from '../types/api';
+import { useAuth } from '../hooks/useAuth';
+import type { CaughtPokemonResponse, PokemonSearchResponse, RunDetailResponse } from '../types/api';
 
 type Tab = 'team' | 'box' | 'graveyard';
 
@@ -140,72 +142,100 @@ function EvolveModal({
 }
 
 export function TeamPage() {
-  const { runId } = useParams<{ runId: string }>();
+  const { runId }  = useParams<{ runId: string }>();
+  const { user }   = useAuth();
+  const isGuest    = !user;
   const [tab, setTab] = useState<Tab>('team');
-  const [selected, setSelected] = useState<CaughtPokemonResponse | null>(null);
-  const [evolving, setEvolving] = useState<CaughtPokemonResponse | null>(null);
-  const [calcTarget, setCalcTarget] = useState<CaughtPokemonResponse | null>(null);
+  const [selected, setSelected]         = useState<CaughtPokemonResponse | null>(null);
+  const [evolving, setEvolving]         = useState<CaughtPokemonResponse | null>(null);
+  const [calcTarget, setCalcTarget]     = useState<CaughtPokemonResponse | null>(null);
   const [pendingToTeam, setPendingToTeam] = useState<CaughtPokemonResponse | null>(null);
-  const [swapTarget, setSwapTarget] = useState<CaughtPokemonResponse | null>(null);
+  const [swapTarget, setSwapTarget]     = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
 
-  const runQ = useQuery({
+  // ── API queries ────────────────────────────────────────────────────────────
+  const apiRunQ = useQuery({
     queryKey: ['runs', runId],
     queryFn:  () => runsApi.get(runId!).then(r => r.data),
-    enabled:  !!runId,
+    enabled:  !!runId && !isGuest,
   });
 
-  const teamQ = useQuery({
+  const apiTeamQ = useQuery({
     queryKey: ['runs', runId, 'team'],
     queryFn:  () => runsApi.team(runId!).then(r => r.data),
-    enabled:  !!runId,
+    enabled:  !!runId && !isGuest,
   });
 
-  const boxQ = useQuery({
+  const apiBoxQ = useQuery({
     queryKey: ['runs', runId, 'box'],
     queryFn:  () => runsApi.box(runId!).then(r => r.data),
-    enabled:  !!runId && tab === 'box',
+    enabled:  !!runId && !isGuest && tab === 'box',
   });
 
-  const graveyardQ = useQuery({
+  const apiGraveyardQ = useQuery({
     queryKey: ['runs', runId, 'graveyard'],
     queryFn:  () => runsApi.graveyard(runId!).then(r => r.data),
-    enabled:  !!runId && tab === 'graveyard',
+    enabled:  !!runId && !isGuest && tab === 'graveyard',
   });
 
-  const statusMutation = useMutation({
-    mutationFn: ({ pokemonId, status }: { pokemonId: string; status: string }) =>
-      runsApi.updatePokemonStatus(runId!, pokemonId, { status }),
-    onSuccess: () => {
+  // ── Guest queries ──────────────────────────────────────────────────────────
+  const guestRunQ = useQuery({
+    queryKey: ['guest', 'runs', runId],
+    queryFn:  () => guestStore.getRun(runId!),
+    enabled:  !!runId && isGuest,
+  });
+
+  const guestTabQ = useQuery({
+    queryKey: ['guest', 'runs', runId, tab],
+    queryFn:  () => guestStore.getByStatus(
+      runId!,
+      tab === 'team' ? 'ACTIVE' : tab === 'box' ? 'BOXED' : 'FAINTED',
+    ),
+    enabled:  !!runId && isGuest,
+  });
+
+  const run: RunDetailResponse | undefined = isGuest ? guestRunQ.data ?? undefined : apiRunQ.data;
+
+  const currentData: CaughtPokemonResponse[] | undefined = isGuest
+    ? guestTabQ.data
+    : tab === 'team'      ? apiTeamQ.data
+    : tab === 'box'       ? apiBoxQ.data
+    :                       apiGraveyardQ.data;
+
+  const isLoading = isGuest ? guestTabQ.isLoading : (
+    tab === 'team'      ? apiTeamQ.isLoading :
+    tab === 'box'       ? apiBoxQ.isLoading  :
+                          apiGraveyardQ.isLoading
+  );
+
+  function invalidateAll() {
+    if (isGuest) {
+      qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
+      qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'team'] });
+      qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'box'] });
+      qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'graveyard'] });
+    } else {
       qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
       qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
       qc.invalidateQueries({ queryKey: ['runs', runId, 'graveyard'] });
       qc.invalidateQueries({ queryKey: ['runs', runId] });
-      setSelected(null);
-    },
+    }
+  }
+
+  const statusMutation = useMutation({
+    mutationFn: ({ pokemonId, status }: { pokemonId: string; status: string }) =>
+      isGuest
+        ? guestStore.updatePokemonStatus(runId!, pokemonId, status as 'ACTIVE' | 'BOXED' | 'FAINTED')
+        : runsApi.updatePokemonStatus(runId!, pokemonId, { status }),
+    onSuccess: () => { invalidateAll(); setSelected(null); },
     onError: () => alert('Error al cambiar el estado. Intentá de nuevo.'),
   });
 
   const devolveMutation = useMutation({
     mutationFn: (pokemonId: string) => runsApi.devolve(runId!, pokemonId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
-      qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
-      qc.invalidateQueries({ queryKey: ['runs', runId, 'graveyard'] });
-      setSelected(null);
-    },
+    onSuccess: () => { invalidateAll(); setSelected(null); },
     onError: () => alert('Error al revertir la evolución. Intentá de nuevo.'),
   });
-
-  const currentData =
-    tab === 'team'      ? teamQ.data :
-    tab === 'box'       ? boxQ.data  :
-                          graveyardQ.data;
-
-  const isLoading =
-    tab === 'team'      ? teamQ.isLoading :
-    tab === 'box'       ? boxQ.isLoading  :
-                          graveyardQ.isLoading;
 
   function toggleSelect(p: CaughtPokemonResponse) {
     setSelected(prev => prev?.id === p.id ? null : p);
@@ -214,12 +244,14 @@ export function TeamPage() {
   async function confirmSwapToTeam() {
     if (!pendingToTeam || !swapTarget) return;
     try {
-      await runsApi.updatePokemonStatus(runId!, swapTarget.id, { status: 'BOXED' });
-      await runsApi.updatePokemonStatus(runId!, pendingToTeam.id, { status: 'ACTIVE' });
-      qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
-      qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
-      qc.invalidateQueries({ queryKey: ['runs', runId, 'graveyard'] });
-      qc.invalidateQueries({ queryKey: ['runs', runId] });
+      if (isGuest) {
+        await guestStore.updatePokemonStatus(runId!, swapTarget.id, 'BOXED');
+        await guestStore.updatePokemonStatus(runId!, pendingToTeam.id, 'ACTIVE');
+      } else {
+        await runsApi.updatePokemonStatus(runId!, swapTarget.id, { status: 'BOXED' });
+        await runsApi.updatePokemonStatus(runId!, pendingToTeam.id, { status: 'ACTIVE' });
+      }
+      invalidateAll();
     } catch {
       alert('Error al hacer el cambio. Intentá de nuevo.');
     } finally {
@@ -229,7 +261,7 @@ export function TeamPage() {
   }
 
   function handleMoveToTeam(pokemon: CaughtPokemonResponse) {
-    const teamCount = teamQ.data?.length ?? 0;
+    const teamCount = isGuest ? guestTabQ.data?.length ?? 0 : apiTeamQ.data?.length ?? 0;
     if (teamCount >= 6) {
       setPendingToTeam(pokemon);
       setSelected(null);
@@ -237,6 +269,10 @@ export function TeamPage() {
       statusMutation.mutate({ pokemonId: pokemon.id, status: 'ACTIVE' });
     }
   }
+
+  const teamForSwap = isGuest
+    ? (guestTabQ.data ?? [])
+    : (apiTeamQ.data ?? []);
 
   return (
     <Layout title="Equipo" runId={runId}>
@@ -305,7 +341,7 @@ export function TeamPage() {
                   💀 Muerto
                 </button>
               )}
-              {selected.status !== 'FAINTED' && (
+              {!isGuest && selected.status !== 'FAINTED' && (
                 <button
                   className="btn btn-outline"
                   onClick={() => { setEvolving(selected); setSelected(null); }}
@@ -313,7 +349,7 @@ export function TeamPage() {
                   🧬 Evolucionar
                 </button>
               )}
-              {selected.currentPokemonId !== selected.originalPokemonId && (
+              {!isGuest && selected.currentPokemonId !== selected.originalPokemonId && (
                 <button
                   className="btn btn-ghost"
                   style={{ fontSize: 13 }}
@@ -323,12 +359,14 @@ export function TeamPage() {
                   ↩️ Revertir evolución
                 </button>
               )}
-              <button
-                className="btn btn-info"
-                onClick={() => { setCalcTarget(selected); setSelected(null); }}
-              >
-                ⚡ Calcular daño
-              </button>
+              {!isGuest && (
+                <button
+                  className="btn btn-info"
+                  onClick={() => { setCalcTarget(selected); setSelected(null); }}
+                >
+                  ⚡ Calcular daño
+                </button>
+              )}
               <button className="btn btn-ghost" onClick={() => setSelected(null)}>
                 Cancelar
               </button>
@@ -337,7 +375,7 @@ export function TeamPage() {
         )}
       </div>
 
-      {evolving && runId && (
+      {evolving && runId && !isGuest && (
         <EvolveModal
           pokemon={evolving}
           runId={runId}
@@ -345,10 +383,10 @@ export function TeamPage() {
         />
       )}
 
-      {calcTarget && runId && runQ.data && (
+      {calcTarget && runId && run && !isGuest && (
         <DamageCalcModal
           runId={runId}
-          gameId={runQ.data.gameId}
+          gameId={run.gameId}
           attacker={calcTarget}
           onClose={() => setCalcTarget(null)}
         />
@@ -366,7 +404,7 @@ export function TeamPage() {
                 Elegí quién va al box para hacerle lugar a <strong>{pendingToTeam.nickname ?? pendingToTeam.currentPokemonName}</strong>:
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {teamQ.data?.map(p => (
+                {teamForSwap.map(p => (
                   <button
                     key={p.id}
                     className={`btn btn-ghost btn-full${swapTarget?.id === p.id ? ' btn-primary' : ''}`}

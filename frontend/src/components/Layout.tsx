@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
+import { useAuth } from '../hooks/useAuth';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ interface LayoutProps {
 
 export function Layout({ children, title, back, action, runId }: LayoutProps) {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <div className="app-shell">
@@ -26,7 +28,13 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
         </div>
         <div className="header-right">
           {action}
-          <NotificationBell />
+          {user ? (
+            <NotificationBell />
+          ) : (
+            <Link to="/login" className="btn btn-ghost" style={{ fontSize: 13 }}>
+              Guardar progreso
+            </Link>
+          )}
         </div>
       </header>
 
@@ -67,20 +75,32 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
             <span>🎮</span>
             <span>Runs</span>
           </Link>
-          <Link
-            to="/feed"
-            className={`nav-tab ${location.pathname === '/feed' ? 'active' : ''}`}
-          >
-            <span>🌐</span>
-            <span>Feed</span>
-          </Link>
-          <Link
-            to="/profile"
-            className={`nav-tab ${location.pathname === '/profile' ? 'active' : ''}`}
-          >
-            <span>👤</span>
-            <span>Perfil</span>
-          </Link>
+          {user ? (
+            <>
+              <Link
+                to="/feed"
+                className={`nav-tab ${location.pathname === '/feed' ? 'active' : ''}`}
+              >
+                <span>🌐</span>
+                <span>Feed</span>
+              </Link>
+              <Link
+                to="/profile"
+                className={`nav-tab ${location.pathname === '/profile' ? 'active' : ''}`}
+              >
+                <span>👤</span>
+                <span>Perfil</span>
+              </Link>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className={`nav-tab ${location.pathname === '/login' ? 'active' : ''}`}
+            >
+              <span>👤</span>
+              <span>Ingresar</span>
+            </Link>
+          )}
         </nav>
       )}
     </div>

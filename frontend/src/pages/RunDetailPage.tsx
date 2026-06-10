@@ -5,11 +5,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { catalogApi } from '../api/catalog';
 import { socialApi } from '../api/social';
+import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { EncounterModal } from '../components/EncounterModal';
 import { RunSocialSection } from '../components/RunSocialSection';
 import { AuthContext } from '../contexts/AuthContext';
-import type { RouteWithEncounterResponse, RouteEncounterSlot, RunDetailResponse } from '../types/api';
+import { useAuth } from '../hooks/useAuth';
+import type {
+  RouteWithEncounterResponse,
+  RouteEncounterSlot,
+  RunDetailResponse,
+  CaughtPokemonResponse,
+} from '../types/api';
+import type { GuestEncounterSaveData } from '../components/EncounterModal';
 
 type ActiveEncounter = { route: RouteWithEncounterResponse; slot: RouteEncounterSlot | null };
 
@@ -55,12 +63,14 @@ function RunMenu({
   runVisibility,
   onConfirm,
   onVisibilityModal,
+  isGuest,
 }: {
   runId: string;
   runStatus: string;
   runVisibility: string;
   onConfirm: (action: 'COMPLETED' | 'ABANDONED') => void;
   onVisibilityModal: () => void;
+  isGuest: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -101,13 +111,15 @@ function RunMenu({
             >
               📊 Estadísticas
             </button>
-            <button
-              className="btn btn-ghost btn-full"
-              style={{ textAlign: 'left' }}
-              onClick={() => { setOpen(false); onVisibilityModal(); }}
-            >
-              {VISIBILITY_LABELS[runVisibility] ?? '🌐 Visibilidad'}
-            </button>
+            {!isGuest && (
+              <button
+                className="btn btn-ghost btn-full"
+                style={{ textAlign: 'left' }}
+                onClick={() => { setOpen(false); onVisibilityModal(); }}
+              >
+                {VISIBILITY_LABELS[runVisibility] ?? '🌐 Visibilidad'}
+              </button>
+            )}
             {runStatus === 'ACTIVE' && (
               <>
                 <button
@@ -133,24 +145,23 @@ function RunMenu({
   );
 }
 
-function BadgeModal({ run, onClose }: { run: RunDetailResponse; onClose: () => void }) {
-  const qc = useQueryClient();
-
+function BadgeModal({
+  run,
+  onClose,
+  onObtain,
+}: {
+  run: RunDetailResponse;
+  onClose: () => void;
+  onObtain: (badgeId: number, badgeName: string) => Promise<void>;
+}) {
   const { data: allBadges = [] } = useQuery({
     queryKey: ['catalog', 'badges', run.gameId],
     queryFn: () => catalogApi.badges(run.gameId).then(r => r.data),
   });
 
+  const [pending, setPending] = useState(false);
   const obtainedIds = new Set(run.badges.map(b => b.badgeId));
-  const available = allBadges.filter(b => !obtainedIds.has(b.id));
-
-  const obtainMut = useMutation({
-    mutationFn: (badgeId: number) => runsApi.obtainBadge(run.id, badgeId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['runs', run.id] });
-      onClose();
-    },
-  });
+  const available   = allBadges.filter(b => !obtainedIds.has(b.id));
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -171,8 +182,13 @@ function BadgeModal({ run, onClose }: { run: RunDetailResponse; onClose: () => v
                   key={b.id}
                   className="btn btn-ghost btn-full"
                   style={{ textAlign: 'left', padding: '10px 12px' }}
-                  onClick={() => obtainMut.mutate(b.id)}
-                  disabled={obtainMut.isPending}
+                  onClick={async () => {
+                    setPending(true);
+                    await onObtain(b.id, b.name);
+                    setPending(false);
+                    onClose();
+                  }}
+                  disabled={pending}
                 >
                   🏅 {b.name}
                 </button>
@@ -188,13 +204,13 @@ function BadgeModal({ run, onClose }: { run: RunDetailResponse; onClose: () => v
 function RunActions({ run }: { run: RunDetailResponse }) {
   const auth = useContext(AuthContext);
   const qc = useQueryClient();
-  const isOwner = auth?.user?.id === run.userId;
+  const isOwner     = auth?.user?.id === run.userId || run.userId === 'guest';
   const authLoading = !auth || auth.isLoading;
 
   const { data: subscribed = false } = useQuery({
     queryKey: ['runs', run.id, 'subscription'],
     queryFn: () => socialApi.isSubscribed(run.id).then(r => r.data),
-    enabled: !isOwner && !authLoading,
+    enabled: !isOwner && !authLoading && run.userId !== 'guest',
   });
 
   const subMut = useMutation({
@@ -210,7 +226,7 @@ function RunActions({ run }: { run: RunDetailResponse }) {
     },
   });
 
-  if (authLoading) return null;
+  if (authLoading || run.userId === 'guest') return null;
 
   return (
     <div style={{ display: 'flex', gap: 8, padding: '0 16px 8px' }}>
@@ -240,38 +256,87 @@ function RunActions({ run }: { run: RunDetailResponse }) {
 
 export function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>();
-  const navigate = useNavigate();
-  const qc = useQueryClient();
+  const navigate  = useNavigate();
+  const qc        = useQueryClient();
+  const { user }  = useAuth();
+  const isGuest   = !user;
 
   const [activeEncounter, setActiveEncounter] = useState<ActiveEncounter | null>(null);
-  const [badgeModal, setBadgeModal] = useState(false);
+  const [badgeModal, setBadgeModal]   = useState(false);
   const [confirmAction, setConfirmAction] = useState<'COMPLETED' | 'ABANDONED' | null>(null);
   const [visModal, setVisModal] = useState(false);
 
-  const { data: run } = useQuery({
+  // ── API queries (logged-in) ────────────────────────────────────────────────
+  const apiRunQ = useQuery({
     queryKey: ['runs', runId],
     queryFn:  () => runsApi.get(runId!).then(r => r.data),
-    enabled:  !!runId,
+    enabled:  !!runId && !isGuest,
   });
 
-  const { data: routes = [], isLoading } = useQuery({
+  const apiRoutesQ = useQuery({
     queryKey: ['runs', runId, 'routes'],
     queryFn:  () => runsApi.routes(runId!).then(r => r.data),
-    enabled:  !!runId,
+    enabled:  !!runId && !isGuest,
   });
 
+  // ── Guest queries ──────────────────────────────────────────────────────────
+  const guestRunQ = useQuery({
+    queryKey: ['guest', 'runs', runId],
+    queryFn:  () => guestStore.getRun(runId!),
+    enabled:  !!runId && isGuest,
+  });
+
+  const guestCatalogRoutesQ = useQuery({
+    queryKey: ['catalog', 'routes', guestRunQ.data?.gameId],
+    queryFn:  () => catalogApi.routes(guestRunQ.data!.gameId).then(r => r.data),
+    enabled:  isGuest && !!guestRunQ.data?.gameId,
+  });
+
+  const guestRoutesQ = useQuery({
+    queryKey: ['guest', 'runs', runId, 'routes'],
+    queryFn:  () => guestStore.buildRoutesWithEncounters(runId!, guestCatalogRoutesQ.data!),
+    enabled:  isGuest && !!guestCatalogRoutesQ.data,
+  });
+
+  const guestTeamQ = useQuery({
+    queryKey: ['guest', 'runs', runId, 'team'],
+    queryFn:  () => guestStore.getByStatus(runId!, 'ACTIVE'),
+    enabled:  isGuest && !!runId,
+  });
+
+  const run: RunDetailResponse | undefined     = isGuest ? guestRunQ.data ?? undefined : apiRunQ.data;
+  const routes: RouteWithEncounterResponse[]   = isGuest ? (guestRoutesQ.data ?? []) : (apiRoutesQ.data ?? []);
+  const isLoading = isGuest
+    ? guestRunQ.isLoading || guestCatalogRoutesQ.isLoading || guestRoutesQ.isLoading
+    : apiRoutesQ.isLoading;
+
+  // ── Mutations ──────────────────────────────────────────────────────────────
   const statusMut = useMutation({
-    mutationFn: (status: string) => runsApi.update(runId!, { status }),
+    mutationFn: (status: string) =>
+      isGuest
+        ? guestStore.updateRun(runId!, { status: status as 'COMPLETED' | 'ABANDONED' })
+        : runsApi.update(runId!, { status }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['runs', runId] });
-      qc.invalidateQueries({ queryKey: ['runs'] });
+      if (isGuest) {
+        qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
+        qc.invalidateQueries({ queryKey: ['guest', 'runs'] });
+      } else {
+        qc.invalidateQueries({ queryKey: ['runs', runId] });
+        qc.invalidateQueries({ queryKey: ['runs'] });
+      }
       navigate('/runs');
     },
   });
 
   const removeBadgeMut = useMutation({
-    mutationFn: (badgeId: number) => runsApi.deleteBadge(runId!, badgeId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['runs', runId] }),
+    mutationFn: (badgeId: number) =>
+      isGuest
+        ? guestStore.removeBadge(runId!, badgeId)
+        : runsApi.deleteBadge(runId!, badgeId),
+    onSuccess: () => {
+      if (isGuest) qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
+      else qc.invalidateQueries({ queryKey: ['runs', runId] });
+    },
     onError: () => alert('Error al quitar la medalla. Intentá de nuevo.'),
   });
 
@@ -282,6 +347,41 @@ export function RunDetailPage() {
       setVisModal(false);
     },
   });
+
+  // ── Guest encounter handler ────────────────────────────────────────────────
+  async function handleGuestEncounter(data: GuestEncounterSaveData) {
+    if (data.swapPokemonId) {
+      await guestStore.updatePokemonStatus(runId!, data.swapPokemonId, 'BOXED');
+    }
+    await guestStore.recordEncounter(runId!, {
+      routeId:     data.routeId,
+      routeName:   data.routeName,
+      outcome:     data.outcome,
+      encounterId: data.encounterId,
+      pokemon:     data.pokemon,
+      nickname:    data.nickname,
+      shiny:       data.shiny,
+      notes:       data.notes,
+    });
+    await qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'routes'] });
+    await qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
+    await qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'team'] });
+  }
+
+  async function handleBadgeObtain(badgeId: number, badgeName: string) {
+    if (isGuest) {
+      await guestStore.obtainBadge(runId!, {
+        badgeId,
+        badgeName,
+        badgeImageUrl: null,
+        obtainedAt: new Date().toISOString(),
+      });
+      qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
+    } else {
+      await runsApi.obtainBadge(runId!, badgeId);
+      qc.invalidateQueries({ queryKey: ['runs', runId] });
+    }
+  }
 
   const maxCatches = (() => {
     const rule = run?.rules?.find(r => r.ruleType === 'MAX_CATCHES_PER_ROUTE' && r.enabled);
@@ -363,6 +463,7 @@ export function RunDetailPage() {
           runVisibility={run.visibility}
           onConfirm={setConfirmAction}
           onVisibilityModal={() => setVisModal(true)}
+          isGuest={isGuest}
         />
       ) : undefined}
     >
@@ -419,7 +520,6 @@ export function RunDetailPage() {
             {groupRoutes.map(route => {
               const slots      = route.slots;
               const hasSlots   = slots.length > 0;
-              // outcome representativo: último slot, o PENDING si no hay ninguno
               const lastSlot   = hasSlots ? slots[slots.length - 1] : null;
               const displayOutcome = lastSlot?.outcome ?? 'PENDING';
               const cfg        = OUTCOME_CONFIG[displayOutcome] ?? OUTCOME_CONFIG['PENDING'];
@@ -441,12 +541,11 @@ export function RunDetailPage() {
                       <span className="route-type">{ENCOUNTER_TYPE_LABELS[route.encounterType] ?? route.encounterType}</span>
                     </div>
                     <div className="route-card-right">
-                      {/* sprites de pokémon capturados */}
                       <span style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                         {slots
                           .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon)
                           .map(s => {
-                            const cp = s.caughtPokemon!;
+                            const cp    = s.caughtPokemon!;
                             const label = cp.nickname ?? cp.currentPokemonName;
                             return cp.currentPokemonSpriteUrl ? (
                               <img
@@ -462,7 +561,6 @@ export function RunDetailPage() {
                           })}
                       </span>
                       {maxCatches > 1 && hasSlots ? (
-                        // múltiples slots: mostrar cada uno como chip pequeño
                         <span style={{ display: 'flex', gap: 3 }}>
                           {slots.map(s => {
                             const c = OUTCOME_CONFIG[s.outcome] ?? OUTCOME_CONFIG['PENDING'];
@@ -501,10 +599,14 @@ export function RunDetailPage() {
         ))}
       </div>
 
-      {runId && <RunSocialSection runId={runId} />}
+      {runId && !isGuest && <RunSocialSection runId={runId} />}
 
       {badgeModal && run && (
-        <BadgeModal run={run} onClose={() => setBadgeModal(false)} />
+        <BadgeModal
+          run={run}
+          onClose={() => setBadgeModal(false)}
+          onObtain={handleBadgeObtain}
+        />
       )}
 
       {activeEncounter && runId && (
@@ -522,6 +624,8 @@ export function RunDetailPage() {
               .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon?.chainId != null)
               .map(s => s.caughtPokemon!.chainId as number)
             )}
+          onSave={isGuest ? handleGuestEncounter : undefined}
+          guestTeamMembers={isGuest ? (guestTeamQ.data ?? []) : undefined}
           onClose={() => setActiveEncounter(null)}
         />
       )}

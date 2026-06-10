@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import type { RunRuleResponse, RunBadgeResponse } from '../types/api';
 
 export interface SyncOperation {
   id?: number;
@@ -8,11 +9,52 @@ export interface SyncOperation {
   createdAt: number;
 }
 
-// Generic query cache entry — stores the JSON body of any GET response
 export interface CacheEntry {
-  key: string;       // e.g. "runs", "runs/abc/routes"
+  key: string;
   data: unknown;
   cachedAt: number;
+}
+
+export interface GuestRun {
+  id: string;
+  gameId: number;
+  gameName: string;
+  gameVersion: string | null;
+  name: string;
+  randomized: boolean;
+  status: 'ACTIVE' | 'COMPLETED' | 'GAME_OVER' | 'ABANDONED';
+  rules: RunRuleResponse[];
+  badges: RunBadgeResponse[];
+  favorite: boolean;
+  archived: boolean;
+  startedAt: string;
+}
+
+export interface GuestEncounterSlot {
+  id: string;
+  runId: string;
+  routeId: number;
+  outcome: string;
+  notes: string | null;
+  caughtPokemonId: string | null;
+}
+
+export interface GuestCaughtPokemon {
+  id: string;
+  runId: string;
+  encounterId: string;
+  routeId: number;
+  routeName: string;
+  originalPokemonId: number;
+  currentPokemonId: number;
+  currentPokemonName: string;
+  currentPokemonTypes: string[];
+  currentPokemonSpriteUrl: string | null;
+  nickname: string | null;
+  shiny: boolean;
+  status: 'ACTIVE' | 'BOXED' | 'FAINTED';
+  caughtAt: string;
+  chainId: number | null;
 }
 
 interface NuzlockeSchema extends DBSchema {
@@ -25,17 +67,41 @@ interface NuzlockeSchema extends DBSchema {
     key: string;
     value: CacheEntry;
   };
+  guestRuns: {
+    key: string;
+    value: GuestRun;
+  };
+  guestEncounterSlots: {
+    key: string;
+    value: GuestEncounterSlot;
+    indexes: { byRunId: string };
+  };
+  guestCaughtPokemon: {
+    key: string;
+    value: GuestCaughtPokemon;
+    indexes: { byRunId: string; byEncounterId: string };
+  };
 }
 
 let _db: IDBPDatabase<NuzlockeSchema> | null = null;
 
 export async function getDb(): Promise<IDBPDatabase<NuzlockeSchema>> {
   if (_db) return _db;
-  _db = await openDB<NuzlockeSchema>('nuzlocke-tracker', 1, {
-    upgrade(db) {
-      const sq = db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
-      sq.createIndex('byCreatedAt', 'createdAt');
-      db.createObjectStore('queryCache', { keyPath: 'key' });
+  _db = await openDB<NuzlockeSchema>('nuzlocke-tracker', 2, {
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) {
+        const sq = db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
+        sq.createIndex('byCreatedAt', 'createdAt');
+        db.createObjectStore('queryCache', { keyPath: 'key' });
+      }
+      if (oldVersion < 2) {
+        db.createObjectStore('guestRuns', { keyPath: 'id' });
+        const slots = db.createObjectStore('guestEncounterSlots', { keyPath: 'id' });
+        slots.createIndex('byRunId', 'runId');
+        const caught = db.createObjectStore('guestCaughtPokemon', { keyPath: 'id' });
+        caught.createIndex('byRunId', 'runId');
+        caught.createIndex('byEncounterId', 'encounterId');
+      }
     },
   });
   return _db;
