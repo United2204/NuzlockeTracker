@@ -33,8 +33,16 @@ export function RegisterPage() {
       await authApi.register(data.email, data.username, data.password);
       setDone(true);
     } catch (e: unknown) {
-      const axiosError = e as { response?: { data?: { message?: string } } };
-      setError(axiosError?.response?.data?.message ?? 'Error al registrarse. Intenta de nuevo.');
+      const axiosError = e as { response?: { status?: number; data?: { detail?: string } } };
+      const status = axiosError?.response?.status;
+      const detail = axiosError?.response?.data?.detail ?? '';
+      if (status === 409) {
+        if (detail.toLowerCase().includes('email')) setError('Ese email ya está registrado.');
+        else if (detail.toLowerCase().includes('username')) setError('Ese username ya está en uso.');
+        else setError('Ya existe una cuenta con esos datos.');
+      } else {
+        setError('Error al registrarse. Intenta de nuevo.');
+      }
     }
   }
 
