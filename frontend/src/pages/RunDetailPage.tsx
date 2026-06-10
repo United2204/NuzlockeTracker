@@ -527,8 +527,8 @@ export function RunDetailPage() {
               const allTerminal = hasSlots && slots.every(s =>
                 ['CAPTURED','FAILED','DIED_IN_ENCOUNTER','NOT_FOUND'].includes(s.outcome)
               );
-              const canAddSlot = run?.status === 'ACTIVE' && maxCatches > 1
-                && slots.length < maxCatches && allTerminal;
+              const canAddSlot = run?.status === 'ACTIVE' && route.encounterType === 'RANDOM'
+                && maxCatches > 1 && slots.length < maxCatches && allTerminal;
 
               return (
                 <div key={route.routeId} style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
