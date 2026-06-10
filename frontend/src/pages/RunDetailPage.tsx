@@ -383,9 +383,11 @@ export function RunDetailPage() {
   }
 
   const maxCatches = (() => {
+    const firstEncounterOnly = run?.rules?.find(r => r.ruleType === 'FIRST_ENCOUNTER_ONLY' && r.enabled);
+    if (firstEncounterOnly) return 1;
     const rule = run?.rules?.find(r => r.ruleType === 'MAX_CATCHES_PER_ROUTE' && r.enabled);
-    if (!rule?.value) return 1;
-    try { return JSON.parse(rule.value).max ?? 1; } catch { return 1; }
+    if (!rule?.value) return Infinity;
+    try { return JSON.parse(rule.value).max ?? Infinity; } catch { return Infinity; }
   })();
 
   const groups = groupByBadge(routes);
