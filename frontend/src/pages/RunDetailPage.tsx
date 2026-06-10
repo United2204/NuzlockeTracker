@@ -312,10 +312,10 @@ export function RunDetailPage() {
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const statusMut = useMutation({
-    mutationFn: (status: string) =>
-      isGuest
-        ? guestStore.updateRun(runId!, { status: status as 'COMPLETED' | 'ABANDONED' })
-        : runsApi.update(runId!, { status }),
+    mutationFn: async (status: string) => {
+      if (isGuest) { await guestStore.updateRun(runId!, { status: status as 'COMPLETED' | 'ABANDONED' }); }
+      else { await runsApi.update(runId!, { status }); }
+    },
     onSuccess: () => {
       if (isGuest) {
         qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
@@ -329,10 +329,10 @@ export function RunDetailPage() {
   });
 
   const removeBadgeMut = useMutation({
-    mutationFn: (badgeId: number) =>
-      isGuest
-        ? guestStore.removeBadge(runId!, badgeId)
-        : runsApi.deleteBadge(runId!, badgeId),
+    mutationFn: async (badgeId: number) => {
+      if (isGuest) { await guestStore.removeBadge(runId!, badgeId); }
+      else { await runsApi.deleteBadge(runId!, badgeId); }
+    },
     onSuccess: () => {
       if (isGuest) qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
       else qc.invalidateQueries({ queryKey: ['runs', runId] });

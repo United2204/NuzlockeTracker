@@ -223,10 +223,10 @@ export function TeamPage() {
   }
 
   const statusMutation = useMutation({
-    mutationFn: ({ pokemonId, status }: { pokemonId: string; status: string }) =>
-      isGuest
-        ? guestStore.updatePokemonStatus(runId!, pokemonId, status as 'ACTIVE' | 'BOXED' | 'FAINTED')
-        : runsApi.updatePokemonStatus(runId!, pokemonId, { status }),
+    mutationFn: async ({ pokemonId, status }: { pokemonId: string; status: string }) => {
+      if (isGuest) { await guestStore.updatePokemonStatus(runId!, pokemonId, status as 'ACTIVE' | 'BOXED' | 'FAINTED'); }
+      else { await runsApi.updatePokemonStatus(runId!, pokemonId, { status }); }
+    },
     onSuccess: () => { invalidateAll(); setSelected(null); },
     onError: () => alert('Error al cambiar el estado. Intentá de nuevo.'),
   });

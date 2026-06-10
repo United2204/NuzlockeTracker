@@ -40,10 +40,10 @@ export function RunsPage() {
   const { data = [], isLoading } = user ? apiQuery : guestQuery;
 
   const archiveMut = useMutation({
-    mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
-      user
-        ? runsApi.update(id, { archived })
-        : guestStore.updateRun(id, { archived }),
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
+      if (user) { await runsApi.update(id, { archived }); }
+      else { await guestStore.updateRun(id, { archived }); }
+    },
     onSuccess: () => {
       if (user) qc.invalidateQueries({ queryKey: ['runs'] });
       else qc.invalidateQueries({ queryKey: ['guest', 'runs'] });
