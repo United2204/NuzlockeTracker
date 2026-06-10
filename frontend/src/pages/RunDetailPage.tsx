@@ -15,7 +15,6 @@ import type {
   RouteWithEncounterResponse,
   RouteEncounterSlot,
   RunDetailResponse,
-  CaughtPokemonResponse,
 } from '../types/api';
 import type { GuestEncounterSaveData } from '../components/EncounterModal';
 
