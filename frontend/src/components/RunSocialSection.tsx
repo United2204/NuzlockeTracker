@@ -65,32 +65,37 @@ function CommentItem({
   });
 
   const isOwn = user?.id === comment.authorId;
+  const isDeleted = comment.content === '[eliminado]';
 
   return (
     <div className="comment-item">
       <div className="comment-header">
-        <span className="comment-author">@{comment.authorUsername}</span>
+        {!isDeleted && <span className="comment-author">@{comment.authorUsername}</span>}
         <span className="comment-date">
           {new Date(comment.createdAt).toLocaleDateString('es', {
             day: 'numeric', month: 'short'
           })}
         </span>
       </div>
-      <p className="comment-content">{comment.content}</p>
-      <div className="comment-actions">
-        {!comment.parentId && (
-          <button className="btn btn-ghost" style={{ fontSize: 12, padding: '2px 6px' }}
-            onClick={() => onReply(comment.id)}>
-            Responder
-          </button>
-        )}
-        {isOwn && (
-          <button className="btn btn-ghost" style={{ fontSize: 12, padding: '2px 6px', color: 'var(--danger)' }}
-            onClick={() => deleteMut.mutate()}>
-            Eliminar
-          </button>
-        )}
-      </div>
+      <p className="comment-content" style={isDeleted ? { color: 'var(--text-muted)', fontStyle: 'italic' } : undefined}>
+        {comment.content}
+      </p>
+      {!isDeleted && (
+        <div className="comment-actions">
+          {!comment.parentId && (
+            <button className="btn btn-ghost" style={{ fontSize: 12, padding: '2px 6px' }}
+              onClick={() => onReply(comment.id)}>
+              Responder
+            </button>
+          )}
+          {isOwn && (
+            <button className="btn btn-ghost" style={{ fontSize: 12, padding: '2px 6px', color: 'var(--danger)' }}
+              onClick={() => deleteMut.mutate()}>
+              Eliminar
+            </button>
+          )}
+        </div>
+      )}
       {comment.replies.length > 0 && (
         <div className="comment-replies">
           {comment.replies.map(r => (
