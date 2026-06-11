@@ -4,6 +4,7 @@ import com.nuzlocketracker.common.security.JwtAuthenticationFilter;
 import com.nuzlocketracker.common.security.OAuth2SuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private ClientRegistrationRepository clientRegistrationRepository;
 
     @Autowired(required = false)
+    @Lazy
     private OAuth2SuccessHandler oAuth2SuccessHandler;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
