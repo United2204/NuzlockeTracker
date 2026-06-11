@@ -46,6 +46,8 @@ public class SocialService {
     public void follow(UUID followerId, UUID followedId) {
         if (followerId.equals(followedId))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No podés seguirte a vos mismo");
+        if (userBlockRepository.existsByBlockerIdAndBlockedId(followedId, followerId))
+            throw new ResourceNotFoundException("Usuario no encontrado");
         if (userFollowRepository.existsByFollowerIdAndFollowedId(followerId, followedId))
             throw new ConflictException("Ya seguís a este usuario");
 
@@ -124,16 +126,22 @@ public class SocialService {
         List<RunComment> topLevel = runCommentRepository.findTopLevelByRunId(runId);
         if (topLevel.isEmpty()) return List.of();
 
+        Set<UUID> blockedByViewer = viewerId != null
+                ? userBlockRepository.findBlockedIdsByBlocker(viewerId)
+                : Set.of();
+
         List<Long> parentIds = topLevel.stream().map(RunComment::getId).toList();
         List<RunComment> replies = runCommentRepository.findRepliesByParentIds(parentIds);
 
         Map<Long, List<CommentResponse>> repliesByParent = replies.stream()
+                .filter(r -> !blockedByViewer.contains(r.getUser().getId()))
                 .collect(Collectors.groupingBy(
                         r -> r.getParent().getId(),
                         Collectors.mapping(this::toCommentResponse, Collectors.toList())
                 ));
 
         return topLevel.stream()
+                .filter(c -> !blockedByViewer.contains(c.getUser().getId()))
                 .map(c -> toCommentResponseWithReplies(c, repliesByParent.getOrDefault(c.getId(), List.of())))
                 .toList();
     }
@@ -319,13 +327,22 @@ public class SocialService {
                 .orElseThrow(() -> new ResourceNotFoundException("Run no encontrada"));
         if (run.getDeletedAt() != null)
             throw new ResourceNotFoundException("Run no encontrada");
+
+        UUID ownerId = run.getUser().getId();
+
+        // Blocked viewers see a 404 — they don't know they're blocked
+        if (viewerId != null && !ownerId.equals(viewerId)
+                && userBlockRepository.existsByBlockerIdAndBlockedId(ownerId, viewerId)) {
+            throw new ResourceNotFoundException("Run no encontrada");
+        }
+
         if (run.getVisibility() == Run.Visibility.PRIVATE) {
-            if (viewerId == null || !run.getUser().getId().equals(viewerId))
+            if (viewerId == null || !ownerId.equals(viewerId))
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta run es privada");
         } else if (run.getVisibility() == Run.Visibility.FOLLOWERS_ONLY) {
             if (viewerId == null || (
-                    !run.getUser().getId().equals(viewerId) &&
-                    !userFollowRepository.existsByFollowerIdAndFollowedId(viewerId, run.getUser().getId())
+                    !ownerId.equals(viewerId) &&
+                    !userFollowRepository.existsByFollowerIdAndFollowedId(viewerId, ownerId)
             )) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo seguidores pueden ver esta run");
             }
