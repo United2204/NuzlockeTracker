@@ -36,12 +36,11 @@ public class SecurityConfig {
     @Autowired(required = false)
     private ClientRegistrationRepository clientRegistrationRepository;
 
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    @Autowired(required = false)
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          OAuth2SuccessHandler oAuth2SuccessHandler) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     @Bean
