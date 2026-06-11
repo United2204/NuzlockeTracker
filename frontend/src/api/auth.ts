@@ -1,4 +1,5 @@
 import { client } from './client';
+import { token } from '../utils/token';
 import type { TokenResponse, MeResponse } from '../types/api';
 
 export const authApi = {
@@ -12,7 +13,7 @@ export const authApi = {
     client.get<MeResponse>('/api/auth/me'),
 
   logout: () =>
-    client.post('/api/auth/logout'),
+    client.post('/api/auth/logout', { refreshToken: token.getRefresh() }),
 
   verifyEmail: (verifyToken: string) =>
     client.get(`/api/auth/verify-email?token=${verifyToken}`),
