@@ -622,7 +622,7 @@ export function RunDetailPage() {
           caughtChainIds={routes
             .filter(r => r.routeId !== activeEncounter.route.routeId)
             .flatMap(r => r.slots
-              .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon?.chainId != null)
+              .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon?.chainId != null && s.caughtPokemon.status !== 'FAINTED')
               .map(s => s.caughtPokemon!.chainId as number)
             )}
           onSave={isGuest ? handleGuestEncounter : undefined}
