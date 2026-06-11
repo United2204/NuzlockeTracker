@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { token } from '../utils/token';
-import { authApi } from '../api/auth';
 import { useAuth } from '../hooks/useAuth';
 
 // Página que recibe los tokens del redirect de Google OAuth2.
@@ -9,7 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 export function OAuth2CallbackPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { login: _login } = useAuth();
+  const { loginWithTokens } = useAuth();
   const ran = useRef(false);
 
   useEffect(() => {
@@ -24,14 +22,9 @@ export function OAuth2CallbackPage() {
       return;
     }
 
-    token.set(accessToken, refreshToken);
-
-    authApi.me()
+    loginWithTokens(accessToken, refreshToken)
       .then(() => navigate('/runs', { replace: true }))
-      .catch(() => {
-        token.clear();
-        navigate('/login?error=oauth', { replace: true });
-      });
+      .catch(() => navigate('/login?error=oauth', { replace: true }));
   }, []);
 
   return (

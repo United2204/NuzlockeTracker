@@ -9,6 +9,7 @@ interface AuthContextValue {
   user: MeResponse | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -49,8 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     migrateGuestData().catch(() => { /* guest data stays in IndexedDB if migration fails */ });
   }, []);
 
+  const loginWithTokens = useCallback(async (accessToken: string, refreshToken: string) => {
+    token.set(accessToken, refreshToken);
+    const me = await authApi.me();
+    setUser(me.data);
+    migrateGuestData().catch(() => { /* guest data stays in IndexedDB if migration fails */ });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithTokens, logout }}>
       {children}
     </AuthContext.Provider>
   );
