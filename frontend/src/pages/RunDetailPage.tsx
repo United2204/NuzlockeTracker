@@ -346,17 +346,6 @@ export function RunDetailPage() {
     },
   });
 
-  const removeBadgeMut = useMutation({
-    mutationFn: async (badgeId: number) => {
-      if (isGuest) { await guestStore.removeBadge(runId!, badgeId); }
-      else { await runsApi.deleteBadge(runId!, badgeId); }
-    },
-    onSuccess: () => {
-      if (isGuest) qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
-      else qc.invalidateQueries({ queryKey: ['runs', runId] });
-    },
-    onError: () => alert('Error al quitar la medalla. Intentá de nuevo.'),
-  });
 
   const visMut = useMutation({
     mutationFn: (visibility: string) => runsApi.update(runId!, { visibility }),
