@@ -92,7 +92,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
             className={`nav-tab ${location.pathname === '/runs' ? 'active' : ''}`}
           >
             <span>🎮</span>
-            <span>Runs</span>
+            <span>{t('nav.runs')}</span>
           </Link>
           {user ? (
             <>
@@ -101,7 +101,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
                 className={`nav-tab ${location.pathname === '/feed' ? 'active' : ''}`}
               >
                 <span>🌐</span>
-                <span>Feed</span>
+                <span>{t('nav.feed')}</span>
               </Link>
               <Link
                 to="/profile"
