@@ -41,15 +41,16 @@ const ENCOUNTER_TYPE_LABELS: Record<string, string> = {
 };
 
 function Pokeball({ size = 20, golden = false }: { size?: number; golden?: boolean }) {
-  const top = golden ? '#FFD700' : '#e53935';
+  const small = size <= 16;
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" style={{ flexShrink: 0, display: 'block' }}>
-      <circle cx="10" cy="10" r="9" fill="#fff" stroke="#2a2a2a" strokeWidth="1.5"/>
-      <path d="M1,10 A9,9 0 0,1 19,10 Z" fill={top}/>
-      <path d="M1,10 A9,9 0 0,1 19,10 Z" fill="none" stroke="#2a2a2a" strokeWidth="1.5"/>
-      <line x1="1" y1="10" x2="19" y2="10" stroke="#2a2a2a" strokeWidth="1.5"/>
-      <circle cx="10" cy="10" r="3" fill="#fff" stroke="#2a2a2a" strokeWidth="1.5"/>
-    </svg>
+    <span
+      className={[
+        'pokeball',
+        golden ? 'pokeball--shiny' : '',
+        small  ? 'pokeball--sm'    : '',
+      ].filter(Boolean).join(' ')}
+      aria-hidden="true"
+    />
   );
 }
 

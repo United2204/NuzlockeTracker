@@ -361,6 +361,7 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
   padding: 16px;
   text-decoration: none !important;
   color: var(--text);
@@ -369,7 +370,7 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 
 .run-card:hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow);
 }
 
 .run-card-header {
@@ -475,6 +476,50 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   justify-content: center;
 }
 .badge-remove-btn:hover { opacity: 1; background: rgba(0,0,0,.15); }
+
+/* ─── Pokeball ───────────────────────────────────────────────────── */
+.pokeball {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #e53935 50%, #fff 50%);
+  border: 2px solid #2a2a2a;
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.pokeball::before {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: #2a2a2a;
+}
+
+.pokeball::after {
+  content: '';
+  position: absolute;
+  width: 7px; height: 7px;
+  background: #fff;
+  border: 2px solid #2a2a2a;
+  border-radius: 50%;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pokeball--shiny {
+  background: linear-gradient(to bottom, #FFD700 50%, #fff 50%);
+}
+
+.pokeball--sm {
+  width: 16px; height: 16px;
+  border-width: 1.5px;
+}
+
+.pokeball--sm::before { height: 1.5px; left: -1.5px; right: -1.5px; }
+.pokeball--sm::after  { width: 5px; height: 5px; border-width: 1.5px; }
 
 /* ─── Route Cards ────────────────────────────────────────────────── */
 .route-group { display: flex; flex-direction: column; gap: 6px; }
@@ -1573,32 +1618,51 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 
 /* ─── Active Run Card ────────────────────────────────────────────── */
 .run-card-wrapper {
-  position: relative;
-  transition: transform .2s ease;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.run-card-wrapper:hover {
+  box-shadow: var(--shadow);
 }
 
 .run-card-wrapper--active {
-  transform: scale(1.025);
-  transform-origin: top center;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg), var(--shadow-sm);
+}
+
+.run-card-wrapper--active:hover {
+  box-shadow: 0 0 0 2px var(--accent-bg), var(--shadow);
 }
 
 .run-card-wrapper .run-card {
-  padding-bottom: 36px;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding-bottom: 16px;
+}
+
+.run-card-wrapper .run-card:hover {
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .run-card--active {
-  border: 2px solid var(--accent) !important;
-  box-shadow: 0 0 0 3px var(--accent-bg), var(--shadow-sm) !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-
 .run-card-actions {
-  position: absolute;
-  bottom: 8px;
-  right: 10px;
   display: flex;
   gap: 6px;
   align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
 }
 
 .run-pin-btn {
