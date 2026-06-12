@@ -1,8 +1,22 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { socialApi } from '../api/social';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
+
+const STATUS_LABEL: Record<string, string> = {
+  ACTIVE:    'Activa',
+  COMPLETED: 'Completada',
+  GAME_OVER: 'Game Over',
+  ABANDONED: 'Abandonada',
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  ACTIVE:    '#22c55e',
+  COMPLETED: '#3b82f6',
+  GAME_OVER: '#ef4444',
+  ABANDONED: '#6b7280',
+};
 
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -12,6 +26,12 @@ export function PublicProfilePage() {
   const { data, isLoading } = useQuery({
     queryKey: ['profile', username],
     queryFn:  () => socialApi.getPublicProfile(username!).then(r => r.data),
+    enabled:  !!username,
+  });
+
+  const { data: runs = [] } = useQuery({
+    queryKey: ['profile', username, 'runs'],
+    queryFn:  () => socialApi.getUserRuns(username!).then(r => r.data),
     enabled:  !!username,
   });
 
@@ -69,6 +89,52 @@ export function PublicProfilePage() {
                   {data.isBlocked ? 'Desbloquear' : 'Bloquear'}
                 </button>
               </div>
+            )}
+
+            {runs.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-h)', marginBottom: 10 }}>
+                  Runs
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {runs.map(run => (
+                    <Link
+                      key={run.id}
+                      to={`/runs/${run.id}`}
+                      className="run-card"
+                      style={{ display: 'block', textDecoration: 'none' }}
+                    >
+                      <div className="run-card-header">
+                        <div>
+                          <div className="run-name">{run.name}</div>
+                          <div className="run-game">
+                            {run.gameName}{run.gameVersion ? ` · ${run.gameVersion}` : ''}
+                          </div>
+                        </div>
+                        <span
+                          className="status-badge"
+                          style={{ background: STATUS_COLOR[run.status] ?? '#888' }}
+                        >
+                          {STATUS_LABEL[run.status] ?? run.status}
+                        </span>
+                      </div>
+                      <div className="run-card-stats">
+                        <span>⚔️ {run.activePokemon} activos</span>
+                        <span>💀 {run.faintedPokemon} muertos</span>
+                        {run.visibility === 'FOLLOWERS_ONLY' && (
+                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>👥</span>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {runs.length === 0 && !isLoading && (
+              <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', marginTop: 24 }}>
+                No hay runs públicas todavía.
+              </p>
             )}
           </>
         )}

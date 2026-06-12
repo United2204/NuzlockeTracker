@@ -1,5 +1,6 @@
 package com.nuzlocketracker.social;
 
+import com.nuzlocketracker.run.dto.RunSummaryResponse;
 import com.nuzlocketracker.social.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,12 @@ public class SocialController {
     public PublicProfileResponse getPublicProfile(@PathVariable String username, Authentication auth) {
         UUID viewerId = auth != null ? me(auth) : null;
         return socialService.getPublicProfile(username, viewerId);
+    }
+
+    @GetMapping("/api/users/{username}/runs")
+    public List<RunSummaryResponse> getPublicRuns(@PathVariable String username, Authentication auth) {
+        UUID viewerId = auth != null ? me(auth) : null;
+        return socialService.getPublicRuns(username, viewerId);
     }
 
     // ── Run subscription ──────────────────────────────────────────────────────

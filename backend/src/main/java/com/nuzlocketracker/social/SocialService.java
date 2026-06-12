@@ -5,8 +5,11 @@ import com.nuzlocketracker.auth.repository.UserRepository;
 import com.nuzlocketracker.auth.repository.UserSettingsRepository;
 import com.nuzlocketracker.common.exception.ConflictException;
 import com.nuzlocketracker.common.exception.ResourceNotFoundException;
+import com.nuzlocketracker.run.dto.RunSummaryResponse;
+import com.nuzlocketracker.run.entity.CaughtPokemon;
 import com.nuzlocketracker.run.entity.Run;
 import com.nuzlocketracker.run.entity.RunEvent;
+import com.nuzlocketracker.run.repository.CaughtPokemonRepository;
 import com.nuzlocketracker.run.repository.RunEventRepository;
 import com.nuzlocketracker.run.repository.RunRepository;
 import com.nuzlocketracker.social.dto.*;
@@ -39,6 +42,7 @@ public class SocialService {
     private final NotificationRepository notificationRepository;
     private final UserBlockRepository userBlockRepository;
     private final RunEventRepository runEventRepository;
+    private final CaughtPokemonRepository caughtPokemonRepository;
 
     // ── Follow ──────────────────────────────────────────────────────────────
 
@@ -313,6 +317,34 @@ public class SocialService {
                 user.getId().toString(), user.getUsername(), user.isVerified(),
                 followers, following, isFollowing, isBlocked
         );
+    }
+
+    // ── Public runs of a user ────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<RunSummaryResponse> getPublicRuns(String username, UUID viewerId) {
+        User owner = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        // Blocked viewers get a 404 — they don't know they're blocked
+        if (viewerId != null && userBlockRepository.existsByBlockerIdAndBlockedId(owner.getId(), viewerId))
+            throw new ResourceNotFoundException("Usuario no encontrado");
+
+        boolean isOwner = owner.getId().equals(viewerId);
+        boolean isFollowing = !isOwner && viewerId != null &&
+                userFollowRepository.existsByFollowerIdAndFollowedId(viewerId, owner.getId());
+
+        return runRepository.findAllByUserId(owner.getId()).stream()
+                .filter(r -> !r.isArchived())
+                .filter(r -> switch (r.getVisibility()) {
+                    case PUBLIC -> true;
+                    case FOLLOWERS_ONLY -> isOwner || isFollowing;
+                    case PRIVATE -> isOwner;
+                })
+                .map(r -> RunSummaryResponse.from(r,
+                        caughtPokemonRepository.countByRunIdAndStatus(r.getId(), CaughtPokemon.Status.ACTIVE),
+                        caughtPokemonRepository.countByRunIdAndStatus(r.getId(), CaughtPokemon.Status.FAINTED)))
+                .toList();
     }
 
     // ── User search ──────────────────────────────────────────────────────────

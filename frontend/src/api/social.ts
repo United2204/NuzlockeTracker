@@ -1,4 +1,5 @@
 import { client } from './client';
+import type { RunSummaryResponse } from '../types/api';
 
 export interface Comment {
   id: number;
@@ -79,6 +80,8 @@ export const socialApi = {
   // Profile
   getPublicProfile: (username: string) =>
     client.get<PublicProfile>(`/api/users/${username}/profile`),
+  getUserRuns: (username: string) =>
+    client.get<RunSummaryResponse[]>(`/api/users/${username}/runs`),
 
   // Subscription
   isSubscribed: (runId: string) =>
