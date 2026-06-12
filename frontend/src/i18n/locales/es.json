@@ -50,8 +50,8 @@
     }
   },
   "nav": {
-    "runs": "Runs",
-    "feed": "Feed",
+    "runs": "Partidas",
+    "feed": "Social",
     "profile": "Perfil",
     "login": "Ingresar"
   },
@@ -71,7 +71,7 @@
     "fainted": "muertos",
     "boxed": "en caja",
     "newRun": "+ Nueva",
-    "myRuns": "Mis Runs",
+    "myRuns": "Mis Partidas",
     "createFirst": "Crear tu primera run",
     "noRuns": "Todavía no tenés runs.",
     "archived": "Archivadas",
