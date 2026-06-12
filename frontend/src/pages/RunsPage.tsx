@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
@@ -21,6 +22,18 @@ const STATUS_COLOR: Record<string, string> = {
   ABANDONED: '#6b7280',
 };
 
+const VISIBILITY_ICON: Record<string, string> = {
+  PUBLIC:         '🌐',
+  FOLLOWERS_ONLY: '👥',
+  PRIVATE:        '🔒',
+};
+
+const VISIBILITY_LABEL: Record<string, string> = {
+  PUBLIC:         '🌐 Pública',
+  FOLLOWERS_ONLY: '👥 Solo seguidores',
+  PRIVATE:        '🔒 Privada',
+};
+
 const ACTIVE_RUN_KEY = 'nuzlocke_active_run_id';
 
 export function RunsPage() {
@@ -30,6 +43,7 @@ export function RunsPage() {
   const [activeRunId, setActiveRunId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_RUN_KEY),
   );
+  const [visEditId, setVisEditId] = useState<string | null>(null);
 
   const apiQuery = useQuery({
     queryKey: ['runs'],
@@ -94,6 +108,15 @@ export function RunsPage() {
     },
   });
 
+  const visMut = useMutation({
+    mutationFn: ({ id, visibility }: { id: string; visibility: string }) =>
+      runsApi.update(id, { visibility }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs'] });
+      setVisEditId(null);
+    },
+  });
+
   function toggleActiveRun(id: string) {
     if (activeRunId === id) {
       localStorage.removeItem(ACTIVE_RUN_KEY);
@@ -149,6 +172,14 @@ export function RunsPage() {
           <div className="run-card-stats">
             <span>⚔️ {run.activePokemon} activos</span>
             <span>💀 {run.faintedPokemon} muertos</span>
+            {run.visibility && (
+              <span
+                title={VISIBILITY_LABEL[run.visibility] ?? run.visibility}
+                style={{ marginLeft: 'auto', fontSize: 14 }}
+              >
+                {VISIBILITY_ICON[run.visibility] ?? '🌐'}
+              </span>
+            )}
           </div>
         </Link>
         <div className="run-card-actions">
@@ -159,6 +190,15 @@ export function RunsPage() {
           >
             📍{isActive ? ' En búsqueda' : ''}
           </button>
+          {user && (
+            <button
+              className="btn btn-ghost run-archive-btn"
+              onClick={() => setVisEditId(run.id)}
+              title="Cambiar visibilidad"
+            >
+              {VISIBILITY_ICON[run.visibility ?? 'PUBLIC']}
+            </button>
+          )}
           {showArchiveLabel ? (
             <button
               className="btn btn-ghost run-archive-btn"
@@ -184,6 +224,7 @@ export function RunsPage() {
   }
 
   return (
+    <>
     <Layout
       title={user ? `@${user.username}` : 'Mis Runs'}
       action={user ? (
@@ -244,5 +285,37 @@ export function RunsPage() {
         )}
       </div>
     </Layout>
+
+    {visEditId && createPortal(
+      <div className="modal-overlay" onClick={() => setVisEditId(null)}>
+        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 320 }}>
+          <div className="modal-header">
+            <h2 className="modal-title">Visibilidad de la run</h2>
+            <button type="button" className="modal-close" onClick={() => setVisEditId(null)} aria-label="Cerrar">✕</button>
+          </div>
+          <div className="modal-body">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(['PUBLIC', 'FOLLOWERS_ONLY', 'PRIVATE'] as const).map(v => {
+                const currentRun = data.find(r => r.id === visEditId);
+                const isCurrent = currentRun?.visibility === v;
+                return (
+                  <button
+                    key={v}
+                    className={`btn ${isCurrent ? 'btn-primary' : 'btn-ghost'} btn-full`}
+                    style={{ textAlign: 'left' }}
+                    onClick={() => visMut.mutate({ id: visEditId, visibility: v })}
+                    disabled={visMut.isPending || isCurrent}
+                  >
+                    {VISIBILITY_LABEL[v]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

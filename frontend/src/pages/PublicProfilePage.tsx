@@ -18,6 +18,18 @@ const STATUS_COLOR: Record<string, string> = {
   ABANDONED: '#6b7280',
 };
 
+const VISIBILITY_ICON: Record<string, string> = {
+  PUBLIC:         '🌐',
+  FOLLOWERS_ONLY: '👥',
+  PRIVATE:        '🔒',
+};
+
+const VISIBILITY_LABEL: Record<string, string> = {
+  PUBLIC:         'Pública',
+  FOLLOWERS_ONLY: 'Solo seguidores',
+  PRIVATE:        'Privada',
+};
+
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
@@ -121,8 +133,13 @@ export function PublicProfilePage() {
                       <div className="run-card-stats">
                         <span>⚔️ {run.activePokemon} activos</span>
                         <span>💀 {run.faintedPokemon} muertos</span>
-                        {run.visibility === 'FOLLOWERS_ONLY' && (
-                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>👥</span>
+                        {run.visibility && run.visibility !== 'PUBLIC' && (
+                          <span
+                            title={VISIBILITY_LABEL[run.visibility] ?? run.visibility}
+                            style={{ marginLeft: 'auto', fontSize: 14 }}
+                          >
+                            {VISIBILITY_ICON[run.visibility]}
+                          </span>
                         )}
                       </div>
                     </Link>
