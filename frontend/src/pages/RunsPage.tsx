@@ -7,12 +7,13 @@ import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/Toast';
 
 const STATUS_LABEL: Record<string, string> = {
-  ACTIVE:    'Activa',
-  COMPLETED: 'Completada',
-  GAME_OVER: 'Game Over',
-  ABANDONED: 'Abandonada',
+  ACTIVE:    '▶ Activa',
+  COMPLETED: '★ Completada',
+  GAME_OVER: '✕ Game Over',
+  ABANDONED: '— Abandonada',
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -39,6 +40,7 @@ const ACTIVE_RUN_KEY = 'nuzlocke_active_run_id';
 export function RunsPage() {
   const { user, logout } = useAuth();
   const qc = useQueryClient();
+  const { showToast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_RUN_KEY),
@@ -102,9 +104,10 @@ export function RunsPage() {
       if (user) { await runsApi.update(id, { archived }); }
       else { await guestStore.updateRun(id, { archived }); }
     },
-    onSuccess: () => {
+    onSuccess: (_data, { archived }) => {
       if (user) qc.invalidateQueries({ queryKey: ['runs'] });
       else qc.invalidateQueries({ queryKey: ['guest', 'runs'] });
+      showToast(archived ? 'Run archivada' : 'Run desarchivada');
     },
   });
 

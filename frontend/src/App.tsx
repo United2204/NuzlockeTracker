@@ -23,6 +23,7 @@ import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { useSyncFlush } from './hooks/useSyncFlush';
+import { ToastProvider } from './components/Toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ToastProvider>
         <BrowserRouter>
           <OfflineBanner />
           <SyncManager />
@@ -68,6 +70,7 @@ function App() {
             <Route path="*" element={<Navigate to="/runs" replace />} />
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

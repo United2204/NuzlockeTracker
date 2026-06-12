@@ -45,8 +45,8 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
           {user ? (
             <NotificationBell />
           ) : (
-            <Link to="/login" className="btn btn-ghost" style={{ fontSize: 13 }}>
-              Guardar progreso
+            <Link to="/register" className="btn btn-ghost" style={{ fontSize: 13 }}>
+              Registrarse
             </Link>
           )}
         </div>

@@ -8,6 +8,7 @@ import { runsApi } from '../api/runs';
 import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/Toast';
 import type { GameResponse } from '../types/api';
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
@@ -77,6 +78,7 @@ type FormData = z.infer<typeof schema>;
 export function NewRunPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [games, setGames] = useState<GameResponse[]>([]);
   const [selectedGame, setSelectedGame] = useState<GameResponse | null>(null);
   const [submitError, setSubmitError] = useState('');
@@ -153,6 +155,7 @@ export function NewRunPage() {
         runId = res.id;
       }
 
+      showToast('¡Run creada!');
       navigate(`/runs/${runId}`);
     } catch {
       setSubmitError('Error al crear la run. Intenta de nuevo.');
