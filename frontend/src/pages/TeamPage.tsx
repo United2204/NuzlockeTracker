@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { catalogApi } from '../api/catalog';
@@ -14,12 +15,6 @@ import type { CaughtPokemonResponse, PokemonSearchResponse, RunDetailResponse } 
 
 type Tab = 'team' | 'box' | 'graveyard';
 
-const TAB_LABELS: Record<Tab, string> = {
-  team:      '⚔️ Equipo',
-  box:       '📦 Box',
-  graveyard: '💀 Cementerio',
-};
-
 function EvolveModal({
   pokemon,
   runId,
@@ -29,6 +24,7 @@ function EvolveModal({
   runId: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [target, setTarget] = useState<PokemonSearchResponse | null>(null);
   const [showFreeSearch, setShowFreeSearch] = useState(false);
   const [error, setError] = useState('');
@@ -49,11 +45,11 @@ function EvolveModal({
       qc.invalidateQueries({ queryKey: ['all-caught', runId] });
       onClose();
     },
-    onError: () => setError('Error al evolucionar. Intenta de nuevo.'),
+    onError: () => setError(t('team.evolve.error')),
   });
 
   function confirm() {
-    if (!target) { setError('Seleccioná la evolución'); return; }
+    if (!target) { setError(t('team.evolve.selectFirst')); return; }
     mutation.mutate();
   }
 
@@ -62,7 +58,7 @@ function EvolveModal({
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">
-            Evolucionar: {pokemon.nickname ?? pokemon.currentPokemonName}
+            {t('team.evolve.title', { name: pokemon.nickname ?? pokemon.currentPokemonName })}
           </h2>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
@@ -72,7 +68,7 @@ function EvolveModal({
           ) : showFreeSearch ? (
             <>
               <div className="form-group">
-                <label className="form-label">Evolución *</label>
+                <label className="form-label">{t('team.evolve.label')}</label>
                 <PokemonSearch onSelect={setTarget} />
               </div>
               {target && (
@@ -83,7 +79,7 @@ function EvolveModal({
             </>
           ) : evolutions.length > 0 ? (
             <>
-              <label className="form-label">Elegí la evolución</label>
+              <label className="form-label">{t('team.evolve.choose')}</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                 {evolutions.map(p => (
                   <button
@@ -109,13 +105,13 @@ function EvolveModal({
                 style={{ marginTop: 12, fontSize: 13 }}
                 onClick={() => { setTarget(null); setShowFreeSearch(true); }}
               >
-                No está en la lista (ROM hack / fangame)
+                {t('team.evolve.notInList')}
               </button>
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '16px 0' }}>
               <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>
-                Este Pokémon no tiene evoluciones registradas.
+                {t('team.evolve.none')}
               </p>
               <button
                 type="button"
@@ -123,7 +119,7 @@ function EvolveModal({
                 style={{ fontSize: 13 }}
                 onClick={() => setShowFreeSearch(true)}
               >
-                Buscar manualmente (ROM hack / fangame)
+                {t('team.evolve.searchManually')}
               </button>
             </div>
           )}
@@ -135,7 +131,7 @@ function EvolveModal({
             onClick={confirm}
             disabled={mutation.isPending || !target}
           >
-            {mutation.isPending ? 'Evolucionando...' : 'Confirmar evolución'}
+            {mutation.isPending ? t('team.evolve.evolving') : t('team.evolve.confirm')}
           </button>
         </div>
       </div>
@@ -144,6 +140,7 @@ function EvolveModal({
 }
 
 export function TeamPage() {
+  const { t }      = useTranslation();
   const { runId }  = useParams<{ runId: string }>();
   const { user }   = useAuth();
   const isGuest    = !user;
@@ -232,13 +229,13 @@ export function TeamPage() {
       else { await runsApi.updatePokemonStatus(runId!, pokemonId, { status }); }
     },
     onSuccess: () => { invalidateAll(); setSelected(null); },
-    onError: () => alert('Error al cambiar el estado. Intentá de nuevo.'),
+    onError: () => alert(t('team.statusError')),
   });
 
   const devolveMutation = useMutation({
     mutationFn: (pokemonId: string) => runsApi.devolve(runId!, pokemonId),
     onSuccess: () => { invalidateAll(); setSelected(null); },
-    onError: () => alert('Error al revertir la evolución. Intentá de nuevo.'),
+    onError: () => alert(t('team.revertError')),
   });
 
   function toggleSelect(p: CaughtPokemonResponse) {
@@ -257,7 +254,7 @@ export function TeamPage() {
       }
       invalidateAll();
     } catch {
-      alert('Error al hacer el cambio. Intentá de nuevo.');
+      alert(t('team.swapError'));
     } finally {
       setPendingToTeam(null);
       setSwapTarget(null);
@@ -279,15 +276,15 @@ export function TeamPage() {
     : (apiTeamQ.data ?? []);
 
   return (
-    <Layout title="Equipo" runId={runId}>
+    <Layout title={t('team.title')} runId={runId}>
       <div className="tab-bar">
-        {(['team', 'box', 'graveyard'] as Tab[]).map(t => (
+        {(['team', 'box', 'graveyard'] as Tab[]).map(tabKey => (
           <button
-            key={t}
-            className={`tab-btn${tab === t ? ' active' : ''}`}
-            onClick={() => { setTab(t); setSelected(null); }}
+            key={tabKey}
+            className={`tab-btn${tab === tabKey ? ' active' : ''}`}
+            onClick={() => { setTab(tabKey); setSelected(null); }}
           >
-            {TAB_LABELS[t]}
+            {t(`team.tab.${tabKey}`)}
           </button>
         ))}
       </div>
@@ -297,7 +294,7 @@ export function TeamPage() {
 
         {!isLoading && !currentData?.length && (
           <div className="empty-state">
-            <p>Sin Pokémon aquí aún.</p>
+            <p>{t('team.empty')}</p>
           </div>
         )}
 
@@ -324,7 +321,7 @@ export function TeamPage() {
                   onClick={() => handleMoveToTeam(selected)}
                   disabled={statusMutation.isPending}
                 >
-                  ⚔️ Equipo
+                  {t('team.action.team')}
                 </button>
               )}
               {selected.status !== 'BOXED' && (
@@ -333,7 +330,7 @@ export function TeamPage() {
                   onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'BOXED' })}
                   disabled={statusMutation.isPending}
                 >
-                  📦 Box
+                  {t('team.action.box')}
                 </button>
               )}
               {selected.status !== 'FAINTED' && (
@@ -342,7 +339,7 @@ export function TeamPage() {
                   onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'FAINTED' })}
                   disabled={statusMutation.isPending}
                 >
-                  💀 Muerto
+                  {t('team.action.fainted')}
                 </button>
               )}
               {!isGuest && selected.status !== 'FAINTED' && (
@@ -350,7 +347,7 @@ export function TeamPage() {
                   className="btn btn-outline"
                   onClick={() => { setEvolving(selected); setSelected(null); }}
                 >
-                  🧬 Evolucionar
+                  {t('team.action.evolve')}
                 </button>
               )}
               {!isGuest && selected.currentPokemonId !== selected.originalPokemonId && (
@@ -360,7 +357,7 @@ export function TeamPage() {
                   onClick={() => devolveMutation.mutate(selected.id)}
                   disabled={devolveMutation.isPending}
                 >
-                  ↩️ Revertir evolución
+                  {t('team.action.revertEvolution')}
                 </button>
               )}
               {!isGuest && (
@@ -368,11 +365,11 @@ export function TeamPage() {
                   className="btn btn-info"
                   onClick={() => { setCalcTarget(selected); setSelected(null); }}
                 >
-                  ⚡ Calcular daño
+                  {t('team.action.damageCalc')}
                 </button>
               )}
               <button className="btn btn-ghost" onClick={() => setSelected(null)}>
-                Cancelar
+                {t('btn.cancel')}
               </button>
             </div>
           </div>
@@ -400,12 +397,12 @@ export function TeamPage() {
         <div className="modal-overlay" style={{ zIndex: 210 }} onClick={() => { setPendingToTeam(null); setSwapTarget(null); }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">⚔️ Equipo lleno</h2>
+              <h2 className="modal-title">{t('team.teamFull')}</h2>
               <button type="button" className="modal-close" onClick={() => { setPendingToTeam(null); setSwapTarget(null); }} aria-label="Cerrar">✕</button>
             </div>
             <div className="modal-body">
               <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>
-                Elegí quién va al box para hacerle lugar a <strong>{pendingToTeam.nickname ?? pendingToTeam.currentPokemonName}</strong>:
+                {t('team.chooseSwap', { name: pendingToTeam.nickname ?? pendingToTeam.currentPokemonName })}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {teamForSwap.map(p => (
@@ -425,7 +422,7 @@ export function TeamPage() {
                   style={{ marginTop: 12 }}
                   onClick={confirmSwapToTeam}
                 >
-                  ✅ Confirmar — {swapTarget.nickname ?? swapTarget.currentPokemonName} va al box
+                  {t('team.confirmSwap', { name: swapTarget.nickname ?? swapTarget.currentPokemonName })}
                 </button>
               )}
             </div>

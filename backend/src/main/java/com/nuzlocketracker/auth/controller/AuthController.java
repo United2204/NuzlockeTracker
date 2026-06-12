@@ -3,6 +3,7 @@ package com.nuzlocketracker.auth.controller;
 import com.nuzlocketracker.auth.dto.*;
 import com.nuzlocketracker.auth.entity.User;
 import com.nuzlocketracker.auth.repository.UserRepository;
+import com.nuzlocketracker.auth.repository.UserSettingsRepository;
 import com.nuzlocketracker.auth.service.AuthService;
 import com.nuzlocketracker.common.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -71,6 +73,9 @@ public class AuthController {
         UUID userId = UUID.fromString(authentication.getName());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
-        return MeResponse.from(user);
+        String language = userSettingsRepository.findById(userId)
+                .map(s -> s.getLanguage())
+                .orElse(null);
+        return MeResponse.from(user, language);
     }
 }

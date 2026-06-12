@@ -13,6 +13,7 @@ export interface MeResponse {
   role: string;
   emailVerified: boolean;
   verified: boolean;
+  language: string | null;
   lastUsernameChangedAt: string | null;
   createdAt: string;
 }

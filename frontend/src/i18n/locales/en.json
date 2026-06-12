@@ -84,5 +84,127 @@
       "LEGENDARY": "Legendary",
       "TRADE": "Trade"
     }
+  },
+  "rule": {
+    "FIRST_ENCOUNTER_ONLY": { "label": "First encounter only", "desc": "One catch per route" },
+    "PERMADEATH": { "label": "Permadeath", "desc": "If it faints, it goes to the graveyard" },
+    "SPECIES_CLAUSE": { "label": "Species clause", "desc": "No repeating an evolution line" },
+    "DUPLICATE_CLAUSE": { "label": "Duplicate clause", "desc": "No repeating the exact Pokémon" },
+    "ITEM_CLAUSE": { "label": "No items in battle", "desc": "No Potions/X-items in battle" },
+    "REGIONAL_VARIANT_CLAUSE": { "label": "Regional variants = dup", "desc": "Raichu-Kanto and Raichu-Alola count as the same" },
+    "LEVEL_CAP": { "label": "Level cap", "desc": "Level limit by the next gym" },
+    "MAX_CATCHES_PER_ROUTE": { "label": "Max catches per route", "desc": "Attempt limit per zone" },
+    "NICKNAME_REQUIRED": { "label": "Nickname required", "desc": "Remember to set a nickname (warning only)" }
+  },
+  "preset": {
+    "classic": { "label": "🏆 Classic", "desc": "First encounter per route, permadeath, species clause" },
+    "hardcore": { "label": "💀 Hardcore", "desc": "Classic + no items in battle + gym level cap" },
+    "free": { "label": "📝 Free", "desc": "No restrictions — just log what you catch" }
+  },
+  "newRun": {
+    "title": "New Run",
+    "game": "Game *",
+    "chooseGame": "Choose a game...",
+    "chooseGameError": "Choose a game",
+    "version": "Version",
+    "allVersions": "All versions",
+    "name": "Run name *",
+    "namePlaceholder": "e.g. My first Nuzlocke",
+    "required": "Required",
+    "maxChars": "Max 150 characters",
+    "gameMode": "Game mode",
+    "customizeRules": "Customize rules",
+    "modified": "modified",
+    "visibility": "Visibility",
+    "randomizer": "🎲 Randomizer run (random Pokémon)",
+    "creating": "Creating...",
+    "create": "Create run",
+    "createError": "Error creating the run. Try again.",
+    "created": "Run created!"
+  },
+  "team": {
+    "title": "Team",
+    "tab": {
+      "team": "⚔️ Team",
+      "box": "📦 Box",
+      "graveyard": "💀 Graveyard"
+    },
+    "empty": "No Pokémon here yet.",
+    "action": {
+      "team": "⚔️ Team",
+      "box": "📦 Box",
+      "fainted": "💀 Fainted",
+      "evolve": "🧬 Evolve",
+      "revertEvolution": "↩️ Revert evolution",
+      "damageCalc": "⚡ Damage calc"
+    },
+    "teamFull": "⚔️ Team full",
+    "chooseSwap": "Choose who goes to the box to make room for {{name}}:",
+    "confirmSwap": "✅ Confirm — {{name}} goes to the box",
+    "swapError": "Error making the swap. Try again.",
+    "statusError": "Error changing status. Try again.",
+    "revertError": "Error reverting the evolution. Try again.",
+    "evolve": {
+      "title": "Evolve: {{name}}",
+      "label": "Evolution *",
+      "choose": "Choose the evolution",
+      "notInList": "Not in the list (ROM hack / fangame)",
+      "none": "This Pokémon has no registered evolutions.",
+      "searchManually": "Search manually (ROM hack / fangame)",
+      "evolving": "Evolving...",
+      "confirm": "Confirm evolution",
+      "error": "Error evolving. Try again.",
+      "selectFirst": "Select the evolution"
+    }
+  },
+  "encounter": {
+    "outcome": {
+      "CAPTURED": "✅ Captured",
+      "FAILED": "❌ Failed",
+      "DIED_IN_ENCOUNTER": "💀 Died catching",
+      "NOT_FOUND": "🔍 Not found",
+      "DEFERRED": "⏳ Defer"
+    },
+    "chooseOutcome": "Choose an outcome",
+    "editing": "✏️ Editing existing record",
+    "classicWarning": "⚠️ Classic Nuzlocke: only the first encounter counts",
+    "chooseStarter": "✅ Choose your starter Pokémon",
+    "guaranteed": "✅ Guaranteed Pokémon",
+    "outcomeLabel": "Outcome *",
+    "starterLabel": "Starter Pokémon *",
+    "capturedLabel": "Captured Pokémon *",
+    "nickname": "Nickname (optional)",
+    "nicknamePlaceholder": "Leave empty to use the name",
+    "isShiny": "✨ Is shiny",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "e.g. I chose Charmander",
+    "speciesConflict": "⚠️ Species Clause: you already have a Pokémon from the same evolution line in this run.",
+    "record": "Record",
+    "selectPokemon": "Select a Pokémon",
+    "nicknameRequired": "Nickname required in this run",
+    "error": "Error recording the encounter. Try again.",
+    "teamFull": "⚔️ Team full",
+    "teamFullQuestion": "Your team has 6 Pokémon. What do we do with the new one?",
+    "sendToBox": "📦 Send it straight to the box",
+    "orChooseSwap": "Or choose who goes to the box to make room on the team:",
+    "confirmSwap": "✅ Confirm — {{name}} goes to the box"
+  },
+  "runDetail": {
+    "title": "Run",
+    "noBadge": "No badge required",
+    "badgeGroup": "🏅 {{badge}}",
+    "visibilityMenu": "🌐 Visibility",
+    "rulesTitle": "Run rules",
+    "saveRules": "Save rules",
+    "obtainBadge": "Obtain badge",
+    "allBadges": "You've obtained all badges.",
+    "favoriteOn": "⭐ Favorite",
+    "favoriteOff": "☆ Favorite",
+    "subscribed": "🔔 Subscribed",
+    "subscribe": "🔕 Subscribe",
+    "completeConfirm": "Confirm you finished this run? Your Hall of Fame will be saved.",
+    "abandonConfirm": "Are you sure you want to abandon this run?",
+    "visibilityTitle": "Run visibility",
+    "addEncounter": "Add another encounter"
   }
 }

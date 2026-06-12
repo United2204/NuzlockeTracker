@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { settingsApi } from '../api/settings';
 import { authApi } from '../api/auth';
+import { applyLanguage } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { Layout } from '../components/Layout';
 
@@ -15,7 +16,7 @@ function daysUntilUsernameChange(lastChanged: string | null): number | null {
 }
 
 export function SettingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
 
   // ── Settings (language + privacy) ─────────────────────────────────────
@@ -40,10 +41,7 @@ export function SettingsPage() {
     onSuccess: () => {
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 2500);
-      const lang = language || navigator.language.split('-')[0] || 'es';
-      i18n.changeLanguage(lang);
-      if (language) localStorage.setItem('language', language);
-      else localStorage.removeItem('language');
+      applyLanguage(language || null);
     },
   });
 

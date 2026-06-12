@@ -13,10 +13,15 @@ public record MeResponse(
         String role,
         boolean emailVerified,
         boolean verified,
+        String language,
         OffsetDateTime lastUsernameChangedAt,
         OffsetDateTime createdAt
 ) {
     public static MeResponse from(User user) {
+        return from(user, null);
+    }
+
+    public static MeResponse from(User user, String language) {
         return new MeResponse(
                 user.getId(),
                 user.getEmail(),
@@ -25,6 +30,7 @@ public record MeResponse(
                 user.getRole().name(),
                 user.isEmailVerified(),
                 user.isVerified(),
+                language,
                 user.getLastUsernameChangedAt(),
                 user.getCreatedAt()
         );

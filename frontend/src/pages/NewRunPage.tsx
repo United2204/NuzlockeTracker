@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,9 +15,9 @@ import type { GameResponse } from '../types/api';
 // ─── Presets ──────────────────────────────────────────────────────────────────
 
 const PRESETS = [
-  { id: 1, label: '🏆 Clásico',  desc: 'Primer encuentro por ruta, permadeath, species clause' },
-  { id: 2, label: '💀 Hardcore', desc: 'Clásico + sin ítems en combate + level cap por gym' },
-  { id: 3, label: '📝 Libre',    desc: 'Sin restricciones — solo registrar lo que capturás' },
+  { id: 1, key: 'classic' },
+  { id: 2, key: 'hardcore' },
+  { id: 3, key: 'free' },
 ];
 
 type RuleKey =
@@ -26,21 +27,19 @@ type RuleKey =
 
 interface RuleDef {
   key: RuleKey;
-  label: string;
-  desc: string;
   hasValue?: 'levelCap' | 'maxCatches';
 }
 
 const RULE_DEFS: RuleDef[] = [
-  { key: 'FIRST_ENCOUNTER_ONLY',    label: 'Solo primer encuentro',      desc: 'Una captura por ruta' },
-  { key: 'PERMADEATH',              label: 'Permadeath',                 desc: 'Si muere, va al cementerio' },
-  { key: 'SPECIES_CLAUSE',          label: 'Species clause',             desc: 'No repetir línea evolutiva' },
-  { key: 'DUPLICATE_CLAUSE',        label: 'Duplicate clause',           desc: 'No repetir Pokémon exacto' },
-  { key: 'ITEM_CLAUSE',             label: 'Sin ítems en combate',       desc: 'No usar Pociones/X-items en batalla' },
-  { key: 'REGIONAL_VARIANT_CLAUSE', label: 'Variantes regionales = dup', desc: 'Raichu-Kanto y Raichu-Alola cuentan como mismo' },
-  { key: 'LEVEL_CAP',               label: 'Level cap',                  desc: 'Límite de nivel por el siguiente gym', hasValue: 'levelCap' },
-  { key: 'MAX_CATCHES_PER_ROUTE',   label: 'Máx. capturas por ruta',     desc: 'Límite de intentos por zona', hasValue: 'maxCatches' },
-  { key: 'NICKNAME_REQUIRED',       label: 'Nickname obligatorio',       desc: 'Recordar asignar apodo (solo aviso)' },
+  { key: 'FIRST_ENCOUNTER_ONLY' },
+  { key: 'PERMADEATH' },
+  { key: 'SPECIES_CLAUSE' },
+  { key: 'DUPLICATE_CLAUSE' },
+  { key: 'ITEM_CLAUSE' },
+  { key: 'REGIONAL_VARIANT_CLAUSE' },
+  { key: 'LEVEL_CAP',             hasValue: 'levelCap' },
+  { key: 'MAX_CATCHES_PER_ROUTE', hasValue: 'maxCatches' },
+  { key: 'NICKNAME_REQUIRED' },
 ];
 
 type RulesState = Record<RuleKey, { enabled: boolean; value: string }>;
@@ -64,8 +63,8 @@ function defaultRulesForPreset(presetId: number): RulesState {
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  gameId:      z.string().min(1, 'Elegí un juego'),
-  name:        z.string().min(1, 'Requerido').max(150, 'Máximo 150 caracteres'),
+  gameId:      z.string().min(1, 'newRun.chooseGameError'),
+  name:        z.string().min(1, 'newRun.required').max(150, 'newRun.maxChars'),
   gameVersion: z.string().optional(),
   randomized:  z.boolean().optional(),
   visibility:  z.string().optional(),
@@ -77,6 +76,7 @@ type FormData = z.infer<typeof schema>;
 
 export function NewRunPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { showToast } = useToast();
   const [games, setGames] = useState<GameResponse[]>([]);
@@ -155,10 +155,10 @@ export function NewRunPage() {
         runId = res.id;
       }
 
-      showToast('¡Run creada!');
+      showToast(t('newRun.created'));
       navigate(`/runs/${runId}`);
     } catch {
-      setSubmitError('Error al crear la run. Intenta de nuevo.');
+      setSubmitError(t('newRun.createError'));
     }
   }
 
@@ -168,27 +168,27 @@ export function NewRunPage() {
   );
 
   return (
-    <Layout title="Nueva Run" back="/runs">
+    <Layout title={t('newRun.title')} back="/runs">
       <div className="page-content">
         <form onSubmit={handleSubmit(onSubmit)} className="form-card">
 
           {/* Juego */}
           <div className="form-group">
-            <label className="form-label">Juego *</label>
+            <label className="form-label">{t('newRun.game')}</label>
             <select className="form-input" {...register('gameId')}>
-              <option value="">Elegí un juego...</option>
+              <option value="">{t('newRun.chooseGame')}</option>
               {games.map(g => (
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
-            {errors.gameId && <span className="form-error">{errors.gameId.message}</span>}
+            {errors.gameId && <span className="form-error">{t(errors.gameId.message ?? '')}</span>}
           </div>
 
           {selectedGame?.versions && selectedGame.versions.length > 0 && (
             <div className="form-group">
-              <label className="form-label">Versión</label>
+              <label className="form-label">{t('newRun.version')}</label>
               <select className="form-input" {...register('gameVersion')}>
-                <option value="">Todas las versiones</option>
+                <option value="">{t('newRun.allVersions')}</option>
                 {selectedGame.versions.map(v => (
                   <option key={v} value={v}>{v}</option>
                 ))}
@@ -198,18 +198,18 @@ export function NewRunPage() {
 
           {/* Nombre */}
           <div className="form-group">
-            <label className="form-label">Nombre de la run *</label>
+            <label className="form-label">{t('newRun.name')}</label>
             <input
               className="form-input"
               {...register('name')}
-              placeholder="Ej: Mi primera Nuzlocke"
+              placeholder={t('newRun.namePlaceholder')}
             />
-            {errors.name && <span className="form-error">{errors.name.message}</span>}
+            {errors.name && <span className="form-error">{t(errors.name.message ?? '')}</span>}
           </div>
 
           {/* Modo de juego */}
           <div className="form-group">
-            <label className="form-label">Modo de juego</label>
+            <label className="form-label">{t('newRun.gameMode')}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {PRESETS.map(p => (
                 <button
@@ -224,8 +224,8 @@ export function NewRunPage() {
                     textAlign: 'left', gap: 2,
                   }}
                 >
-                  <span style={{ fontWeight: 600, fontSize: 15 }}>{p.label}</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.desc}</span>
+                  <span style={{ fontWeight: 600, fontSize: 15 }}>{t(`preset.${p.key}.label`)}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t(`preset.${p.key}.desc`)}</span>
                 </button>
               ))}
             </div>
@@ -243,8 +243,8 @@ export function NewRunPage() {
                 alignItems: 'center', gap: 6,
               }}
             >
-              {showCustom ? '▲' : '▼'} Personalizar reglas
-              {isCustomized && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', borderRadius: 4, padding: '1px 5px' }}>modificado</span>}
+              {showCustom ? '▲' : '▼'} {t('newRun.customizeRules')}
+              {isCustomized && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', borderRadius: 4, padding: '1px 5px' }}>{t('newRun.modified')}</span>}
             </button>
 
             {showCustom && (
@@ -276,8 +276,8 @@ export function NewRunPage() {
                       }} />
                     </button>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{def.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{def.desc}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{t(`rule.${def.key}.label`)}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t(`rule.${def.key}.desc`)}</div>
                     </div>
                     {def.hasValue === 'levelCap' && rules[def.key].enabled && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -311,24 +311,24 @@ export function NewRunPage() {
           {/* Visibilidad — solo para usuarios con cuenta */}
           {user && (
             <div className="form-group">
-              <label className="form-label">Visibilidad</label>
+              <label className="form-label">{t('newRun.visibility')}</label>
               <select className="form-input" {...register('visibility')}>
-                <option value="PRIVATE">🔒 Privada</option>
-                <option value="PUBLIC">🌍 Pública</option>
-                <option value="FOLLOWERS_ONLY">👥 Solo seguidores</option>
+                <option value="PRIVATE">{t('run.visibility.PRIVATE')}</option>
+                <option value="PUBLIC">{t('run.visibility.PUBLIC')}</option>
+                <option value="FOLLOWERS_ONLY">{t('run.visibility.FOLLOWERS_ONLY')}</option>
               </select>
             </div>
           )}
 
           <div className="form-check">
             <input type="checkbox" id="randomized" {...register('randomized')} />
-            <label htmlFor="randomized">🎲 Run randomizer (Pokémon aleatorios)</label>
+            <label htmlFor="randomized">{t('newRun.randomizer')}</label>
           </div>
 
           {submitError && <p className="form-error">{submitError}</p>}
 
           <button type="submit" className="btn btn-primary btn-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creando...' : 'Crear run'}
+            {isSubmitting ? t('newRun.creating') : t('newRun.create')}
           </button>
         </form>
       </div>

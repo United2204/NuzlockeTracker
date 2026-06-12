@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { catalogApi } from '../api/catalog';
@@ -21,23 +22,13 @@ import type { GuestEncounterSaveData } from '../components/EncounterModal';
 
 type ActiveEncounter = { route: RouteWithEncounterResponse; slot: RouteEncounterSlot | null };
 
-const OUTCOME_CONFIG: Record<string, { label: string; color: string }> = {
-  PENDING:           { label: 'Pendiente',     color: '#6b7280' },
-  DEFERRED:          { label: 'Postergado',    color: '#f59e0b' },
-  CAPTURED:          { label: 'Capturado',     color: '#22c55e' },
-  FAILED:            { label: 'Fallido',       color: '#ef4444' },
-  DIED_IN_ENCOUNTER: { label: 'Murió',         color: '#ef4444' },
-  NOT_FOUND:         { label: 'No encontrado', color: '#6b7280' },
-};
-
-const ENCOUNTER_TYPE_LABELS: Record<string, string> = {
-  RANDOM:     'Aleatorio',
-  STATIC:     'Estático',
-  GIFT:       'Regalo',
-  STARTER:    'Inicial',
-  FOSSIL:     'Fósil',
-  LEGENDARY:  'Legendario',
-  TRADE:      'Intercambio',
+const OUTCOME_COLOR: Record<string, string> = {
+  PENDING:           '#6b7280',
+  DEFERRED:          '#f59e0b',
+  CAPTURED:          '#22c55e',
+  FAILED:            '#ef4444',
+  DIED_IN_ENCOUNTER: '#ef4444',
+  NOT_FOUND:         '#6b7280',
 };
 
 function Pokeball({ size = 20, golden = false }: { size?: number; golden?: boolean }) {
@@ -58,10 +49,12 @@ function toShinySpriteUrl(url: string): string {
   return url.replace(/\/sprites\/pokemon\/(\d+\.png)$/, '/sprites/pokemon/shiny/$1');
 }
 
+const NO_BADGE = '__NO_BADGE__';
+
 function groupByBadge(routes: RouteWithEncounterResponse[]): Map<string, RouteWithEncounterResponse[]> {
   const groups = new Map<string, RouteWithEncounterResponse[]>();
   for (const r of routes) {
-    const key = r.requiredBadgeName ?? 'Sin medalla requerida';
+    const key = r.requiredBadgeName ?? NO_BADGE;
     const group = groups.get(key);
     if (group) group.push(r);
     else groups.set(key, [r]);
@@ -69,30 +62,25 @@ function groupByBadge(routes: RouteWithEncounterResponse[]): Map<string, RouteWi
   return groups;
 }
 
-const VISIBILITY_LABELS: Record<string, string> = {
-  PUBLIC: '🌐 Pública',
-  FOLLOWERS_ONLY: '👥 Solo seguidores',
-  PRIVATE: '🔒 Privada',
-};
-
 type RuleKey =
   | 'FIRST_ENCOUNTER_ONLY' | 'PERMADEATH' | 'NICKNAME_REQUIRED'
   | 'SPECIES_CLAUSE' | 'DUPLICATE_CLAUSE' | 'ITEM_CLAUSE'
   | 'REGIONAL_VARIANT_CLAUSE' | 'LEVEL_CAP' | 'MAX_CATCHES_PER_ROUTE';
 
-const RULE_DEFS: { key: RuleKey; label: string; desc: string; hasValue?: 'levelCap' | 'maxCatches' }[] = [
-  { key: 'FIRST_ENCOUNTER_ONLY',    label: 'Solo primer encuentro',      desc: 'Una captura por ruta' },
-  { key: 'PERMADEATH',              label: 'Permadeath',                 desc: 'Si muere, va al cementerio' },
-  { key: 'SPECIES_CLAUSE',          label: 'Species clause',             desc: 'No repetir línea evolutiva' },
-  { key: 'DUPLICATE_CLAUSE',        label: 'Duplicate clause',           desc: 'No repetir Pokémon exacto' },
-  { key: 'ITEM_CLAUSE',             label: 'Sin ítems en combate',       desc: 'No usar Pociones/X-items en batalla' },
-  { key: 'REGIONAL_VARIANT_CLAUSE', label: 'Variantes regionales = dup', desc: 'Raichu-Kanto y Raichu-Alola cuentan como mismo' },
-  { key: 'LEVEL_CAP',               label: 'Level cap',                  desc: 'Límite de nivel por el siguiente gym', hasValue: 'levelCap' },
-  { key: 'MAX_CATCHES_PER_ROUTE',   label: 'Máx. capturas por ruta',     desc: 'Límite de intentos por zona', hasValue: 'maxCatches' },
-  { key: 'NICKNAME_REQUIRED',       label: 'Nickname obligatorio',       desc: 'Recordar asignar apodo (solo aviso)' },
+const RULE_DEFS: { key: RuleKey; hasValue?: 'levelCap' | 'maxCatches' }[] = [
+  { key: 'FIRST_ENCOUNTER_ONLY' },
+  { key: 'PERMADEATH' },
+  { key: 'SPECIES_CLAUSE' },
+  { key: 'DUPLICATE_CLAUSE' },
+  { key: 'ITEM_CLAUSE' },
+  { key: 'REGIONAL_VARIANT_CLAUSE' },
+  { key: 'LEVEL_CAP',             hasValue: 'levelCap' },
+  { key: 'MAX_CATCHES_PER_ROUTE', hasValue: 'maxCatches' },
+  { key: 'NICKNAME_REQUIRED' },
 ];
 
 function RulesModal({ run, onClose }: { run: RunDetailResponse; onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   type RulesState = Record<RuleKey, { enabled: boolean; value: string }>;
 
@@ -143,7 +131,7 @@ function RulesModal({ run, onClose }: { run: RunDetailResponse; onClose: () => v
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
         <div className="modal-header">
-          <h2 className="modal-title">Reglas de la run</h2>
+          <h2 className="modal-title">{t('runDetail.rulesTitle')}</h2>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -174,8 +162,8 @@ function RulesModal({ run, onClose }: { run: RunDetailResponse; onClose: () => v
                 }} />
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{def.label}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{def.desc}</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{t(`rule.${def.key}.label`)}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t(`rule.${def.key}.desc`)}</div>
               </div>
               {def.hasValue === 'levelCap' && rules[def.key].enabled && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -206,7 +194,7 @@ function RulesModal({ run, onClose }: { run: RunDetailResponse; onClose: () => v
             onClick={() => mut.mutate()}
             disabled={mut.isPending}
           >
-            {mut.isPending ? 'Guardando...' : 'Guardar reglas'}
+            {mut.isPending ? t('btn.saving') : t('runDetail.saveRules')}
           </button>
         </div>
       </div>
@@ -234,6 +222,7 @@ function RunMenu({
   isGuest: boolean;
   isOwner: boolean;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -271,7 +260,7 @@ function RunMenu({
               style={{ textAlign: 'left' }}
               onClick={() => { setOpen(false); navigate(`/runs/${runId}/stats`); }}
             >
-              📊 Estadísticas
+              {t('run.stats')}
             </button>
             {!isGuest && isOwner && (
               <>
@@ -280,14 +269,14 @@ function RunMenu({
                   style={{ textAlign: 'left' }}
                   onClick={() => { setOpen(false); onRulesModal(); }}
                 >
-                  📋 Reglas
+                  {t('run.rules')}
                 </button>
                 <button
                   className="btn btn-ghost btn-full"
                   style={{ textAlign: 'left' }}
                   onClick={() => { setOpen(false); onVisibilityModal(); }}
                 >
-                  {VISIBILITY_LABELS[runVisibility] ?? '🌐 Visibilidad'}
+                  {t(`run.visibility.${runVisibility}`, t('runDetail.visibilityMenu'))}
                 </button>
               </>
             )}
@@ -298,14 +287,14 @@ function RunMenu({
                   style={{ textAlign: 'left', color: 'var(--success)' }}
                   onClick={() => { setOpen(false); onConfirm('COMPLETED'); }}
                 >
-                  ✅ Completar run
+                  {t('run.complete')}
                 </button>
                 <button
                   className="btn btn-ghost btn-full"
                   style={{ textAlign: 'left', color: 'var(--text-muted)' }}
                   onClick={() => { setOpen(false); onConfirm('ABANDONED'); }}
                 >
-                  🏳️ Abandonar run
+                  {t('run.abandon')}
                 </button>
               </>
             )}
@@ -325,6 +314,7 @@ function BadgeModal({
   onClose: () => void;
   onObtain: (badgeId: number, badgeName: string) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const { data: allBadges = [] } = useQuery({
     queryKey: ['catalog', 'badges', run.gameId],
     queryFn: () => catalogApi.badges(run.gameId).then(r => r.data),
@@ -338,13 +328,13 @@ function BadgeModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
         <div className="modal-header">
-          <h2 className="modal-title">Obtener medalla</h2>
+          <h2 className="modal-title">{t('runDetail.obtainBadge')}</h2>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
         <div className="modal-body">
           {available.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-              Ya obtuviste todas las medallas.
+              {t('runDetail.allBadges')}
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -373,6 +363,7 @@ function BadgeModal({
 }
 
 function RunActions({ run }: { run: RunDetailResponse }) {
+  const { t } = useTranslation();
   const auth = useContext(AuthContext);
   const qc = useQueryClient();
   const isOwner     = auth?.user?.id === run.userId || run.userId === 'guest';
@@ -408,7 +399,7 @@ function RunActions({ run }: { run: RunDetailResponse }) {
           onClick={() => favMut.mutate()}
           disabled={favMut.isPending}
         >
-          {run.favorite ? '⭐ Favorita' : '☆ Favorita'}
+          {run.favorite ? t('runDetail.favoriteOn') : t('runDetail.favoriteOff')}
         </button>
       )}
       {!isOwner && (
@@ -418,7 +409,7 @@ function RunActions({ run }: { run: RunDetailResponse }) {
           onClick={() => subMut.mutate()}
           disabled={subMut.isPending}
         >
-          {subscribed ? '🔔 Suscripto' : '🔕 Suscribirse'}
+          {subscribed ? t('runDetail.subscribed') : t('runDetail.subscribe')}
         </button>
       )}
     </div>
@@ -426,6 +417,7 @@ function RunActions({ run }: { run: RunDetailResponse }) {
 }
 
 export function RunDetailPage() {
+  const { t }     = useTranslation();
   const { runId } = useParams<{ runId: string }>();
   const navigate  = useNavigate();
   const qc        = useQueryClient();
@@ -593,15 +585,15 @@ export function RunDetailPage() {
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">
-            {confirmAction === 'COMPLETED' ? '✅ Completar run' : '🏳️ Abandonar run'}
+            {confirmAction === 'COMPLETED' ? t('run.complete') : t('run.abandon')}
           </h2>
           <button type="button" className="modal-close" onClick={() => setConfirmAction(null)} aria-label="Cerrar">✕</button>
         </div>
         <div className="modal-body">
           <p style={{ color: 'var(--text-muted)' }}>
             {confirmAction === 'COMPLETED'
-              ? '¿Confirmás que terminaste esta run? Se guardará tu Hall of Fame.'
-              : '¿Seguro que querés abandonar esta run?'}
+              ? t('runDetail.completeConfirm')
+              : t('runDetail.abandonConfirm')}
           </p>
           <div className="actions-row">
             <button
@@ -609,10 +601,10 @@ export function RunDetailPage() {
               onClick={() => statusMut.mutate(confirmAction)}
               disabled={statusMut.isPending}
             >
-              {statusMut.isPending ? 'Guardando...' : 'Confirmar'}
+              {statusMut.isPending ? t('btn.saving') : t('btn.confirm')}
             </button>
             <button className="btn btn-ghost" onClick={() => setConfirmAction(null)}>
-              Cancelar
+              {t('btn.cancel')}
             </button>
           </div>
         </div>
@@ -625,7 +617,7 @@ export function RunDetailPage() {
     <div className="modal-overlay" onClick={() => setVisModal(false)}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 320 }}>
         <div className="modal-header">
-          <h2 className="modal-title">Visibilidad de la run</h2>
+          <h2 className="modal-title">{t('runDetail.visibilityTitle')}</h2>
           <button type="button" className="modal-close" onClick={() => setVisModal(false)} aria-label="Cerrar">✕</button>
         </div>
         <div className="modal-body">
@@ -638,7 +630,7 @@ export function RunDetailPage() {
                 onClick={() => visMut.mutate(v)}
                 disabled={visMut.isPending || run?.visibility === v}
               >
-                {VISIBILITY_LABELS[v]}
+                {t(`run.visibility.${v}`)}
               </button>
             ))}
           </div>
@@ -650,7 +642,7 @@ export function RunDetailPage() {
 
   return (
     <Layout
-      title={run?.name ?? 'Run'}
+      title={run?.name ?? t('runDetail.title')}
       back={isOwner ? '/runs' : -1}
       runId={runId}
       action={run && runId ? (
@@ -684,19 +676,19 @@ export function RunDetailPage() {
 
         {!isLoading && routes.length === 0 && (
           <div className="empty-state">
-            <p>Este juego no tiene rutas cargadas aún.</p>
+            <p>{t('route.noRoutes')}</p>
           </div>
         )}
 
         {Array.from(groups.entries()).map(([badge, groupRoutes]) => (
           <div key={badge} className="route-group">
-            <h3 className="route-group-title">🏅 {badge}</h3>
+            <h3 className="route-group-title">{t('runDetail.badgeGroup', { badge: badge === NO_BADGE ? t('runDetail.noBadge') : badge })}</h3>
             {groupRoutes.map(route => {
               const slots      = route.slots;
               const hasSlots   = slots.length > 0;
               const lastSlot   = hasSlots ? slots[slots.length - 1] : null;
               const displayOutcome = lastSlot?.outcome ?? 'PENDING';
-              const cfg        = OUTCOME_CONFIG[displayOutcome] ?? OUTCOME_CONFIG['PENDING'];
+              const cfgColor   = OUTCOME_COLOR[displayOutcome] ?? OUTCOME_COLOR['PENDING'];
               const allTerminal = hasSlots && slots.every(s =>
                 ['CAPTURED','FAILED','DIED_IN_ENCOUNTER','NOT_FOUND'].includes(s.outcome)
               );
@@ -713,7 +705,7 @@ export function RunDetailPage() {
                   >
                     <div className="route-card-left">
                       <span className="route-name">{route.routeName}</span>
-                      <span className="route-type">{ENCOUNTER_TYPE_LABELS[route.encounterType] ?? route.encounterType}</span>
+                      <span className="route-type">{t(`route.type.${route.encounterType}`, route.encounterType)}</span>
                     </div>
                     <div className="route-card-right">
                       <span style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -742,7 +734,7 @@ export function RunDetailPage() {
                       {maxCatches > 1 && hasSlots ? (
                         <span style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                           {slots.map(s => {
-                            const c = OUTCOME_CONFIG[s.outcome] ?? OUTCOME_CONFIG['PENDING'];
+                            const cColor = OUTCOME_COLOR[s.outcome] ?? OUTCOME_COLOR['PENDING'];
                             return s.outcome === 'CAPTURED' ? (
                               <span
                                 key={s.id}
@@ -754,11 +746,11 @@ export function RunDetailPage() {
                             ) : (
                               <span
                                 key={s.id}
-                                style={{ fontSize: 10, color: c.color, border: `1px solid ${c.color}`,
+                                style={{ fontSize: 10, color: cColor, border: `1px solid ${cColor}`,
                                   borderRadius: 4, padding: '1px 4px', cursor: isOwner ? 'pointer' : 'default' }}
                                 onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
-                                {c.label}
+                                {t(`outcome.${s.outcome}`)}
                               </span>
                             );
                           })}
@@ -766,7 +758,7 @@ export function RunDetailPage() {
                       ) : (
                         displayOutcome === 'CAPTURED'
                           ? <Pokeball size={20} golden={lastSlot?.caughtPokemon?.shiny ?? false} />
-                          : <span className="outcome-tag" style={{ color: cfg.color }}>{cfg.label}</span>
+                          : <span className="outcome-tag" style={{ color: cfgColor }}>{t(`outcome.${displayOutcome}`)}</span>
                       )}
                     </div>
                   </button>
@@ -775,7 +767,7 @@ export function RunDetailPage() {
                     <button
                       className="btn btn-ghost"
                       style={{ padding: '0 10px', fontSize: 18, alignSelf: 'center', flexShrink: 0 }}
-                      title="Agregar otro encuentro"
+                      title={t('runDetail.addEncounter')}
                       onClick={() => setActiveEncounter({ route, slot: null })}
                     >
                       +

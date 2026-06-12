@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,15 +9,15 @@ import { PokemonSearch } from './PokemonSearch';
 import { runsApi } from '../api/runs';
 
 const OUTCOMES = [
-  { value: 'CAPTURED',          label: '✅ Capturado',         color: '#22c55e' },
-  { value: 'FAILED',            label: '❌ Fallido',           color: '#ef4444' },
-  { value: 'DIED_IN_ENCOUNTER', label: '💀 Murió capturando',  color: '#ef4444' },
-  { value: 'NOT_FOUND',         label: '🔍 No encontrado',     color: '#6b7280' },
-  { value: 'DEFERRED',          label: '⏳ Postergar',         color: '#f59e0b' },
+  { value: 'CAPTURED',          color: '#22c55e' },
+  { value: 'FAILED',            color: '#ef4444' },
+  { value: 'DIED_IN_ENCOUNTER', color: '#ef4444' },
+  { value: 'NOT_FOUND',         color: '#6b7280' },
+  { value: 'DEFERRED',          color: '#f59e0b' },
 ];
 
 const schema = z.object({
-  outcome:  z.string().min(1, 'Elegí un resultado'),
+  outcome:  z.string().min(1, 'encounter.chooseOutcome'),
   nickname: z.string().max(50).optional(),
   shiny:    z.boolean().optional(),
   notes:    z.string().max(500).optional(),
@@ -60,6 +61,7 @@ export function EncounterModal({
   nicknameRequired, firstEncounterOnly, speciesClauseEnabled,
   caughtChainIds, onClose, onSave, guestTeamMembers,
 }: Props) {
+  const { t } = useTranslation();
   const existingPokemon: PokemonSearchResponse | null = slot?.caughtPokemon ? {
     id:               slot.caughtPokemon.currentPokemonId,
     name:             slot.caughtPokemon.currentPokemonName,
@@ -142,7 +144,7 @@ export function EncounterModal({
       }
       onClose();
     } catch (err: unknown) {
-      let msg = 'Error al registrar el encuentro. Intenta de nuevo.';
+      let msg = t('encounter.error');
       if (err && typeof err === 'object' && 'response' in err) {
         const res = (err as { response?: { data?: { detail?: string; title?: string } } }).response;
         msg = res?.data?.detail ?? res?.data?.title ?? msg;
@@ -154,11 +156,11 @@ export function EncounterModal({
 
   async function onSubmit(data: FormData) {
     if (needsPokemon && !selectedPokemon) {
-      setSubmitError('Seleccioná un Pokémon');
+      setSubmitError(t('encounter.selectPokemon'));
       return;
     }
     if (needsPokemon && nicknameRequired && !data.nickname?.trim()) {
-      setSubmitError('Nickname obligatorio en esta run');
+      setSubmitError(t('encounter.nicknameRequired'));
       return;
     }
     setSubmitError('');
@@ -184,10 +186,10 @@ export function EncounterModal({
                 background: 'var(--accent-bg)', border: '1px solid var(--accent)',
                 borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13,
               }}>
-                ✏️ Editando registro existente
+                {t('encounter.editing')}
                 {firstEncounterOnly && (
                   <span style={{ color: 'var(--warning)', display: 'block', marginTop: 4 }}>
-                    ⚠️ Nuzlocke clásico: solo vale el primer encuentro
+                    {t('encounter.classicWarning')}
                   </span>
                 )}
               </div>
@@ -195,11 +197,11 @@ export function EncounterModal({
 
             {isForced ? (
               <p className="form-label" style={{ marginBottom: 8, color: '#22c55e' }}>
-                ✅ {route.encounterType === 'STARTER' ? 'Elegí tu Pokémon inicial' : 'Pokémon garantizado'}
+                {route.encounterType === 'STARTER' ? t('encounter.chooseStarter') : t('encounter.guaranteed')}
               </p>
             ) : (
               <div className="form-group">
-                <label className="form-label">Resultado *</label>
+                <label className="form-label">{t('encounter.outcomeLabel')}</label>
                 <div className="outcome-grid">
                   {OUTCOMES.map(o => (
                     <label key={o.value} style={{ display: 'contents' }}>
@@ -209,7 +211,7 @@ export function EncounterModal({
                         style={outcome === o.value ? { borderColor: o.color, color: o.color } : undefined}
                         onClick={() => setValue('outcome', o.value)}
                       >
-                        {o.label}
+                        {t(`encounter.outcome.${o.value}`)}
                       </span>
                     </label>
                   ))}
@@ -221,32 +223,32 @@ export function EncounterModal({
               <>
                 <div className="form-group">
                   <label className="form-label">
-                    {route.encounterType === 'STARTER' ? 'Pokémon inicial *' : 'Pokémon capturado *'}
+                    {route.encounterType === 'STARTER' ? t('encounter.starterLabel') : t('encounter.capturedLabel')}
                   </label>
                   <PokemonSearch onSelect={setSelectedPokemon} initialPokemon={existingPokemon} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Nickname (opcional)</label>
+                  <label className="form-label">{t('encounter.nickname')}</label>
                   <input
                     className="form-input"
                     {...register('nickname')}
-                    placeholder="Dejar vacío para usar el nombre"
+                    placeholder={t('encounter.nicknamePlaceholder')}
                   />
                 </div>
                 <div className="form-check">
                   <input type="checkbox" id="shiny" {...register('shiny')} />
-                  <label htmlFor="shiny">✨ Es shiny</label>
+                  <label htmlFor="shiny">{t('encounter.isShiny')}</label>
                 </div>
               </>
             )}
 
             <div className="form-group">
-              <label className="form-label">Notas (opcional)</label>
+              <label className="form-label">{t('encounter.notes')}</label>
               <textarea
                 className="form-input"
                 rows={2}
                 {...register('notes')}
-                placeholder="Ej: elegí Charmander"
+                placeholder={t('encounter.notesPlaceholder')}
               />
             </div>
 
@@ -255,7 +257,7 @@ export function EncounterModal({
                 background: 'rgba(245,158,11,.12)', border: '1px solid #f59e0b',
                 borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#f59e0b',
               }}>
-                ⚠️ Species Clause: ya tenés un Pokémon de la misma línea evolutiva en esta run.
+                {t('encounter.speciesConflict')}
               </div>
             )}
 
@@ -266,7 +268,7 @@ export function EncounterModal({
               className="btn btn-primary"
               disabled={isSubmitting || !outcome}
             >
-              {isSubmitting ? 'Guardando...' : isForced ? 'Confirmar' : 'Registrar'}
+              {isSubmitting ? t('btn.saving') : isForced ? t('btn.confirm') : t('encounter.record')}
             </button>
           </form>
         </div>
@@ -276,24 +278,24 @@ export function EncounterModal({
         <div className="modal-overlay" style={{ zIndex: 210 }} onClick={() => setPendingData(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">⚔️ Equipo lleno</h2>
+              <h2 className="modal-title">{t('encounter.teamFull')}</h2>
               <button type="button" className="modal-close" onClick={() => setPendingData(null)} aria-label="Cerrar">✕</button>
             </div>
             <div className="modal-body">
               <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>
-                Tu equipo tiene 6 Pokémon. ¿Qué hacemos con el nuevo?
+                {t('encounter.teamFullQuestion')}
               </p>
               <button
                 className="btn btn-ghost btn-full"
                 style={{ textAlign: 'left', marginBottom: 8 }}
                 onClick={() => doSubmit(pendingData!, 'box')}
               >
-                📦 Mandarlo directo al box
+                {t('encounter.sendToBox')}
               </button>
               {teamMembers.length > 0 && (
                 <>
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '12px 0 8px' }}>
-                    O elegí quién va al box para hacer lugar en el equipo:
+                    {t('encounter.orChooseSwap')}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {teamMembers.map(p => (
@@ -313,7 +315,7 @@ export function EncounterModal({
                       style={{ marginTop: 12 }}
                       onClick={() => doSubmit(pendingData!, memberToBox)}
                     >
-                      ✅ Confirmar — {memberToBox.nickname ?? memberToBox.currentPokemonName} va al box
+                      {t('encounter.confirmSwap', { name: memberToBox.nickname ?? memberToBox.currentPokemonName })}
                     </button>
                   )}
                 </>
