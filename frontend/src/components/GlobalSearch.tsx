@@ -6,12 +6,19 @@ import type { PokemonSearchResponse } from '../types/api';
 import { typeColor } from '../utils/pokemonTypes';
 import { useAuth } from '../hooks/useAuth';
 
+// Map from chainId (or pokemonId when chain is null) → best status
 interface Props {
-  caughtChainIds: Set<number>;
-  caughtPokemonIds: Set<number>;
+  caughtByChainId: Map<number, string>;
+  caughtByPokemonId: Map<number, string>;
 }
 
-export function GlobalSearch({ caughtChainIds, caughtPokemonIds }: Props) {
+const STATUS_CONFIG: Record<string, { emoji: string; label: string; bg: string; color: string }> = {
+  ACTIVE:  { emoji: '⚔️', label: 'En equipo',  bg: 'rgba(22,163,74,.12)',   color: '#16a34a' },
+  BOXED:   { emoji: '📦', label: 'En box',      bg: 'rgba(217,119,6,.12)',   color: '#d97706' },
+  FAINTED: { emoji: '💀', label: 'Muerto',      bg: 'rgba(220,38,38,.12)',   color: '#dc2626' },
+};
+
+export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -73,9 +80,13 @@ export function GlobalSearch({ caughtChainIds, caughtPokemonIds }: Props) {
     }
   }
 
-  function isCaught(p: PokemonSearchResponse): boolean {
-    if (p.chainId != null && caughtChainIds.has(p.chainId)) return true;
-    return caughtPokemonIds.has(p.id);
+  // Returns best status for this Pokémon (considers full evo chain via chainId)
+  function getCaughtStatus(p: PokemonSearchResponse): string | null {
+    if (p.chainId != null) {
+      const s = caughtByChainId.get(p.chainId);
+      if (s) return s;
+    }
+    return caughtByPokemonId.get(p.id) ?? null;
   }
 
   function goToProfile(username: string) {
@@ -93,7 +104,7 @@ export function GlobalSearch({ caughtChainIds, caughtPokemonIds }: Props) {
         <input
           className="global-search-input"
           value={query}
-          onChange={e => { setQuery(e.target.value); }}
+          onChange={e => setQuery(e.target.value)}
           onFocus={() => hasResults && setOpen(true)}
           placeholder="Buscar Pokémon o usuario..."
           autoComplete="off"
@@ -114,23 +125,32 @@ export function GlobalSearch({ caughtChainIds, caughtPokemonIds }: Props) {
           {pokemonResults.length > 0 && (
             <>
               <div className="search-section-label">Pokémon</div>
-              {pokemonResults.map(p => (
-                <div key={p.id} className="search-item search-item--pokemon">
-                  {p.spriteUrl
-                    ? <img src={p.spriteUrl} alt={p.name} className="search-sprite" />
-                    : <div className="search-sprite-placeholder" />
-                  }
-                  <span className="search-name">{p.name}</span>
-                  <div className="type-badges search-types">
-                    {p.types.map(t => (
-                      <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
-                    ))}
+              {pokemonResults.map(p => {
+                const status = getCaughtStatus(p);
+                const cfg = status ? STATUS_CONFIG[status] : null;
+                return (
+                  <div key={p.id} className="search-item search-item--pokemon">
+                    {p.spriteUrl
+                      ? <img src={p.spriteUrl} alt={p.name} className="search-sprite" />
+                      : <div className="search-sprite-placeholder" />
+                    }
+                    <span className="search-name">{p.name}</span>
+                    <div className="type-badges search-types">
+                      {p.types.map(t => (
+                        <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
+                      ))}
+                    </div>
+                    {cfg && (
+                      <span
+                        className="caught-badge"
+                        style={{ background: cfg.bg, color: cfg.color }}
+                      >
+                        {cfg.emoji} {cfg.label}
+                      </span>
+                    )}
                   </div>
-                  {isCaught(p) && (
-                    <span className="caught-badge">✓ Capturado</span>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </>
           )}
 

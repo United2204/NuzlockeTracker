@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { catalogApi } from '../api/catalog';
 import { socialApi } from '../api/social';
 import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
+import { GlobalSearch } from '../components/GlobalSearch';
 import { EncounterModal } from '../components/EncounterModal';
 import { RunSocialSection } from '../components/RunSocialSection';
 import { AuthContext } from '../contexts/AuthContext';
@@ -392,6 +393,39 @@ export function RunDetailPage() {
 
   const groups = groupByBadge(routes);
 
+  // Derived from already-loaded routes — no extra API calls
+  // Priority: ACTIVE > BOXED > FAINTED (keeps best status when same chain appears multiple times)
+  function bestStatus(current: string | undefined, incoming: string): string {
+    if (!current) return incoming;
+    const rank = { ACTIVE: 2, BOXED: 1, FAINTED: 0 };
+    return (rank[incoming as keyof typeof rank] ?? 0) > (rank[current as keyof typeof rank] ?? 0)
+      ? incoming : current;
+  }
+
+  const caughtByChainId = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const route of routes) {
+      for (const slot of route.slots) {
+        const p = slot.caughtPokemon;
+        if (p?.chainId != null) map.set(p.chainId, bestStatus(map.get(p.chainId), p.status));
+      }
+    }
+    return map;
+  }, [routes]);
+
+  const caughtByPokemonId = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const route of routes) {
+      for (const slot of route.slots) {
+        const p = slot.caughtPokemon;
+        if (p != null && p.chainId == null) {
+          map.set(p.originalPokemonId, bestStatus(map.get(p.originalPokemonId), p.status));
+        }
+      }
+    }
+    return map;
+  }, [routes]);
+
   const confirmModal = confirmAction ? createPortal(
     <div className="modal-overlay" onClick={() => setConfirmAction(null)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -507,6 +541,8 @@ export function RunDetailPage() {
       {run && <RunActions run={run} />}
 
       <div className="page-content">
+        <GlobalSearch caughtByChainId={caughtByChainId} caughtByPokemonId={caughtByPokemonId} />
+
         {isLoading && <div className="spinner" style={{ margin: '48px auto' }} />}
 
         {!isLoading && routes.length === 0 && (

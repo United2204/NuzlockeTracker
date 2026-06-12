@@ -60,14 +60,28 @@ export function RunsPage() {
     staleTime: 30_000,
   });
 
-  const caughtChainIds = useMemo(
-    () => new Set(allCaught.map(p => p.chainId).filter(Boolean) as number[]),
-    [allCaught],
-  );
-  const caughtPokemonIds = useMemo(
-    () => new Set(allCaught.map(p => p.originalPokemonId)),
-    [allCaught],
-  );
+  function bestStatus(current: string | undefined, incoming: string): string {
+    if (!current) return incoming;
+    const rank = { ACTIVE: 2, BOXED: 1, FAINTED: 0 };
+    return (rank[incoming as keyof typeof rank] ?? 0) > (rank[current as keyof typeof rank] ?? 0)
+      ? incoming : current;
+  }
+
+  const caughtByChainId = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of allCaught) {
+      if (p.chainId != null) map.set(p.chainId, bestStatus(map.get(p.chainId), p.status));
+    }
+    return map;
+  }, [allCaught]);
+
+  const caughtByPokemonId = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of allCaught) {
+      if (p.chainId == null) map.set(p.originalPokemonId, bestStatus(map.get(p.originalPokemonId), p.status));
+    }
+    return map;
+  }, [allCaught]);
 
   const archiveMut = useMutation({
     mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
@@ -136,17 +150,14 @@ export function RunsPage() {
             <span>⚔️ {run.activePokemon} activos</span>
             <span>💀 {run.faintedPokemon} muertos</span>
           </div>
-          {isActive && (
-            <div className="active-run-chip">📍 Run activa para búsqueda</div>
-          )}
         </Link>
         <div className="run-card-actions">
           <button
             className={`btn run-pin-btn${isActive ? ' run-pin-btn--active' : ''}`}
             onClick={() => toggleActiveRun(run.id)}
-            title={isActive ? 'Desactivar como run activa' : 'Definir como run activa para búsqueda'}
+            title={isActive ? 'Quitar del buscador' : 'Usar en el buscador'}
           >
-            📍{isActive ? ' Activa' : ''}
+            📍{isActive ? ' En búsqueda' : ''}
           </button>
           {showArchiveLabel ? (
             <button
@@ -180,7 +191,7 @@ export function RunsPage() {
       ) : undefined}
     >
       <div className="page-content">
-        <GlobalSearch caughtChainIds={caughtChainIds} caughtPokemonIds={caughtPokemonIds} />
+        <GlobalSearch caughtByChainId={caughtByChainId} caughtByPokemonId={caughtByPokemonId} />
 
         <div className="page-header">
           <h2>Mis Runs</h2>

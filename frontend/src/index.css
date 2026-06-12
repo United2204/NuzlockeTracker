@@ -1557,13 +1557,6 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   box-shadow: 0 0 0 3px var(--accent-bg), var(--shadow-sm) !important;
 }
 
-.active-run-chip {
-  margin-top: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.02em;
-}
 
 .run-card-actions {
   position: absolute;
