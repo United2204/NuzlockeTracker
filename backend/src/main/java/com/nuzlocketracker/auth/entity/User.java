@@ -38,6 +38,9 @@ public class User {
     @Column(name = "is_verified", nullable = false)
     private boolean verified = false;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Column(name = "last_username_changed_at")
     private OffsetDateTime lastUsernameChangedAt;
 

@@ -75,20 +75,164 @@ const VISIBILITY_LABELS: Record<string, string> = {
   PRIVATE: '🔒 Privada',
 };
 
+type RuleKey =
+  | 'FIRST_ENCOUNTER_ONLY' | 'PERMADEATH' | 'NICKNAME_REQUIRED'
+  | 'SPECIES_CLAUSE' | 'DUPLICATE_CLAUSE' | 'ITEM_CLAUSE'
+  | 'REGIONAL_VARIANT_CLAUSE' | 'LEVEL_CAP' | 'MAX_CATCHES_PER_ROUTE';
+
+const RULE_DEFS: { key: RuleKey; label: string; desc: string; hasValue?: 'levelCap' | 'maxCatches' }[] = [
+  { key: 'FIRST_ENCOUNTER_ONLY',    label: 'Solo primer encuentro',      desc: 'Una captura por ruta' },
+  { key: 'PERMADEATH',              label: 'Permadeath',                 desc: 'Si muere, va al cementerio' },
+  { key: 'SPECIES_CLAUSE',          label: 'Species clause',             desc: 'No repetir línea evolutiva' },
+  { key: 'DUPLICATE_CLAUSE',        label: 'Duplicate clause',           desc: 'No repetir Pokémon exacto' },
+  { key: 'ITEM_CLAUSE',             label: 'Sin ítems en combate',       desc: 'No usar Pociones/X-items en batalla' },
+  { key: 'REGIONAL_VARIANT_CLAUSE', label: 'Variantes regionales = dup', desc: 'Raichu-Kanto y Raichu-Alola cuentan como mismo' },
+  { key: 'LEVEL_CAP',               label: 'Level cap',                  desc: 'Límite de nivel por el siguiente gym', hasValue: 'levelCap' },
+  { key: 'MAX_CATCHES_PER_ROUTE',   label: 'Máx. capturas por ruta',     desc: 'Límite de intentos por zona', hasValue: 'maxCatches' },
+  { key: 'NICKNAME_REQUIRED',       label: 'Nickname obligatorio',       desc: 'Recordar asignar apodo (solo aviso)' },
+];
+
+function RulesModal({ run, onClose }: { run: RunDetailResponse; onClose: () => void }) {
+  const qc = useQueryClient();
+  type RulesState = Record<RuleKey, { enabled: boolean; value: string }>;
+
+  const [rules, setRules] = useState<RulesState>(() => {
+    const state = {} as RulesState;
+    for (const def of RULE_DEFS) {
+      const existing = run.rules?.find(r => r.ruleType === def.key);
+      let value = '';
+      if (existing?.value) {
+        try {
+          const parsed = JSON.parse(existing.value);
+          value = String(parsed.modifierPercent ?? parsed.max ?? '');
+        } catch { value = ''; }
+      }
+      state[def.key] = { enabled: existing?.enabled ?? false, value };
+    }
+    return state;
+  });
+
+  const mut = useMutation({
+    mutationFn: () => {
+      const payload = (Object.entries(rules) as [RuleKey, { enabled: boolean; value: string }][])
+        .map(([ruleType, r]) => {
+          let value: string | null = null;
+          if (ruleType === 'LEVEL_CAP' && r.enabled && r.value !== '')
+            value = `{"modifierPercent":${parseInt(r.value, 10) || 0}}`;
+          if (ruleType === 'MAX_CATCHES_PER_ROUTE' && r.enabled && r.value !== '')
+            value = `{"max":${parseInt(r.value, 10) || 1}}`;
+          return { ruleType, enabled: r.enabled, value };
+        });
+      return runsApi.updateRules(run.id, payload);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', run.id] });
+      onClose();
+    },
+  });
+
+  function toggleRule(key: RuleKey) {
+    setRules(prev => ({ ...prev, [key]: { ...prev[key], enabled: !prev[key].enabled } }));
+  }
+
+  function setRuleValue(key: RuleKey, value: string) {
+    setRules(prev => ({ ...prev, [key]: { ...prev[key], value } }));
+  }
+
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div className="modal-header">
+          <h2 className="modal-title">Reglas de la run</h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        </div>
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {RULE_DEFS.map(def => (
+            <div
+              key={def.key}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', borderRadius: 8,
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => toggleRule(def.key)}
+                style={{
+                  flexShrink: 0, width: 36, height: 20, borderRadius: 10,
+                  border: 'none', cursor: 'pointer',
+                  background: rules[def.key].enabled ? 'var(--accent)' : 'var(--border)',
+                  position: 'relative', transition: 'background 0.2s',
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: 2,
+                  left: rules[def.key].enabled ? 18 : 2,
+                  width: 16, height: 16, borderRadius: '50%',
+                  background: '#fff', transition: 'left 0.2s',
+                }} />
+              </button>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{def.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{def.desc}</div>
+              </div>
+              {def.hasValue === 'levelCap' && rules[def.key].enabled && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <input
+                    type="number" min={-20} max={50}
+                    value={rules[def.key].value}
+                    onChange={e => setRuleValue(def.key, e.target.value)}
+                    style={{ width: 52, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: 13 }}
+                    placeholder="0"
+                  />
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>%</span>
+                </div>
+              )}
+              {def.hasValue === 'maxCatches' && rules[def.key].enabled && (
+                <input
+                  type="number" min={1} max={10}
+                  value={rules[def.key].value}
+                  onChange={e => setRuleValue(def.key, e.target.value)}
+                  style={{ width: 52, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: 13, flexShrink: 0 }}
+                  placeholder="1"
+                />
+              )}
+            </div>
+          ))}
+          <button
+            className="btn btn-primary btn-full"
+            style={{ marginTop: 8 }}
+            onClick={() => mut.mutate()}
+            disabled={mut.isPending}
+          >
+            {mut.isPending ? 'Guardando...' : 'Guardar reglas'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function RunMenu({
   runId,
   runStatus,
   runVisibility,
   onConfirm,
   onVisibilityModal,
+  onRulesModal,
   isGuest,
+  isOwner,
 }: {
   runId: string;
   runStatus: string;
   runVisibility: string;
   onConfirm: (action: 'COMPLETED' | 'ABANDONED') => void;
   onVisibilityModal: () => void;
+  onRulesModal: () => void;
   isGuest: boolean;
+  isOwner: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -129,16 +273,25 @@ function RunMenu({
             >
               📊 Estadísticas
             </button>
-            {!isGuest && (
-              <button
-                className="btn btn-ghost btn-full"
-                style={{ textAlign: 'left' }}
-                onClick={() => { setOpen(false); onVisibilityModal(); }}
-              >
-                {VISIBILITY_LABELS[runVisibility] ?? '🌐 Visibilidad'}
-              </button>
+            {!isGuest && isOwner && (
+              <>
+                <button
+                  className="btn btn-ghost btn-full"
+                  style={{ textAlign: 'left' }}
+                  onClick={() => { setOpen(false); onRulesModal(); }}
+                >
+                  📋 Reglas
+                </button>
+                <button
+                  className="btn btn-ghost btn-full"
+                  style={{ textAlign: 'left' }}
+                  onClick={() => { setOpen(false); onVisibilityModal(); }}
+                >
+                  {VISIBILITY_LABELS[runVisibility] ?? '🌐 Visibilidad'}
+                </button>
+              </>
             )}
-            {runStatus === 'ACTIVE' && (
+            {isOwner && runStatus === 'ACTIVE' && (
               <>
                 <button
                   className="btn btn-ghost btn-full"
@@ -283,6 +436,7 @@ export function RunDetailPage() {
   const [badgeModal, setBadgeModal]   = useState(false);
   const [confirmAction, setConfirmAction] = useState<'COMPLETED' | 'ABANDONED' | null>(null);
   const [visModal, setVisModal] = useState(false);
+  const [rulesModal, setRulesModal] = useState(false);
 
   // ── API queries (logged-in) ────────────────────────────────────────────────
   const apiRunQ = useQuery({
@@ -327,6 +481,7 @@ export function RunDetailPage() {
   const isLoading = isGuest
     ? guestRunQ.isLoading || guestCatalogRoutesQ.isLoading || guestRoutesQ.isLoading
     : apiRoutesQ.isLoading;
+  const isOwner = isGuest ? true : (user?.id === run?.userId);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const statusMut = useMutation({
@@ -496,7 +651,7 @@ export function RunDetailPage() {
   return (
     <Layout
       title={run?.name ?? 'Run'}
-      back="/runs"
+      back={isOwner ? '/runs' : -1}
       runId={runId}
       action={run && runId ? (
         <RunMenu
@@ -505,7 +660,9 @@ export function RunDetailPage() {
           runVisibility={run.visibility}
           onConfirm={setConfirmAction}
           onVisibilityModal={() => setVisModal(true)}
+          onRulesModal={() => setRulesModal(true)}
           isGuest={isGuest}
+          isOwner={isOwner}
         />
       ) : undefined}
     >
@@ -543,15 +700,16 @@ export function RunDetailPage() {
               const allTerminal = hasSlots && slots.every(s =>
                 ['CAPTURED','FAILED','DIED_IN_ENCOUNTER','NOT_FOUND'].includes(s.outcome)
               );
-              const canAddSlot = run?.status === 'ACTIVE' && route.encounterType === 'RANDOM'
+              const canAddSlot = isOwner && run?.status === 'ACTIVE' && route.encounterType === 'RANDOM'
                 && maxCatches > 1 && slots.length < maxCatches && allTerminal;
 
               return (
                 <div key={route.routeId} style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
                   <button
                     className="route-card"
-                    style={{ flex: 1 }}
-                    onClick={() => setActiveEncounter({ route, slot: lastSlot })}
+                    style={{ flex: 1, cursor: isOwner ? 'pointer' : 'default' }}
+                    onClick={() => isOwner && setActiveEncounter({ route, slot: lastSlot })}
+                    disabled={!isOwner}
                   >
                     <div className="route-card-left">
                       <span className="route-name">{route.routeName}</span>
@@ -588,8 +746,8 @@ export function RunDetailPage() {
                             return s.outcome === 'CAPTURED' ? (
                               <span
                                 key={s.id}
-                                style={{ cursor: 'pointer', lineHeight: 0 }}
-                                onClick={e => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
+                                style={{ cursor: isOwner ? 'pointer' : 'default', lineHeight: 0 }}
+                                onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
                                 <Pokeball size={16} golden={s.caughtPokemon?.shiny ?? false} />
                               </span>
@@ -597,8 +755,8 @@ export function RunDetailPage() {
                               <span
                                 key={s.id}
                                 style={{ fontSize: 10, color: c.color, border: `1px solid ${c.color}`,
-                                  borderRadius: 4, padding: '1px 4px', cursor: 'pointer' }}
-                                onClick={e => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
+                                  borderRadius: 4, padding: '1px 4px', cursor: isOwner ? 'pointer' : 'default' }}
+                                onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
                                 {c.label}
                               </span>
@@ -663,6 +821,9 @@ export function RunDetailPage() {
 
       {confirmModal}
       {visibilityModal}
+      {rulesModal && run && isOwner && (
+        <RulesModal run={run} onClose={() => setRulesModal(false)} />
+      )}
     </Layout>
   );
 }

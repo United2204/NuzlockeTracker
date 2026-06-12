@@ -9,9 +9,11 @@ export interface MeResponse {
   id: string;
   email: string;
   username: string;
+  avatarUrl: string | null;
   role: string;
   emailVerified: boolean;
   verified: boolean;
+  lastUsernameChangedAt: string | null;
   createdAt: string;
 }
 

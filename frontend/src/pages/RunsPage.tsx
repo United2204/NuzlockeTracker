@@ -2,19 +2,13 @@ import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { runsApi } from '../api/runs';
 import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/Toast';
-
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE:    '▶ Activa',
-  COMPLETED: '★ Completada',
-  GAME_OVER: '✕ Game Over',
-  ABANDONED: '— Abandonada',
-};
 
 const STATUS_COLOR: Record<string, string> = {
   ACTIVE:    '#22c55e',
@@ -29,11 +23,6 @@ const VISIBILITY_ICON: Record<string, string> = {
   PRIVATE:        '🔒',
 };
 
-const VISIBILITY_LABEL: Record<string, string> = {
-  PUBLIC:         '🌐 Pública',
-  FOLLOWERS_ONLY: '👥 Solo seguidores',
-  PRIVATE:        '🔒 Privada',
-};
 
 const ACTIVE_RUN_KEY = 'nuzlocke_active_run_id';
 
@@ -41,6 +30,7 @@ export function RunsPage() {
   const { user, logout } = useAuth();
   const qc = useQueryClient();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [showArchived, setShowArchived] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_RUN_KEY),
@@ -169,15 +159,15 @@ export function RunsPage() {
               className="status-badge"
               style={{ background: STATUS_COLOR[run.status] ?? '#888' }}
             >
-              {STATUS_LABEL[run.status] ?? run.status}
+              {t(`run.status.${run.status}`, run.status)}
             </span>
           </div>
           <div className="run-card-stats">
-            <span>⚔️ {run.activePokemon} activos</span>
-            <span>💀 {run.faintedPokemon} muertos</span>
+            <span>⚔️ {run.activePokemon} {t('run.active')}</span>
+            <span>💀 {run.faintedPokemon} {t('run.fainted')}</span>
             {run.visibility && (
               <span
-                title={VISIBILITY_LABEL[run.visibility] ?? run.visibility}
+                title={t(`run.visibility.${run.visibility}`, run.visibility)}
                 style={{ marginLeft: 'auto', fontSize: 14 }}
               >
                 {VISIBILITY_ICON[run.visibility] ?? '🌐'}
@@ -189,15 +179,13 @@ export function RunsPage() {
           <button
             className={`btn run-pin-btn${isActive ? ' run-pin-btn--active' : ''}`}
             onClick={() => toggleActiveRun(run.id)}
-            title={isActive ? 'Quitar del buscador' : 'Usar en el buscador'}
           >
-            📍{isActive ? ' En búsqueda' : ''}
+            📍{isActive ? ` ${t('run.newRun').slice(2) ?? 'En búsqueda'}` : ''}
           </button>
           {user && (
             <button
               className="btn btn-ghost run-archive-btn"
               onClick={() => setVisEditId(run.id)}
-              title="Cambiar visibilidad"
             >
               {VISIBILITY_ICON[run.visibility ?? 'PUBLIC']}
             </button>
@@ -207,18 +195,16 @@ export function RunsPage() {
               className="btn btn-ghost run-archive-btn"
               onClick={() => archiveMut.mutate({ id: run.id, archived: true })}
               disabled={archiveMut.isPending}
-              title="Archivar run"
             >
-              📦 Archivar
+              {t('run.archive')}
             </button>
           ) : (
             <button
               className="btn btn-ghost run-archive-btn"
               onClick={() => archiveMut.mutate({ id: run.id, archived: false })}
               disabled={archiveMut.isPending}
-              title="Desarchivar run"
             >
-              ↩ Desarchivar
+              {t('run.unarchive')}
             </button>
           )}
         </div>
@@ -238,8 +224,8 @@ export function RunsPage() {
         <GlobalSearch caughtByChainId={caughtByChainId} caughtByPokemonId={caughtByPokemonId} />
 
         <div className="page-header">
-          <h2>Mis Runs</h2>
-          <Link to="/runs/new" className="btn btn-primary">+ Nueva</Link>
+          <h2>{t('run.myRuns')}</h2>
+          <Link to="/runs/new" className="btn btn-primary">{t('run.newRun')}</Link>
         </div>
 
         {!user && (
@@ -260,8 +246,8 @@ export function RunsPage() {
 
         {!isLoading && data.length === 0 && (
           <div className="empty-state">
-            <p>Todavía no tenés runs.</p>
-            <Link to="/runs/new" className="btn btn-primary">Crear tu primera run</Link>
+            <p>{t('run.noRuns')}</p>
+            <Link to="/runs/new" className="btn btn-primary">{t('run.createFirst')}</Link>
           </div>
         )}
 
@@ -276,7 +262,7 @@ export function RunsPage() {
               style={{ color: 'var(--text-muted)', fontSize: 13 }}
               onClick={() => setShowArchived(v => !v)}
             >
-              {showArchived ? '▲' : '▼'} Archivadas ({archived.length})
+              {showArchived ? '▲' : '▼'} {t('run.archived')} ({archived.length})
             </button>
 
             {showArchived && (

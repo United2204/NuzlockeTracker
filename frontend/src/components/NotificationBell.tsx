@@ -1,29 +1,50 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { socialApi, type Notification } from '../api/social';
 
-const TYPE_LABELS: Record<string, string> = {
-  POKEMON_CAPTURED: 'capturó un Pokémon',
-  POKEMON_FAINTED:  'un Pokémon cayó',
-  BADGE_OBTAINED:   'obtuvo una medalla',
-  RUN_ENDED:        'terminó una run',
-  NEW_FOLLOWER:     'te empezó a seguir',
-  NEW_COMMENT:      'comentó en tu run',
-  NEW_REACTION:     'reaccionó a tu run',
-};
+function notifText(n: Notification): string {
+  if (n.type === 'NEW_FOLLOWER') return 'te empezó a seguir';
+  if (n.type === 'POKEMON_CAPTURED') return 'capturó un Pokémon';
+  if (n.type === 'POKEMON_FAINTED') return 'un Pokémon cayó';
+  if (n.type === 'BADGE_OBTAINED') return 'obtuvo una medalla';
+  if (n.type === 'RUN_ENDED') return 'terminó una run';
+  if (n.type === 'NEW_COMMENT') return 'comentó en tu run';
+  if (n.type === 'NEW_REACTION') return 'reaccionó a tu run';
+  return n.type;
+}
 
 function NotificationItem({ n, onRead }: { n: Notification; onRead: (id: number) => void }) {
-  return (
+  const isFollower = n.type === 'NEW_FOLLOWER' && n.actorUsername;
+
+  const content = (
     <div
       className={`notif-item ${n.read ? '' : 'notif-item--unread'}`}
       onClick={() => !n.read && onRead(n.id)}
     >
-      <span className="notif-text">{TYPE_LABELS[n.type] ?? n.type}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {isFollower ? (
+          <span className="notif-text">
+            <strong>@{n.actorUsername}</strong> {notifText(n)}
+          </span>
+        ) : (
+          <span className="notif-text">{notifText(n)}</span>
+        )}
+      </div>
       <span className="notif-date">
         {new Date(n.createdAt).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
       </span>
     </div>
   );
+
+  if (isFollower) {
+    return (
+      <Link to={`/u/${n.actorUsername}`} style={{ textDecoration: 'none', display: 'block' }}>
+        {content}
+      </Link>
+    );
+  }
+  return content;
 }
 
 export function NotificationBell() {

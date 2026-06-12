@@ -1,5 +1,88 @@
 {
-  "app": {
-    "name": "NuzlockeTracker"
+  "app": { "name": "NuzlockeTracker" },
+  "nav": {
+    "runs": "Runs",
+    "feed": "Feed",
+    "profile": "Profile",
+    "login": "Sign in"
+  },
+  "run": {
+    "status": {
+      "ACTIVE": "▶ Active",
+      "COMPLETED": "★ Completed",
+      "GAME_OVER": "✕ Game Over",
+      "ABANDONED": "— Abandoned"
+    },
+    "visibility": {
+      "PUBLIC": "🌐 Public",
+      "FOLLOWERS_ONLY": "👥 Followers only",
+      "PRIVATE": "🔒 Private"
+    },
+    "active": "active",
+    "fainted": "fainted",
+    "boxed": "boxed",
+    "newRun": "+ New",
+    "myRuns": "My Runs",
+    "createFirst": "Create your first run",
+    "noRuns": "You don't have any runs yet.",
+    "archived": "Archived",
+    "archive": "📦 Archive",
+    "unarchive": "↩ Unarchive",
+    "favorite": "Favorite",
+    "complete": "✅ Complete run",
+    "abandon": "🏳️ Abandon run",
+    "rules": "📋 Rules",
+    "stats": "📊 Stats"
+  },
+  "outcome": {
+    "PENDING": "Pending",
+    "DEFERRED": "Deferred",
+    "CAPTURED": "Captured",
+    "FAILED": "Failed",
+    "DIED_IN_ENCOUNTER": "Died",
+    "NOT_FOUND": "Not found"
+  },
+  "btn": {
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "✓ Saved",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "block": "Block",
+    "unblock": "Unblock",
+    "register": "Sign up"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "username": "Username",
+    "usernameCooldown": "You can change your username in {{days}} days.",
+    "avatarUrl": "Profile picture URL",
+    "saveProfile": "Save profile",
+    "language": "Language",
+    "languageDesc": "Empty = use browser language.",
+    "auto": "Auto",
+    "privacy": "Privacy",
+    "allowFollowers": "Allow followers",
+    "allowFollowersDesc": "If disabled, no one new can follow you."
+  },
+  "profile": {
+    "followers": "followers",
+    "following": "following",
+    "noRuns": "No public runs yet."
+  },
+  "route": {
+    "noRoutes": "This game has no routes loaded yet.",
+    "type": {
+      "RANDOM": "Random",
+      "STATIC": "Static",
+      "GIFT": "Gift",
+      "STARTER": "Starter",
+      "FOSSIL": "Fossil",
+      "LEGENDARY": "Legendary",
+      "TRADE": "Trade"
+    }
   }
 }

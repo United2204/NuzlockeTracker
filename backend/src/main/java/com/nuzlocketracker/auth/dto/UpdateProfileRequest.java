@@ -6,5 +6,8 @@ import jakarta.validation.constraints.Size;
 public record UpdateProfileRequest(
         @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
         @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username may only contain letters, digits, and underscores")
-        String username
+        String username,
+
+        @Size(max = 500, message = "Avatar URL too long")
+        String avatarUrl
 ) {}

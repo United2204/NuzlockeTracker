@@ -15,6 +15,7 @@ import com.nuzlocketracker.common.exception.ResourceNotFoundException;
 import com.nuzlocketracker.run.dto.*;
 import com.nuzlocketracker.run.entity.*;
 import com.nuzlocketracker.run.repository.*;
+import com.nuzlocketracker.social.repository.UserFollowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class RunService {
     private final PokemonRepository pokemonRepository;
     private final PokemonNameRepository pokemonNameRepository;
     private final BadgeRepository badgeRepository;
+    private final UserFollowRepository userFollowRepository;
 
     // ─── Runs ──────────────────────────────────────────────────────────────────
 
@@ -86,7 +88,7 @@ public class RunService {
 
     @Transactional(readOnly = true)
     public RunDetailResponse getRun(UUID userId, UUID runId) {
-        Run run = requireOwnedRun(userId, runId);
+        Run run = requireReadableRun(userId, runId);
         return buildDetail(run);
     }
 
@@ -129,11 +131,35 @@ public class RunService {
         runRepository.save(run);
     }
 
+    public List<RunRuleResponse> updateRules(UUID userId, UUID runId, UpdateRulesRequest req) {
+        requireOwnedRun(userId, runId);
+        List<RunRule> existing = runRuleRepository.findAllByRunId(runId);
+        Map<RunRule.RuleType, RunRule> byType = existing.stream()
+                .collect(Collectors.toMap(RunRule::getRuleType, r -> r));
+
+        for (UpdateRulesRequest.RuleOverride ov : req.rules()) {
+            try {
+                RunRule.RuleType type = RunRule.RuleType.valueOf(ov.ruleType());
+                RunRule rule = byType.computeIfAbsent(type, t -> {
+                    RunRule r = new RunRule();
+                    r.setRun(runRepository.getReferenceById(runId));
+                    r.setRuleType(t);
+                    return r;
+                });
+                rule.setEnabled(ov.enabled());
+                rule.setValue(ov.value());
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        runRuleRepository.saveAll(byType.values());
+        return byType.values().stream().map(RunRuleResponse::from).toList();
+    }
+
     // ─── Rutas y encuentros ────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<RouteWithEncounterResponse> getRoutes(UUID userId, UUID runId) {
-        Run run = requireOwnedRun(userId, runId);
+        Run run = requireReadableRun(userId, runId);
         List<Route> routes = routeRepository.findByGameIdOrderByDisplayOrder(run.getGame().getId());
 
         Map<Long, List<RouteEncounter>> encountersByRouteId = routeEncounterRepository
@@ -429,6 +455,21 @@ public class RunService {
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    private Run requireReadableRun(UUID viewerId, UUID runId) {
+        Run run = runRepository.findByIdAndDeletedAtIsNull(runId)
+                .orElseThrow(() -> new ResourceNotFoundException("Run", runId));
+        if (run.getUser().getId().equals(viewerId)) return run;
+        return switch (run.getVisibility()) {
+            case PUBLIC -> run;
+            case FOLLOWERS_ONLY -> {
+                if (userFollowRepository.existsByFollowerIdAndFollowedId(viewerId, run.getUser().getId()))
+                    yield run;
+                throw new ResourceNotFoundException("Run", runId);
+            }
+            case PRIVATE -> throw new ResourceNotFoundException("Run", runId);
+        };
+    }
 
     private Run requireOwnedRun(UUID userId, UUID runId) {
         Run run = runRepository.findByIdAndDeletedAtIsNull(runId)

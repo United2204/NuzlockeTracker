@@ -73,6 +73,9 @@ export const runsApi = {
   devolve: (runId: string, pokemonId: string) =>
     client.patch<CaughtPokemonResponse>(`/api/runs/${runId}/pokemon/${pokemonId}/devolve`, {}),
 
+  updateRules: (runId: string, rules: { ruleType: string; enabled: boolean; value: string | null }[]) =>
+    client.patch(`/api/runs/${runId}/rules`, { rules }),
+
   badges: (runId: string) =>
     client.get<RunBadgeResponse[]>(`/api/runs/${runId}/badges`),
 

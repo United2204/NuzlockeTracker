@@ -316,6 +316,7 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 
 /* ─── Auth Page ──────────────────────────────────────────────────── */
 .auth-page {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;

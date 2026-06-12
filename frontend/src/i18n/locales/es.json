@@ -1,5 +1,88 @@
 {
-  "app": {
-    "name": "NuzlockeTracker"
+  "app": { "name": "NuzlockeTracker" },
+  "nav": {
+    "runs": "Runs",
+    "feed": "Feed",
+    "profile": "Perfil",
+    "login": "Ingresar"
+  },
+  "run": {
+    "status": {
+      "ACTIVE": "▶ Activa",
+      "COMPLETED": "★ Completada",
+      "GAME_OVER": "✕ Game Over",
+      "ABANDONED": "— Abandonada"
+    },
+    "visibility": {
+      "PUBLIC": "🌐 Pública",
+      "FOLLOWERS_ONLY": "👥 Solo seguidores",
+      "PRIVATE": "🔒 Privada"
+    },
+    "active": "activos",
+    "fainted": "muertos",
+    "boxed": "en caja",
+    "newRun": "+ Nueva",
+    "myRuns": "Mis Runs",
+    "createFirst": "Crear tu primera run",
+    "noRuns": "Todavía no tenés runs.",
+    "archived": "Archivadas",
+    "archive": "📦 Archivar",
+    "unarchive": "↩ Desarchivar",
+    "favorite": "Favorita",
+    "complete": "✅ Completar run",
+    "abandon": "🏳️ Abandonar run",
+    "rules": "📋 Reglas",
+    "stats": "📊 Estadísticas"
+  },
+  "outcome": {
+    "PENDING": "Pendiente",
+    "DEFERRED": "Postergado",
+    "CAPTURED": "Capturado",
+    "FAILED": "Fallido",
+    "DIED_IN_ENCOUNTER": "Murió",
+    "NOT_FOUND": "No encontrado"
+  },
+  "btn": {
+    "save": "Guardar cambios",
+    "saving": "Guardando...",
+    "saved": "✓ Guardado",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "follow": "Seguir",
+    "unfollow": "Dejar de seguir",
+    "block": "Bloquear",
+    "unblock": "Desbloquear",
+    "register": "Registrarse"
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Perfil",
+    "username": "Nombre de usuario",
+    "usernameCooldown": "Podés cambiar tu nombre de usuario en {{days}} días.",
+    "avatarUrl": "URL de foto de perfil",
+    "saveProfile": "Guardar perfil",
+    "language": "Idioma",
+    "languageDesc": "Vacío = usar el idioma del navegador.",
+    "auto": "Auto",
+    "privacy": "Privacidad",
+    "allowFollowers": "Permitir seguidores",
+    "allowFollowersDesc": "Si está desactivado, nadie nuevo podrá seguirte."
+  },
+  "profile": {
+    "followers": "seguidores",
+    "following": "siguiendo",
+    "noRuns": "No hay runs públicas todavía."
+  },
+  "route": {
+    "noRoutes": "Este juego no tiene rutas cargadas aún.",
+    "type": {
+      "RANDOM": "Aleatorio",
+      "STATIC": "Estático",
+      "GIFT": "Regalo",
+      "STARTER": "Inicial",
+      "FOSSIL": "Fósil",
+      "LEGENDARY": "Legendario",
+      "TRADE": "Intercambio"
+    }
   }
 }

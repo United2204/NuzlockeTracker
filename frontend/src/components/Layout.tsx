@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -7,22 +8,26 @@ import { useTheme } from '../hooks/useTheme';
 interface LayoutProps {
   children: ReactNode;
   title?: string;
-  back?: string;
+  back?: string | number;
   action?: ReactNode;
   runId?: string;
 }
 
 export function Layout({ children, title, back, action, runId }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <div className="app-shell">
       <header className="app-header">
         <div className="header-left">
           {back ? (
-            <Link to={back} className="back-btn" aria-label="Volver">←</Link>
+            typeof back === 'number'
+              ? <button className="back-btn" aria-label="Volver" onClick={() => navigate(back)}>←</button>
+              : <Link to={back} className="back-btn" aria-label="Volver">←</Link>
           ) : (
             <span className="app-logo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -46,7 +51,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
             <NotificationBell />
           ) : (
             <Link to="/register" className="btn btn-ghost" style={{ fontSize: 13 }}>
-              Registrarse
+              {t('btn.register')}
             </Link>
           )}
         </div>
@@ -102,8 +107,13 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
                 to="/profile"
                 className={`nav-tab ${location.pathname === '/profile' ? 'active' : ''}`}
               >
-                <span>👤</span>
-                <span>Perfil</span>
+                <span>
+                  {user?.avatarUrl
+                    ? <img src={user.avatarUrl} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', verticalAlign: 'middle' }} />
+                    : '👤'
+                  }
+                </span>
+                <span>{t('nav.profile')}</span>
               </Link>
             </>
           ) : (
@@ -112,7 +122,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
               className={`nav-tab ${location.pathname === '/login' ? 'active' : ''}`}
             >
               <span>👤</span>
-              <span>Ingresar</span>
+              <span>{t('nav.login')}</span>
             </Link>
           )}
         </nav>

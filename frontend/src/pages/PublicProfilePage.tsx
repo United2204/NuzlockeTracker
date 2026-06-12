@@ -71,7 +71,12 @@ export function PublicProfilePage() {
         {data && (
           <>
             <div className="profile-header">
-              <div className="profile-avatar">{data.username.charAt(0).toUpperCase()}</div>
+              <div className="profile-avatar">
+                {data.avatarUrl
+                  ? <img src={data.avatarUrl} alt={data.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  : data.username.charAt(0).toUpperCase()
+                }
+              </div>
               <div>
                 <p className="profile-username">
                   {data.username}

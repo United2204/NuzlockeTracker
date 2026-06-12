@@ -46,6 +46,7 @@ export interface Notification {
   id: number;
   type: string;
   referenceId: number;
+  actorUsername: string | null;
   read: boolean;
   createdAt: string;
 }
@@ -53,6 +54,7 @@ export interface Notification {
 export interface PublicProfile {
   userId: string;
   username: string;
+  avatarUrl: string | null;
   isVerified: boolean;
   followerCount: number;
   followingCount: number;

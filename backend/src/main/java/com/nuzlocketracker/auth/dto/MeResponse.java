@@ -9,9 +9,11 @@ public record MeResponse(
         UUID id,
         String email,
         String username,
+        String avatarUrl,
         String role,
         boolean emailVerified,
         boolean verified,
+        OffsetDateTime lastUsernameChangedAt,
         OffsetDateTime createdAt
 ) {
     public static MeResponse from(User user) {
@@ -19,9 +21,11 @@ public record MeResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getUsername(),
+                user.getAvatarUrl(),
                 user.getRole().name(),
                 user.isEmailVerified(),
                 user.isVerified(),
+                user.getLastUsernameChangedAt(),
                 user.getCreatedAt()
         );
     }

@@ -49,6 +49,13 @@ public class RunController {
         runService.deleteRun(userId(auth), runId);
     }
 
+    @PatchMapping("/{runId}/rules")
+    public List<RunRuleResponse> updateRules(@PathVariable UUID runId,
+                                              @Valid @RequestBody UpdateRulesRequest req,
+                                              Authentication auth) {
+        return runService.updateRules(userId(auth), runId, req);
+    }
+
     // ─── Rutas ─────────────────────────────────────────────────────────────────
 
     @GetMapping("/{runId}/routes")

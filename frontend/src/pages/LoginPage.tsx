@@ -61,6 +61,14 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
+      <button
+        className="btn btn-ghost"
+        onClick={() => navigate(-1)}
+        style={{ position: 'absolute', top: 12, left: 12, fontSize: 20, lineHeight: 1 }}
+        aria-label="Volver"
+      >
+        ←
+      </button>
       <div className="auth-card">
         <h1 className="auth-title logo-brand">
           NUZL<span className="pokeball pokeball--logo" aria-hidden="true" />CKETRACKER

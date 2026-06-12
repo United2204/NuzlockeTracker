@@ -46,6 +46,10 @@ public class UserService {
             user.setLastUsernameChangedAt(OffsetDateTime.now());
         }
 
+        if (req.avatarUrl() != null) {
+            user.setAvatarUrl(req.avatarUrl().isBlank() ? null : req.avatarUrl().trim());
+        }
+
         return MeResponse.from(userRepository.save(user));
     }
 

@@ -63,7 +63,7 @@ public class SocialService {
         follow.setFollowed(followed);
         userFollowRepository.save(follow);
 
-        createNotification(followed, Notification.Type.NEW_FOLLOWER, followerId.getMostSignificantBits());
+        createNotification(followed, Notification.Type.NEW_FOLLOWER, 0L, follower);
     }
 
     @Transactional
@@ -314,7 +314,7 @@ public class SocialService {
         boolean isBlocked = viewerId != null &&
                 userBlockRepository.existsByBlockerIdAndBlockedId(viewerId, user.getId());
         return new PublicProfileResponse(
-                user.getId().toString(), user.getUsername(), user.isVerified(),
+                user.getId().toString(), user.getUsername(), user.getAvatarUrl(), user.isVerified(),
                 followers, following, isFollowing, isBlocked
         );
     }
@@ -364,7 +364,7 @@ public class SocialService {
                     boolean isBlocked = viewerId != null &&
                             userBlockRepository.existsByBlockerIdAndBlockedId(viewerId, user.getId());
                     return new PublicProfileResponse(
-                            user.getId().toString(), user.getUsername(), user.isVerified(),
+                            user.getId().toString(), user.getUsername(), user.getAvatarUrl(), user.isVerified(),
                             followers, following, isFollowing, isBlocked);
                 })
                 .toList();
@@ -405,11 +405,12 @@ public class SocialService {
         return run;
     }
 
-    private void createNotification(User recipient, Notification.Type type, long referenceId) {
+    private void createNotification(User recipient, Notification.Type type, long referenceId, User actor) {
         var n = new Notification();
         n.setUser(recipient);
         n.setType(type);
         n.setReferenceId(referenceId);
+        n.setActor(actor);
         notificationRepository.save(n);
     }
 
@@ -444,12 +445,6 @@ public class SocialService {
     }
 
     private NotificationResponse toNotificationResponse(Notification n) {
-        return new NotificationResponse(
-                n.getId(),
-                n.getType().name(),
-                n.getReferenceId(),
-                n.isRead(),
-                n.getCreatedAt()
-        );
+        return NotificationResponse.from(n);
     }
 }

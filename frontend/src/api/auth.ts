@@ -2,6 +2,11 @@ import { client } from './client';
 import { token } from '../utils/token';
 import type { TokenResponse, MeResponse } from '../types/api';
 
+export interface UpdateProfilePayload {
+  username?: string;
+  avatarUrl?: string | null;
+}
+
 export const authApi = {
   register: (email: string, username: string, password: string) =>
     client.post('/api/auth/register', { email, username, password }),
@@ -11,6 +16,9 @@ export const authApi = {
 
   me: () =>
     client.get<MeResponse>('/api/auth/me'),
+
+  updateProfile: (payload: UpdateProfilePayload) =>
+    client.patch<MeResponse>('/api/me', payload),
 
   logout: () =>
     client.post('/api/auth/logout', { refreshToken: token.getRefresh() }),

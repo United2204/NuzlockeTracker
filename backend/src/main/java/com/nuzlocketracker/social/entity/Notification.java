@@ -32,6 +32,10 @@ public class Notification {
     @Column(name = "reference_id", nullable = false)
     private Long referenceId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_id")
+    private User actor;
+
     @Column(name = "is_read", nullable = false)
     private boolean read = false;
 
