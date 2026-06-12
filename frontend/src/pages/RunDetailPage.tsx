@@ -529,33 +529,6 @@ export function RunDetailPage() {
         </div>
       )}
 
-      {run && (
-        <div className="badges-row">
-          {run.badges.map(b => (
-            <div key={b.badgeId} className="badge-chip badge-chip--removable" title={b.badgeName}>
-              🏅 {b.badgeName}
-              {run.status === 'ACTIVE' && (
-                <button
-                  className="badge-remove-btn"
-                  onClick={() => removeBadgeMut.mutate(b.badgeId)}
-                  disabled={removeBadgeMut.isPending}
-                  aria-label={`Quitar ${b.badgeName}`}
-                >×</button>
-              )}
-            </div>
-          ))}
-          {run.status === 'ACTIVE' && (
-            <button
-              className="btn btn-ghost badge-chip"
-              style={{ fontSize: 13, padding: '4px 10px', cursor: 'pointer' }}
-              onClick={() => setBadgeModal(true)}
-            >
-              + Medalla
-            </button>
-          )}
-        </div>
-      )}
-
       {run && <RunActions run={run} />}
 
       <div className="page-content">
