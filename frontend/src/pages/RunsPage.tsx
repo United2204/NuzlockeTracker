@@ -295,7 +295,7 @@ export function RunsPage() {
                     onClick={() => visMut.mutate({ id: visEditId, visibility: v })}
                     disabled={visMut.isPending || isCurrent}
                   >
-                    {VISIBILITY_LABEL[v]}
+                    {t(`run.visibility.${v}`, v)}
                   </button>
                 );
               })}
