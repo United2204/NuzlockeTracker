@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { catalogApi } from '../api/catalog';
 import type { PokemonSearchResponse } from '../types/api';
 import { typeColor } from '../utils/pokemonTypes';
@@ -9,7 +10,8 @@ interface Props {
   initialPokemon?: PokemonSearchResponse | null;
 }
 
-export function PokemonSearch({ onSelect, placeholder = 'Buscar Pokémon...', initialPokemon }: Props) {
+export function PokemonSearch({ onSelect, placeholder, initialPokemon }: Props) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState(initialPokemon?.name ?? '');
   const [results, setResults] = useState<PokemonSearchResponse[]>([]);
   const [open, setOpen] = useState(false);
@@ -55,7 +57,7 @@ export function PokemonSearch({ onSelect, placeholder = 'Buscar Pokémon...', in
           className="form-input"
           value={query}
           onChange={e => { setQuery(e.target.value); setSelected(null); }}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('search.pokemon')}
           autoComplete="off"
         />
         {selected && (

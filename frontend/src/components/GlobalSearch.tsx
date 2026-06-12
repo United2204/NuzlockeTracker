@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { catalogApi } from '../api/catalog';
 import { socialApi, type PublicProfile } from '../api/social';
 import type { PokemonSearchResponse } from '../types/api';
@@ -12,13 +13,14 @@ interface Props {
   caughtByPokemonId: Map<number, string>;
 }
 
-const STATUS_CONFIG: Record<string, { emoji: string; label: string; bg: string; color: string }> = {
-  ACTIVE:  { emoji: '⚔️', label: 'En equipo',  bg: 'rgba(22,163,74,.12)',   color: '#16a34a' },
-  BOXED:   { emoji: '📦', label: 'En box',      bg: 'rgba(217,119,6,.12)',   color: '#d97706' },
-  FAINTED: { emoji: '💀', label: 'Muerto',      bg: 'rgba(220,38,38,.12)',   color: '#dc2626' },
+const STATUS_CONFIG: Record<string, { emoji: string; key: string; bg: string; color: string }> = {
+  ACTIVE:  { emoji: '⚔️', key: 'ACTIVE',  bg: 'rgba(22,163,74,.12)',   color: '#16a34a' },
+  BOXED:   { emoji: '📦', key: 'BOXED',   bg: 'rgba(217,119,6,.12)',   color: '#d97706' },
+  FAINTED: { emoji: '💀', key: 'FAINTED', bg: 'rgba(220,38,38,.12)',   color: '#dc2626' },
 };
 
 export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -106,7 +108,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => hasResults && setOpen(true)}
-          placeholder="Buscar Pokémon o usuario..."
+          placeholder={t('search.global')}
           autoComplete="off"
         />
         {loading && <span className="global-search-spinner" />}
@@ -115,7 +117,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
             type="button"
             className="search-clear global-search-clear"
             onClick={() => { setQuery(''); setOpen(false); }}
-            aria-label="Limpiar búsqueda"
+            aria-label={t('search.clearSearch')}
           >✕</button>
         )}
       </div>
@@ -124,7 +126,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
         <div className="global-search-dropdown">
           {pokemonResults.length > 0 && (
             <>
-              <div className="search-section-label">Pokémon</div>
+              <div className="search-section-label">{t('search.sectionPokemon')}</div>
               {pokemonResults.map(p => {
                 const status = getCaughtStatus(p);
                 const cfg = status ? STATUS_CONFIG[status] : null;
@@ -145,7 +147,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
                         className="caught-badge"
                         style={{ background: cfg.bg, color: cfg.color }}
                       >
-                        {cfg.emoji} {cfg.label}
+                        {cfg.emoji} {t(`search.status.${cfg.key}`)}
                       </span>
                     )}
                   </div>
@@ -156,7 +158,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
 
           {userResults.length > 0 && (
             <>
-              <div className="search-section-label">Usuarios</div>
+              <div className="search-section-label">{t('search.sectionUsers')}</div>
               {userResults.map(u => (
                 <div key={u.userId} className="search-item search-item--user">
                   <button
@@ -168,7 +170,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
                       @{u.username}
                       {u.isVerified && <span className="verified-badge">✓</span>}
                     </span>
-                    <span className="search-user-followers">{u.followerCount} seguidores</span>
+                    <span className="search-user-followers">{u.followerCount} {t('search.followers')}</span>
                   </button>
                   {user && !u.isBlocked && (
                     <button
@@ -176,7 +178,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
                       className={`btn ${followingState[u.userId] ? 'btn-ghost' : 'btn-primary'} search-follow-btn`}
                       onClick={() => void toggleFollow(u.userId)}
                     >
-                      {followingState[u.userId] ? 'Siguiendo' : 'Seguir'}
+                      {followingState[u.userId] ? t('search.following') : t('btn.follow')}
                     </button>
                   )}
                 </div>

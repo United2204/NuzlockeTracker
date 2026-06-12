@@ -1,5 +1,54 @@
 {
   "app": { "name": "NuzlockeTracker" },
+  "search": {
+    "pokemon": "Buscar Pokémon...",
+    "global": "Buscar Pokémon o usuario...",
+    "clearSearch": "Limpiar búsqueda",
+    "sectionPokemon": "Pokémon",
+    "sectionUsers": "Usuarios",
+    "followers": "seguidores",
+    "following": "Siguiendo",
+    "status": {
+      "ACTIVE": "En equipo",
+      "BOXED": "En box",
+      "FAINTED": "Muerto"
+    }
+  },
+  "feed": {
+    "title": "Feed",
+    "global": "Global",
+    "following": "Siguiendo",
+    "emptyFollowing": "Seguí a otros jugadores para ver su actividad aquí.",
+    "emptyPublic": "No hay actividad pública aún.",
+    "event": {
+      "POKEMON_CAPTURED": "¡Capturó un Pokémon!",
+      "POKEMON_EVOLVED": "¡Evolucionó un Pokémon!",
+      "POKEMON_FAINTED": "Un Pokémon cayó...",
+      "BADGE_OBTAINED": "¡Obtuvo una medalla!",
+      "RUN_ENDED": "¡Run terminada!"
+    },
+    "in": "en"
+  },
+  "myProfile": {
+    "title": "Mi perfil",
+    "settings": "⚙️ Configuración",
+    "myContributions": "📦 Mis contribuciones",
+    "submitContribution": "➕ Enviar contribución",
+    "adminPanel": "🛡️ Panel admin — Contribuciones",
+    "logout": "🚪 Cerrar sesión",
+    "runsSection": "Runs",
+    "statsSection": "Historial global",
+    "mostCaught": "Pokémon más capturados",
+    "noCaptures": "Todavía no registraste capturas en ninguna run.",
+    "stat": {
+      "total": "Total",
+      "active": "Activas",
+      "completed": "Completadas",
+      "gameOver": "Game Over",
+      "totalCaptures": "Capturas totales",
+      "totalDeaths": "Muertes totales"
+    }
+  },
   "nav": {
     "runs": "Runs",
     "feed": "Feed",

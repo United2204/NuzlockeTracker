@@ -1,16 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { socialApi, type FeedEvent } from '../api/social';
 import { Layout } from '../components/Layout';
-
-const EVENT_LABELS: Record<string, string> = {
-  POKEMON_CAPTURED: '¡Capturó un Pokémon!',
-  POKEMON_EVOLVED:  '¡Evolucionó un Pokémon!',
-  POKEMON_FAINTED:  'Un Pokémon cayó...',
-  BADGE_OBTAINED:   '¡Obtuvo una medalla!',
-  RUN_ENDED:        '¡Run terminada!',
-};
 
 const EVENT_COLORS: Record<string, string> = {
   POKEMON_CAPTURED: 'var(--success)',
@@ -21,7 +14,8 @@ const EVENT_COLORS: Record<string, string> = {
 };
 
 function FeedCard({ event }: { event: FeedEvent }) {
-  const date = new Date(event.occurredAt).toLocaleDateString('es', {
+  const { t, i18n } = useTranslation();
+  const date = new Date(event.occurredAt).toLocaleDateString(i18n.language, {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
   });
 
@@ -40,19 +34,20 @@ function FeedCard({ event }: { event: FeedEvent }) {
         <span className="feed-date">{date}</span>
       </div>
       <div className="feed-event-label" style={{ color: EVENT_COLORS[event.eventType] }}>
-        {EVENT_LABELS[event.eventType] ?? event.eventType}
+        {t(`feed.event.${event.eventType}`, event.eventType)}
       </div>
       {pokemonName && (
         <div className="feed-pokemon-name">{pokemonName}</div>
       )}
       <div className="feed-run-link">
-        en <Link to={`/runs/${event.runId}`} className="link-subtle">{event.runName}</Link>
+        {t('feed.in')} <Link to={`/runs/${event.runId}`} className="link-subtle">{event.runName}</Link>
       </div>
     </div>
   );
 }
 
 export function FeedPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'public' | 'following'>('public');
 
   const publicQ = useQuery({
@@ -70,20 +65,20 @@ export function FeedPage() {
   const { data, isLoading } = tab === 'public' ? publicQ : followingQ;
 
   return (
-    <Layout title="Feed">
+    <Layout title={t('feed.title')}>
       <div className="page-content">
         <div className="segment-bar">
           <button
             className={`segment-btn ${tab === 'public' ? 'active' : ''}`}
             onClick={() => setTab('public')}
           >
-            Global
+            {t('feed.global')}
           </button>
           <button
             className={`segment-btn ${tab === 'following' ? 'active' : ''}`}
             onClick={() => setTab('following')}
           >
-            Siguiendo
+            {t('feed.following')}
           </button>
         </div>
 
@@ -92,9 +87,7 @@ export function FeedPage() {
         {data && data.length === 0 && (
           <div className="empty-state">
             <p>
-              {tab === 'following'
-                ? 'Seguí a otros jugadores para ver su actividad aquí.'
-                : 'No hay actividad pública aún.'}
+              {tab === 'following' ? t('feed.emptyFollowing') : t('feed.emptyPublic')}
             </p>
           </div>
         )}

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { statsApi, type MostCaughtEntry } from '../api/stats';
 import { Layout } from '../components/Layout';
@@ -29,6 +30,7 @@ function MostCaughtRow({ entry, rank }: { entry: MostCaughtEntry; rank: number }
 }
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -43,7 +45,7 @@ export function ProfilePage() {
   };
 
   return (
-    <Layout title="Mi perfil" back="/runs">
+    <Layout title={t('myProfile.title')} back="/runs">
       <div className="page-content">
         {user && (
           <div className="profile-header">
@@ -64,21 +66,21 @@ export function ProfilePage() {
             style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0 }}
             onClick={() => navigate('/settings')}
           >
-            ⚙️ Configuración
+            {t('myProfile.settings')}
           </button>
           <button
             className="btn btn-ghost btn-full"
             style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0 }}
             onClick={() => navigate('/me/contributions')}
           >
-            📦 Mis contribuciones
+            {t('myProfile.myContributions')}
           </button>
           <button
             className="btn btn-ghost btn-full"
             style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0 }}
             onClick={() => navigate('/contributions/new')}
           >
-            ➕ Enviar contribución
+            {t('myProfile.submitContribution')}
           </button>
           {user?.role === 'ADMIN' && (
             <button
@@ -86,7 +88,7 @@ export function ProfilePage() {
               style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0, color: 'var(--accent)' }}
               onClick={() => navigate('/admin/contributions')}
             >
-              🛡️ Panel admin — Contribuciones
+              {t('myProfile.adminPanel')}
             </button>
           )}
           <button
@@ -94,7 +96,7 @@ export function ProfilePage() {
             style={{ textAlign: 'left', padding: '12px 0', color: 'var(--danger)', borderRadius: 0 }}
             onClick={handleLogout}
           >
-            🚪 Cerrar sesión
+            {t('myProfile.logout')}
           </button>
         </div>
 
@@ -103,26 +105,26 @@ export function ProfilePage() {
         {data && (
           <>
             <section className="stats-section">
-              <h3 className="stats-section-title">Runs</h3>
+              <h3 className="stats-section-title">{t('myProfile.runsSection')}</h3>
               <div className="stat-cards-grid">
-                <StatCard label="Total"       value={data.totalRuns} />
-                <StatCard label="Activas"     value={data.activeRuns}    color="var(--info)" />
-                <StatCard label="Completadas" value={data.completedRuns} color="var(--success)" />
-                <StatCard label="Game Over"   value={data.gameOverRuns}  color="var(--danger)" />
+                <StatCard label={t('myProfile.stat.total')}     value={data.totalRuns} />
+                <StatCard label={t('myProfile.stat.active')}    value={data.activeRuns}    color="var(--info)" />
+                <StatCard label={t('myProfile.stat.completed')} value={data.completedRuns} color="var(--success)" />
+                <StatCard label={t('myProfile.stat.gameOver')}  value={data.gameOverRuns}  color="var(--danger)" />
               </div>
             </section>
 
             <section className="stats-section">
-              <h3 className="stats-section-title">Historial global</h3>
+              <h3 className="stats-section-title">{t('myProfile.statsSection')}</h3>
               <div className="stat-cards-grid">
-                <StatCard label="Capturas totales" value={data.totalCaptures} color="var(--success)" />
-                <StatCard label="Muertes totales"  value={data.totalDeaths}   color="var(--danger)" />
+                <StatCard label={t('myProfile.stat.totalCaptures')} value={data.totalCaptures} color="var(--success)" />
+                <StatCard label={t('myProfile.stat.totalDeaths')}   value={data.totalDeaths}   color="var(--danger)" />
               </div>
             </section>
 
             {data.mostCaught.length > 0 && (
               <section className="stats-section">
-                <h3 className="stats-section-title">Pokémon más capturados</h3>
+                <h3 className="stats-section-title">{t('myProfile.mostCaught')}</h3>
                 <div className="stats-list">
                   {data.mostCaught.map((entry, i) => (
                     <MostCaughtRow key={entry.pokemonId} entry={entry} rank={i + 1} />
@@ -133,7 +135,7 @@ export function ProfilePage() {
 
             {data.totalCaptures === 0 && (
               <div className="empty-state">
-                <p>Todavía no registraste capturas en ninguna run.</p>
+                <p>{t('myProfile.noCaptures')}</p>
               </div>
             )}
           </>
