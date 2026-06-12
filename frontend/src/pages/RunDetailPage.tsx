@@ -40,6 +40,23 @@ const ENCOUNTER_TYPE_LABELS: Record<string, string> = {
   TRADE:      'Intercambio',
 };
 
+function Pokeball({ size = 20, golden = false }: { size?: number; golden?: boolean }) {
+  const top = golden ? '#FFD700' : '#e53935';
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" style={{ flexShrink: 0, display: 'block' }}>
+      <circle cx="10" cy="10" r="9" fill="#fff" stroke="#2a2a2a" strokeWidth="1.5"/>
+      <path d="M1,10 A9,9 0 0,1 19,10 Z" fill={top}/>
+      <path d="M1,10 A9,9 0 0,1 19,10 Z" fill="none" stroke="#2a2a2a" strokeWidth="1.5"/>
+      <line x1="1" y1="10" x2="19" y2="10" stroke="#2a2a2a" strokeWidth="1.5"/>
+      <circle cx="10" cy="10" r="3" fill="#fff" stroke="#2a2a2a" strokeWidth="1.5"/>
+    </svg>
+  );
+}
+
+function toShinySpriteUrl(url: string): string {
+  return url.replace(/\/sprites\/pokemon\/(\d+\.png)$/, '/sprites/pokemon/shiny/$1');
+}
+
 function groupByBadge(routes: RouteWithEncounterResponse[]): Map<string, RouteWithEncounterResponse[]> {
   const groups = new Map<string, RouteWithEncounterResponse[]>();
   for (const r of routes) {
@@ -583,13 +600,17 @@ export function RunDetailPage() {
                           .filter(s => s.outcome === 'CAPTURED' && s.caughtPokemon)
                           .map(s => {
                             const cp    = s.caughtPokemon!;
-                            const label = cp.nickname ?? cp.currentPokemonName;
-                            return cp.currentPokemonSpriteUrl ? (
+                            const label = (cp.nickname ?? cp.currentPokemonName) + (cp.shiny ? ' ✨' : '');
+                            const src   = cp.currentPokemonSpriteUrl
+                              ? (cp.shiny ? toShinySpriteUrl(cp.currentPokemonSpriteUrl) : cp.currentPokemonSpriteUrl)
+                              : null;
+                            return src ? (
                               <img
                                 key={s.id}
-                                src={cp.currentPokemonSpriteUrl}
+                                src={src}
                                 alt={label}
                                 title={label}
+                                onError={e => { if (cp.shiny && cp.currentPokemonSpriteUrl) (e.currentTarget).src = cp.currentPokemonSpriteUrl; }}
                                 style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain' }}
                               />
                             ) : (
@@ -598,10 +619,18 @@ export function RunDetailPage() {
                           })}
                       </span>
                       {maxCatches > 1 && hasSlots ? (
-                        <span style={{ display: 'flex', gap: 3 }}>
+                        <span style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                           {slots.map(s => {
                             const c = OUTCOME_CONFIG[s.outcome] ?? OUTCOME_CONFIG['PENDING'];
-                            return (
+                            return s.outcome === 'CAPTURED' ? (
+                              <span
+                                key={s.id}
+                                style={{ cursor: 'pointer', lineHeight: 0 }}
+                                onClick={e => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
+                              >
+                                <Pokeball size={16} golden={s.caughtPokemon?.shiny ?? false} />
+                              </span>
+                            ) : (
                               <span
                                 key={s.id}
                                 style={{ fontSize: 10, color: c.color, border: `1px solid ${c.color}`,
@@ -614,7 +643,9 @@ export function RunDetailPage() {
                           })}
                         </span>
                       ) : (
-                        <span className="outcome-tag" style={{ color: cfg.color }}>{cfg.label}</span>
+                        displayOutcome === 'CAPTURED'
+                          ? <Pokeball size={20} golden={lastSlot?.caughtPokemon?.shiny ?? false} />
+                          : <span className="outcome-tag" style={{ color: cfg.color }}>{cfg.label}</span>
                       )}
                     </div>
                   </button>

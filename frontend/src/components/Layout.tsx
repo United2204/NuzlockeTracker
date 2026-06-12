@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface LayoutProps {
 export function Layout({ children, title, back, action, runId }: LayoutProps) {
   const location = useLocation();
   const { user } = useAuth();
+  const { theme, toggle } = useTheme();
 
   return (
     <div className="app-shell">
@@ -27,6 +29,14 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
           <h1 className="header-title">{title ?? 'NuzlockeTracker'}</h1>
         </div>
         <div className="header-right">
+          <button
+            className="btn btn-ghost theme-toggle"
+            onClick={toggle}
+            title={theme === 'firered' ? 'Cambiar a Esmeralda' : 'Cambiar a Rojo Fuego'}
+            aria-label="Cambiar tema"
+          >
+            {theme === 'firered' ? '💚' : '🔴'}
+          </button>
           {action}
           {user ? (
             <NotificationBell />
