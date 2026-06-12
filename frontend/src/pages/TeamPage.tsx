@@ -45,6 +45,8 @@ function EvolveModal({
       qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
       qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
       qc.invalidateQueries({ queryKey: ['runs', runId] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
+      qc.invalidateQueries({ queryKey: ['all-caught', runId] });
       onClose();
     },
     onError: () => setError('Error al evolucionar. Intenta de nuevo.'),
@@ -219,6 +221,8 @@ export function TeamPage() {
       qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
       qc.invalidateQueries({ queryKey: ['runs', runId, 'graveyard'] });
       qc.invalidateQueries({ queryKey: ['runs', runId] });
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
+      qc.invalidateQueries({ queryKey: ['all-caught', runId] });
     }
   }
 

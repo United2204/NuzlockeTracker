@@ -57,6 +57,7 @@ export function RunsPage() {
       return [...team, ...box, ...grave];
     },
     enabled: !!activeRunId && !!user,
+    staleTime: 0,
   });
 
   function bestStatus(current: string | undefined, incoming: string): string {
