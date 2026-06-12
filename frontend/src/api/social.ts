@@ -60,6 +60,10 @@ export interface PublicProfile {
 }
 
 export const socialApi = {
+  // Search
+  searchUsers: (q: string) =>
+    client.get<PublicProfile[]>('/api/users/search', { params: { q } }),
+
   // Follow
   follow: (userId: string) =>
     client.post(`/api/users/${userId}/follow`),

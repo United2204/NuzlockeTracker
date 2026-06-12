@@ -315,6 +315,29 @@ public class SocialService {
         );
     }
 
+    // ── User search ──────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<PublicProfileResponse> searchUsers(String q, UUID viewerId) {
+        if (q == null || q.isBlank() || q.length() < 2) return List.of();
+        List<com.nuzlocketracker.auth.entity.User> users =
+                userRepository.findByUsernameContainingIgnoreCaseAndDeletedAtIsNull(
+                        q.trim(), PageRequest.of(0, 10));
+        return users.stream()
+                .map(user -> {
+                    long followers = userFollowRepository.countFollowers(user.getId());
+                    long following = userFollowRepository.countFollowing(user.getId());
+                    boolean isFollowing = viewerId != null &&
+                            userFollowRepository.existsByFollowerIdAndFollowedId(viewerId, user.getId());
+                    boolean isBlocked = viewerId != null &&
+                            userBlockRepository.existsByBlockerIdAndBlockedId(viewerId, user.getId());
+                    return new PublicProfileResponse(
+                            user.getId().toString(), user.getUsername(), user.isVerified(),
+                            followers, following, isFollowing, isBlocked);
+                })
+                .toList();
+    }
+
     // ── Internal helpers ─────────────────────────────────────────────────────
 
     private User requireUser(UUID userId) {

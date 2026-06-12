@@ -1375,3 +1375,223 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   font-size: 13px;
   color: var(--danger);
 }
+
+/* ─── Global Search ──────────────────────────────────────────────── */
+.global-search {
+  position: relative;
+}
+
+.global-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.global-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+}
+
+.global-search-input {
+  width: 100%;
+  padding: 11px 40px 11px 40px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+
+.global-search-input:focus {
+  border-color: var(--accent);
+}
+
+.global-search-clear {
+  position: absolute;
+  right: 10px;
+}
+
+.global-search-spinner {
+  position: absolute;
+  right: 12px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+.global-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-sm);
+  max-height: 340px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: var(--shadow);
+}
+
+.search-section-label {
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+
+.search-item--pokemon {
+  cursor: default;
+}
+
+.search-item--user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+}
+
+.search-item--user:last-child { border-bottom: none; }
+
+.search-user-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  min-width: 0;
+}
+
+.search-user-btn:hover .search-user-name { color: var(--accent); }
+
+.search-types {
+  flex: 1;
+}
+
+.search-sprite-placeholder {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.caught-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+  background: rgba(22, 163, 74, 0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.search-user-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-user-followers {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.verified-badge {
+  font-size: 11px;
+  color: var(--info);
+  font-weight: 700;
+  background: rgba(37, 99, 235, 0.12);
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+
+.search-follow-btn {
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+/* ─── Active Run Card ────────────────────────────────────────────── */
+.run-card-wrapper {
+  position: relative;
+  transition: transform .2s ease;
+}
+
+.run-card-wrapper--active {
+  transform: scale(1.025);
+  transform-origin: top center;
+}
+
+.run-card-wrapper .run-card {
+  padding-bottom: 36px;
+}
+
+.run-card--active {
+  border: 2px solid var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-bg), var(--shadow-sm) !important;
+}
+
+.active-run-chip {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.run-card-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.run-pin-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: none;
+}
+
+.run-pin-btn--active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  font-weight: 600;
+}
+
+.run-archive-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--text-muted);
+}

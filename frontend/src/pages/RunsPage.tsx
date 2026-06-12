@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { runsApi } from '../api/runs';
 import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
+import { GlobalSearch } from '../components/GlobalSearch';
 import { useAuth } from '../hooks/useAuth';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -20,10 +21,15 @@ const STATUS_COLOR: Record<string, string> = {
   ABANDONED: '#6b7280',
 };
 
+const ACTIVE_RUN_KEY = 'nuzlocke_active_run_id';
+
 export function RunsPage() {
   const { user, logout } = useAuth();
   const qc = useQueryClient();
   const [showArchived, setShowArchived] = useState(false);
+  const [activeRunId, setActiveRunId] = useState<string | null>(
+    () => localStorage.getItem(ACTIVE_RUN_KEY),
+  );
 
   const apiQuery = useQuery({
     queryKey: ['runs'],
@@ -39,6 +45,30 @@ export function RunsPage() {
 
   const { data = [], isLoading } = user ? apiQuery : guestQuery;
 
+  // Fetch all caught Pokémon (team + box + graveyard) for the active run
+  const { data: allCaught = [] } = useQuery({
+    queryKey: ['all-caught', activeRunId],
+    queryFn: async () => {
+      const [team, box, grave] = await Promise.all([
+        runsApi.team(activeRunId!).then(r => r.data),
+        runsApi.box(activeRunId!).then(r => r.data),
+        runsApi.graveyard(activeRunId!).then(r => r.data),
+      ]);
+      return [...team, ...box, ...grave];
+    },
+    enabled: !!activeRunId && !!user,
+    staleTime: 30_000,
+  });
+
+  const caughtChainIds = useMemo(
+    () => new Set(allCaught.map(p => p.chainId).filter(Boolean) as number[]),
+    [allCaught],
+  );
+  const caughtPokemonIds = useMemo(
+    () => new Set(allCaught.map(p => p.originalPokemonId)),
+    [allCaught],
+  );
+
   const archiveMut = useMutation({
     mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
       if (user) { await runsApi.update(id, { archived }); }
@@ -50,6 +80,22 @@ export function RunsPage() {
     },
   });
 
+  function toggleActiveRun(id: string) {
+    if (activeRunId === id) {
+      localStorage.removeItem(ACTIVE_RUN_KEY);
+      setActiveRunId(null);
+    } else {
+      localStorage.setItem(ACTIVE_RUN_KEY, id);
+      setActiveRunId(id);
+    }
+  }
+
+  // Clear active run if it no longer exists in the list
+  if (activeRunId && data.length > 0 && !data.find(r => r.id === activeRunId)) {
+    localStorage.removeItem(ACTIVE_RUN_KEY);
+    setActiveRunId(null);
+  }
+
   const visible  = data.filter(r => !r.archived);
   const archived = data.filter(r => r.archived);
 
@@ -57,6 +103,74 @@ export function RunsPage() {
     ...visible.filter(r => r.favorite),
     ...visible.filter(r => !r.favorite),
   ];
+
+  function RunCard({ run, showArchiveLabel = true }: { run: typeof sorted[0]; showArchiveLabel?: boolean }) {
+    const isActive = activeRunId === run.id;
+    return (
+      <div
+        key={run.id}
+        className={`run-card-wrapper${isActive ? ' run-card-wrapper--active' : ''}`}
+      >
+        <Link
+          to={`/runs/${run.id}`}
+          className={`run-card${isActive ? ' run-card--active' : ''}`}
+        >
+          <div className="run-card-header">
+            <div>
+              <div className="run-name">
+                {run.favorite && <span style={{ marginRight: 6 }}>⭐</span>}
+                {run.name}
+              </div>
+              <div className="run-game">
+                {run.gameName}{run.gameVersion ? ` · ${run.gameVersion}` : ''}
+              </div>
+            </div>
+            <span
+              className="status-badge"
+              style={{ background: STATUS_COLOR[run.status] ?? '#888' }}
+            >
+              {STATUS_LABEL[run.status] ?? run.status}
+            </span>
+          </div>
+          <div className="run-card-stats">
+            <span>⚔️ {run.activePokemon} activos</span>
+            <span>💀 {run.faintedPokemon} muertos</span>
+          </div>
+          {isActive && (
+            <div className="active-run-chip">📍 Run activa para búsqueda</div>
+          )}
+        </Link>
+        <div className="run-card-actions">
+          <button
+            className={`btn run-pin-btn${isActive ? ' run-pin-btn--active' : ''}`}
+            onClick={() => toggleActiveRun(run.id)}
+            title={isActive ? 'Desactivar como run activa' : 'Definir como run activa para búsqueda'}
+          >
+            📍{isActive ? ' Activa' : ''}
+          </button>
+          {showArchiveLabel ? (
+            <button
+              className="btn btn-ghost run-archive-btn"
+              onClick={() => archiveMut.mutate({ id: run.id, archived: true })}
+              disabled={archiveMut.isPending}
+              title="Archivar run"
+            >
+              📦 Archivar
+            </button>
+          ) : (
+            <button
+              className="btn btn-ghost run-archive-btn"
+              onClick={() => archiveMut.mutate({ id: run.id, archived: false })}
+              disabled={archiveMut.isPending}
+              title="Desarchivar run"
+            >
+              ↩ Desarchivar
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Layout
@@ -66,6 +180,8 @@ export function RunsPage() {
       ) : undefined}
     >
       <div className="page-content">
+        <GlobalSearch caughtChainIds={caughtChainIds} caughtPokemonIds={caughtPokemonIds} />
+
         <div className="page-header">
           <h2>Mis Runs</h2>
           <Link to="/runs/new" className="btn btn-primary">+ Nueva</Link>
@@ -74,7 +190,7 @@ export function RunsPage() {
         {!user && (
           <div style={{
             background: 'var(--accent-bg)', border: '1px solid var(--accent)',
-            borderRadius: 10, padding: '12px 16px', marginBottom: 16,
+            borderRadius: 10, padding: '12px 16px',
             fontSize: 13, color: 'var(--text-muted)',
           }}>
             Tus runs se guardan en este dispositivo.{' '}
@@ -95,45 +211,7 @@ export function RunsPage() {
         )}
 
         <div className="runs-list">
-          {sorted.map(run => (
-            <div key={run.id} style={{ position: 'relative' }}>
-              <Link to={`/runs/${run.id}`} className="run-card">
-                <div className="run-card-header">
-                  <div>
-                    <div className="run-name">
-                      {run.favorite && <span style={{ marginRight: 6 }}>⭐</span>}
-                      {run.name}
-                    </div>
-                    <div className="run-game">
-                      {run.gameName}{run.gameVersion ? ` · ${run.gameVersion}` : ''}
-                    </div>
-                  </div>
-                  <span
-                    className="status-badge"
-                    style={{ background: STATUS_COLOR[run.status] ?? '#888' }}
-                  >
-                    {STATUS_LABEL[run.status] ?? run.status}
-                  </span>
-                </div>
-                <div className="run-card-stats">
-                  <span>⚔️ {run.activePokemon} activos</span>
-                  <span>💀 {run.faintedPokemon} muertos</span>
-                </div>
-              </Link>
-              <button
-                className="btn btn-ghost"
-                style={{
-                  position: 'absolute', bottom: 8, right: 8,
-                  fontSize: 11, padding: '2px 8px', color: 'var(--text-muted)',
-                }}
-                onClick={() => archiveMut.mutate({ id: run.id, archived: true })}
-                disabled={archiveMut.isPending}
-                title="Archivar run"
-              >
-                📦 Archivar
-              </button>
-            </div>
-          ))}
+          {sorted.map(run => <RunCard key={run.id} run={run} />)}
         </div>
 
         {archived.length > 0 && (
@@ -148,42 +226,7 @@ export function RunsPage() {
 
             {showArchived && (
               <div className="runs-list" style={{ marginTop: 8, opacity: 0.7 }}>
-                {archived.map(run => (
-                  <div key={run.id} style={{ position: 'relative' }}>
-                    <Link to={`/runs/${run.id}`} className="run-card">
-                      <div className="run-card-header">
-                        <div>
-                          <div className="run-name">{run.name}</div>
-                          <div className="run-game">
-                            {run.gameName}{run.gameVersion ? ` · ${run.gameVersion}` : ''}
-                          </div>
-                        </div>
-                        <span
-                          className="status-badge"
-                          style={{ background: STATUS_COLOR[run.status] ?? '#888' }}
-                        >
-                          {STATUS_LABEL[run.status] ?? run.status}
-                        </span>
-                      </div>
-                      <div className="run-card-stats">
-                        <span>⚔️ {run.activePokemon} activos</span>
-                        <span>💀 {run.faintedPokemon} muertos</span>
-                      </div>
-                    </Link>
-                    <button
-                      className="btn btn-ghost"
-                      style={{
-                        position: 'absolute', bottom: 8, right: 8,
-                        fontSize: 11, padding: '2px 8px', color: 'var(--text-muted)',
-                      }}
-                      onClick={() => archiveMut.mutate({ id: run.id, archived: false })}
-                      disabled={archiveMut.isPending}
-                      title="Desarchivar run"
-                    >
-                      ↩ Desarchivar
-                    </button>
-                  </div>
-                ))}
+                {archived.map(run => <RunCard key={run.id} run={run} showArchiveLabel={false} />)}
               </div>
             )}
           </div>

@@ -64,6 +64,7 @@ public class SecurityConfig {
                         "/api/auth/refresh", "/api/auth/logout",
                         "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/verify-email").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/search").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

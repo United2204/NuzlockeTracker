@@ -44,6 +44,16 @@ public class SocialController {
         socialService.unblock(me(auth), userId);
     }
 
+    // ── User search ───────────────────────────────────────────────────────────
+
+    @GetMapping("/api/users/search")
+    public List<PublicProfileResponse> searchUsers(
+            @RequestParam String q,
+            Authentication auth) {
+        UUID viewerId = auth != null ? me(auth) : null;
+        return socialService.searchUsers(q, viewerId);
+    }
+
     // ── Public profile ────────────────────────────────────────────────────────
 
     @GetMapping("/api/users/{username}/profile")
