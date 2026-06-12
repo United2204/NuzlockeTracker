@@ -77,12 +77,17 @@ public class RunService {
 
     @Transactional(readOnly = true)
     public List<RunSummaryResponse> listRuns(UUID userId) {
-        return runRepository.findAllByUserId(userId).stream()
-                .map(run -> RunSummaryResponse.from(
-                        run,
-                        caughtPokemonRepository.countByRunIdAndStatus(run.getId(), CaughtPokemon.Status.ACTIVE),
-                        caughtPokemonRepository.countByRunIdAndStatus(run.getId(), CaughtPokemon.Status.FAINTED)
-                ))
+        List<Run> runs = runRepository.findAllByUserId(userId);
+        Map<UUID, Map<CaughtPokemon.Status, Long>> counts = countPokemonByStatus(runs);
+        return runs.stream()
+                .map(run -> {
+                    Map<CaughtPokemon.Status, Long> byStatus = counts.getOrDefault(run.getId(), Map.of());
+                    return RunSummaryResponse.from(
+                            run,
+                            byStatus.getOrDefault(CaughtPokemon.Status.ACTIVE, 0L),
+                            byStatus.getOrDefault(CaughtPokemon.Status.FAINTED, 0L)
+                    );
+                })
                 .toList();
     }
 
@@ -166,12 +171,12 @@ public class RunService {
                 .findAllByRunIdAndDeletedAtIsNull(runId).stream()
                 .collect(Collectors.groupingBy(e -> e.getRoute().getId()));
 
-        Map<UUID, CaughtPokemonResponse> cpByEncounterId = caughtPokemonRepository
-                .findAllByRunId(runId).stream()
-                .collect(Collectors.toMap(
-                        cp -> cp.getRouteEncounter().getId(),
-                        this::toCaughtPokemonResponse
-                ));
+        List<CaughtPokemon> caught = caughtPokemonRepository.findAllByRunId(runId);
+        List<CaughtPokemonResponse> cpResponses = toCaughtPokemonResponses(caught);
+        Map<UUID, CaughtPokemonResponse> cpByEncounterId = new HashMap<>();
+        for (int i = 0; i < caught.size(); i++) {
+            cpByEncounterId.put(caught.get(i).getRouteEncounter().getId(), cpResponses.get(i));
+        }
 
         return routes.stream().map(route -> {
             List<RouteEncounter> encs = encountersByRouteId.getOrDefault(route.getId(), List.of());
@@ -300,22 +305,22 @@ public class RunService {
     @Transactional(readOnly = true)
     public List<CaughtPokemonResponse> getTeam(UUID userId, UUID runId) {
         requireOwnedRun(userId, runId);
-        return caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.ACTIVE)
-                .stream().map(this::toCaughtPokemonResponse).toList();
+        return toCaughtPokemonResponses(
+                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.ACTIVE));
     }
 
     @Transactional(readOnly = true)
     public List<CaughtPokemonResponse> getGraveyard(UUID userId, UUID runId) {
         requireOwnedRun(userId, runId);
-        return caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.FAINTED)
-                .stream().map(this::toCaughtPokemonResponse).toList();
+        return toCaughtPokemonResponses(
+                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.FAINTED));
     }
 
     @Transactional(readOnly = true)
     public List<CaughtPokemonResponse> getBox(UUID userId, UUID runId) {
         requireOwnedRun(userId, runId);
-        return caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.BOXED)
-                .stream().map(this::toCaughtPokemonResponse).toList();
+        return toCaughtPokemonResponses(
+                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.BOXED));
     }
 
     public CaughtPokemonResponse updatePokemonStatus(UUID userId, UUID runId, UUID pokemonId,
@@ -581,6 +586,45 @@ public class RunService {
     private CaughtPokemonResponse toCaughtPokemonResponse(CaughtPokemon cp) {
         Long chainId = pokemonRepository.findChainId(cp.getOriginalPokemon().getId()).orElse(null);
         return CaughtPokemonResponse.from(cp, resolveName(cp.getCurrentPokemon().getId()), chainId);
+    }
+
+    /** Versión en lote: resuelve nombres y chainIds con una query cada uno, en vez de 2 por Pokémon. */
+    private List<CaughtPokemonResponse> toCaughtPokemonResponses(List<CaughtPokemon> pokemons) {
+        if (pokemons.isEmpty()) return List.of();
+
+        Set<Long> currentIds = pokemons.stream()
+                .map(cp -> cp.getCurrentPokemon().getId()).collect(Collectors.toSet());
+        Set<Long> originalIds = pokemons.stream()
+                .map(cp -> cp.getOriginalPokemon().getId()).collect(Collectors.toSet());
+
+        Map<Long, String> names = pokemonNameRepository
+                .findNamesByPokemonIdsAndLang(currentIds, "en").stream()
+                .collect(Collectors.toMap(
+                        PokemonNameRepository.NameProjection::getPokemonId,
+                        PokemonNameRepository.NameProjection::getName));
+
+        Map<Long, Long> chainIds = pokemonRepository.findChainIds(originalIds).stream()
+                .collect(Collectors.toMap(
+                        PokemonRepository.ChainIdProjection::getPokemonId,
+                        PokemonRepository.ChainIdProjection::getChainId));
+
+        return pokemons.stream()
+                .map(cp -> CaughtPokemonResponse.from(
+                        cp,
+                        names.getOrDefault(cp.getCurrentPokemon().getId(), "Unknown"),
+                        chainIds.get(cp.getOriginalPokemon().getId())))
+                .toList();
+    }
+
+    private Map<UUID, Map<CaughtPokemon.Status, Long>> countPokemonByStatus(List<Run> runs) {
+        if (runs.isEmpty()) return Map.of();
+        List<UUID> runIds = runs.stream().map(Run::getId).toList();
+        return caughtPokemonRepository.countByRunIdsGroupedByStatus(runIds).stream()
+                .collect(Collectors.groupingBy(
+                        CaughtPokemonRepository.RunStatusCountProjection::getRunId,
+                        Collectors.toMap(
+                                CaughtPokemonRepository.RunStatusCountProjection::getStatus,
+                                CaughtPokemonRepository.RunStatusCountProjection::getCount)));
     }
 
     private void logStatus(CaughtPokemon cp, CaughtPokemon.Status status, String notes, boolean correction) {

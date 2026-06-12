@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +51,18 @@ public interface PokemonRepository extends JpaRepository<Pokemon, Long> {
 
     @Query(value = "SELECT chain_id FROM pokemon_evolution_chain WHERE pokemon_id = :pokemonId", nativeQuery = true)
     Optional<Long> findChainId(@Param("pokemonId") Long pokemonId);
+
+    @Query(value = """
+            SELECT pokemon_id AS "pokemonId", chain_id AS "chainId"
+            FROM pokemon_evolution_chain
+            WHERE pokemon_id IN (:pokemonIds)
+            """, nativeQuery = true)
+    List<ChainIdProjection> findChainIds(@Param("pokemonIds") Collection<Long> pokemonIds);
+
+    interface ChainIdProjection {
+        Long getPokemonId();
+        Long getChainId();
+    }
 
     @Query("SELECT COUNT(p) FROM Pokemon p WHERE p.evolvesFromPokemonId IS NOT NULL")
     long countWithEvolvesFrom();

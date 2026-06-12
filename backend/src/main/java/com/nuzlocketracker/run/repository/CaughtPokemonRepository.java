@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +20,20 @@ public interface CaughtPokemonRepository extends JpaRepository<CaughtPokemon, UU
 
     @Query("SELECT COUNT(cp) FROM CaughtPokemon cp WHERE cp.run.id = :runId AND cp.status = :status")
     long countByRunIdAndStatus(@Param("runId") UUID runId, @Param("status") CaughtPokemon.Status status);
+
+    @Query("""
+        SELECT cp.run.id AS runId, cp.status AS status, COUNT(cp) AS count
+        FROM CaughtPokemon cp
+        WHERE cp.run.id IN :runIds
+        GROUP BY cp.run.id, cp.status
+    """)
+    List<RunStatusCountProjection> countByRunIdsGroupedByStatus(@Param("runIds") Collection<UUID> runIds);
+
+    interface RunStatusCountProjection {
+        UUID getRunId();
+        CaughtPokemon.Status getStatus();
+        long getCount();
+    }
 
     @Query("SELECT COUNT(cp) FROM CaughtPokemon cp WHERE cp.run.user.id = :userId")
     long countByUserId(@Param("userId") UUID userId);

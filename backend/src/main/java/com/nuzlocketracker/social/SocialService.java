@@ -334,16 +334,32 @@ public class SocialService {
         boolean isFollowing = !isOwner && viewerId != null &&
                 userFollowRepository.existsByFollowerIdAndFollowedId(viewerId, owner.getId());
 
-        return runRepository.findAllByUserId(owner.getId()).stream()
+        List<Run> visibleRuns = runRepository.findAllByUserId(owner.getId()).stream()
                 .filter(r -> !r.isArchived())
                 .filter(r -> switch (r.getVisibility()) {
                     case PUBLIC -> true;
                     case FOLLOWERS_ONLY -> isOwner || isFollowing;
                     case PRIVATE -> isOwner;
                 })
-                .map(r -> RunSummaryResponse.from(r,
-                        caughtPokemonRepository.countByRunIdAndStatus(r.getId(), CaughtPokemon.Status.ACTIVE),
-                        caughtPokemonRepository.countByRunIdAndStatus(r.getId(), CaughtPokemon.Status.FAINTED)))
+                .toList();
+
+        Map<UUID, Map<CaughtPokemon.Status, Long>> counts = visibleRuns.isEmpty()
+                ? Map.of()
+                : caughtPokemonRepository.countByRunIdsGroupedByStatus(
+                        visibleRuns.stream().map(Run::getId).toList()).stream()
+                .collect(Collectors.groupingBy(
+                        CaughtPokemonRepository.RunStatusCountProjection::getRunId,
+                        Collectors.toMap(
+                                CaughtPokemonRepository.RunStatusCountProjection::getStatus,
+                                CaughtPokemonRepository.RunStatusCountProjection::getCount)));
+
+        return visibleRuns.stream()
+                .map(r -> {
+                    Map<CaughtPokemon.Status, Long> byStatus = counts.getOrDefault(r.getId(), Map.of());
+                    return RunSummaryResponse.from(r,
+                            byStatus.getOrDefault(CaughtPokemon.Status.ACTIVE, 0L),
+                            byStatus.getOrDefault(CaughtPokemon.Status.FAINTED, 0L));
+                })
                 .toList();
     }
 
