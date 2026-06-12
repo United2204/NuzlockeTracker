@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palette Preview — Nuzlocke Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #111; padding: 40px 24px; display: flex; flex-direction: column; gap: 32px; }
+  h1 { color: #fff; text-align: center; margin-bottom: 8px; font-size: 20px; }
+  .pair { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .theme-label { color: #aaa; text-align: center; font-size: 13px; margin-bottom: 10px; }
+
+  .phone {
+    width: 375px;
+    height: 780px;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.06);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── FIRERED ── */
+  .fr {
+    --accent:    #CC0000;
+    --accent-h:  #AA0000;
+    --accent-bg: rgba(204,0,0,.10);
+    --bg:        #FDF6E3;
+    --bg-card:   #FFFEF8;
+    --border:    #E8D5B0;
+    --text-h:    #1A0500;
+    --text:      #3D1A00;
+    --text-muted:#8B6E52;
+    --success:   #2E7D32;
+    --shadow-sm: 0 1px 4px rgba(100,40,0,.10);
+    --shadow:    0 4px 12px rgba(100,40,0,.14);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ── EMERALD ── */
+  .em {
+    --accent:    #1B6B2E;
+    --accent-h:  #145224;
+    --accent-bg: rgba(27,107,46,.10);
+    --bg:        #F0F7F1;
+    --bg-card:   #FFFFFF;
+    --border:    #C8DFC9;
+    --text-h:    #0A1F0D;
+    --text:      #1A3520;
+    --text-muted:#5A7D5E;
+    --success:   #2E7D32;
+    --shadow-sm: 0 1px 4px rgba(0,60,20,.08);
+    --shadow:    0 4px 12px rgba(0,60,20,.12);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ── SHARED ── */
+  .app-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .app-title { font-weight: 700; font-size: 17px; color: var(--text-h); }
+  .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px; }
+
+  .page { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+
+  .search-wrap { position: relative; }
+  .search-input {
+    width: 100%; padding: 10px 16px 10px 38px;
+    background: var(--bg-card); border: 1.5px solid var(--border);
+    border-radius: 12px; font-size: 15px; color: var(--text);
+  }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; }
+  .page-header h2 { font-size: 18px; color: var(--text-h); font-weight: 700; }
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Run card wrapper */
+  .run-card-wrapper {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .run-card-wrapper--active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-bg), var(--shadow-sm);
+  }
+  .run-card { padding: 14px 16px; }
+  .run-name { font-weight: 700; font-size: 16px; color: var(--text-h); }
+  .run-game { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .run-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .status-badge {
+    font-size: 11px; font-weight: 700; padding: 3px 8px;
+    border-radius: 20px; color: #fff; flex-shrink: 0;
+  }
+  .run-stats { display: flex; gap: 12px; margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+  .run-actions {
+    display: flex; gap: 8px; padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+  .btn-pin {
+    background: none; border: 1px solid var(--accent); border-radius: 8px;
+    padding: 4px 10px; font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 600;
+  }
+  .btn-pin--active { background: var(--accent); color: #fff; }
+  .btn-ghost-sm {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    padding: 4px 10px; font-size: 12px; color: var(--text-muted); cursor: pointer;
+  }
+
+  /* Status badges en búsqueda */
+  .caught-badge {
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+  }
+  .caught-active  { background: rgba(22,163,74,.15);  color: #16a34a; }
+  .caught-fainted { background: rgba(220,38,38,.15);  color: #dc2626; }
+  .caught-boxed   { background: rgba(180,100,6,.15);  color: #b45309; }
+
+  /* Search dropdown */
+  .search-dropdown {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow);
+    padding: 6px 0;
+  }
+  .search-label { font-size: 11px; font-weight: 700; color: var(--text-muted); padding: 4px 14px 2px; text-transform: uppercase; letter-spacing: .5px; }
+  .search-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
+  .search-sprite { width: 36px; height: 36px; image-rendering: pixelated; }
+  .search-name { font-size: 14px; font-weight: 600; color: var(--text-h); flex: 1; }
+  .type-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; color: #fff; }
+
+  /* Pokeball (CSS pura — idéntica a la implementación) */
+  .pokeball {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(to bottom, #e53935 50%, #fff 50%);
+    border: 2px solid #2a2a2a;
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+  .pokeball::before {
+    content: '';
+    position: absolute;
+    left: -2px; right: -2px;
+    top: calc(50% - 1px);
+    height: 2px;
+    background: #2a2a2a;
+  }
+  .pokeball::after {
+    content: '';
+    position: absolute;
+    width: 7px; height: 7px;
+    background: #fff;
+    border: 2px solid #2a2a2a;
+    border-radius: 50%;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .pokeball--shiny {
+    background: linear-gradient(to bottom, #FFD700 50%, #fff 50%);
+  }
+  .pokeball--sm { width: 16px; height: 16px; border-width: 1.5px; }
+  .pokeball--sm::before { height: 1.5px; left: -1.5px; right: -1.5px; }
+  .pokeball--sm::after  { width: 5px; height: 5px; border-width: 1.5px; }
+
+  /* Route list (RunDetailPage) */
+  .route-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .route-section-title {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .6px;
+    padding: 8px 14px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .route-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .route-row:last-child { border-bottom: none; }
+  .route-row-name { font-size: 14px; font-weight: 600; color: var(--text-h); flex: 1; }
+  .route-row-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .route-sprite { width: 40px; height: 40px; image-rendering: pixelated; }
+  .route-pokemon-name { font-size: 13px; color: var(--text); }
+  .outcome-failed { font-size: 12px; font-weight: 600; color: #ef4444; }
+  .outcome-pending { font-size: 12px; color: var(--text-muted); }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex; height: 60px;
+    background: var(--bg-card); border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .nav-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; font-size: 11px; color: var(--text-muted);
+  }
+  .nav-tab.active { color: var(--accent); }
+  .nav-tab span:first-child { font-size: 20px; }
+</style>
+</head>
+<body>
+<h1>Palette Preview — Nuzlocke Tracker</h1>
+<p style="color:#888; text-align:center; font-size:13px; margin-bottom:8px;">Este HTML usa exactamente el mismo CSS que está en la app ahora.</p>
+
+<div class="pair">
+
+  <!-- ══ FIRERED ══ -->
+  <div>
+    <div class="theme-label">🔴 FireRed</div>
+    <div class="phone fr">
+      <header class="app-header">
+        <span class="app-title">@roo22</span>
+        <button class="btn-icon">🔴</button>
+      </header>
+
+      <div class="page">
+        <!-- Search -->
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" placeholder="Buscar Pokémon o usuario..." readonly>
+        </div>
+        <div class="search-dropdown">
+          <div class="search-label">Pokémon</div>
+          <div class="search-item">
+            <img class="search-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" alt="">
+            <span class="search-name">Arcanine</span>
+            <span class="type-badge" style="background:#e25822">Fuego</span>
+            <span class="caught-badge caught-active">⚔️ Equipo</span>
+          </div>
+          <div class="search-item">
+            <img class="search-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/131.png" alt="">
+            <span class="search-name">Lapras ✨</span>
+            <span class="type-badge" style="background:#6890f0">Agua</span>
+            <span class="caught-badge caught-fainted">💀 Muerto</span>
+          </div>
+        </div>
+
+        <!-- Mis Runs -->
+        <div class="page-header">
+          <h2>Mis Runs</h2>
+          <button class="btn-primary">+ Nueva</button>
+        </div>
+
+        <!-- Tarjeta activa -->
+        <div class="run-card-wrapper run-card-wrapper--active">
+          <div class="run-card">
+            <div class="run-header">
+              <div>
+                <div class="run-name">⭐ Mi run FireRed</div>
+                <div class="run-game">Pokémon FireRed · Rojo</div>
+              </div>
+              <span class="status-badge" style="background:#22c55e">Activa</span>
+            </div>
+            <div class="run-stats">
+              <span>⚔️ 5 activos</span>
+              <span>💀 2 muertos</span>
+              <span style="margin-left:auto; font-size:14px" title="Privada">🔒</span>
+            </div>
+          </div>
+          <div class="run-actions">
+            <button class="btn-pin btn-pin--active">📍 En búsqueda</button>
+            <button class="btn-ghost-sm">🔒</button>
+            <button class="btn-ghost-sm">📦 Archivar</button>
+          </div>
+        </div>
+
+        <!-- Tarjeta normal -->
+        <div class="run-card-wrapper">
+          <div class="run-card">
+            <div class="run-header">
+              <div>
+                <div class="run-name">Run Esmeralda</div>
+                <div class="run-game">Pokémon Emerald</div>
+              </div>
+              <span class="status-badge" style="background:#ef4444">Game Over</span>
+            </div>
+            <div class="run-stats">
+              <span>⚔️ 0 activos</span>
+              <span>💀 6 muertos</span>
+              <span style="margin-left:auto; font-size:14px" title="Pública">🌐</span>
+            </div>
+          </div>
+          <div class="run-actions">
+            <button class="btn-pin">📍</button>
+            <button class="btn-ghost-sm">🌐</button>
+            <button class="btn-ghost-sm">📦 Archivar</button>
+          </div>
+        </div>
+
+        <!-- Rutas (RunDetailPage preview) -->
+        <div class="route-section">
+          <div class="route-section-title">🏅 Sin medalla requerida</div>
+          <div class="route-row">
+            <span class="pokeball"></span>
+            <span class="route-row-name">Ruta 1</span>
+            <div class="route-row-right">
+              <img class="route-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/16.png" alt="">
+              <span class="route-pokemon-name">Pidgey</span>
+            </div>
+          </div>
+          <div class="route-row">
+            <span class="pokeball pokeball--shiny"></span>
+            <span class="route-row-name">Ruta 2 ✨</span>
+            <div class="route-row-right">
+              <img class="route-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/25.png" alt="">
+              <span class="route-pokemon-name">Pikachu ✨</span>
+            </div>
+          </div>
+          <div class="route-row">
+            <span class="outcome-failed">✕</span>
+            <span class="route-row-name">Ruta 3</span>
+            <div class="route-row-right">
+              <span class="outcome-failed">Fallido</span>
+            </div>
+          </div>
+          <div class="route-row">
+            <span class="outcome-pending">·</span>
+            <span class="route-row-name">Ruta 4</span>
+            <div class="route-row-right">
+              <span class="outcome-pending">Pendiente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="bottom-nav">
+        <div class="nav-tab active"><span>🎮</span><span>Runs</span></div>
+        <div class="nav-tab"><span>🌍</span><span>Feed</span></div>
+        <div class="nav-tab"><span>🔔</span><span>Notif.</span></div>
+        <div class="nav-tab"><span>👤</span><span>Perfil</span></div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ══ EMERALD ══ -->
+  <div>
+    <div class="theme-label">💚 Emerald</div>
+    <div class="phone em">
+      <header class="app-header">
+        <span class="app-title">@roo22</span>
+        <button class="btn-icon">💚</button>
+      </header>
+
+      <div class="page">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" placeholder="Buscar Pokémon o usuario..." readonly>
+        </div>
+        <div class="search-dropdown">
+          <div class="search-label">Pokémon</div>
+          <div class="search-item">
+            <img class="search-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/254.png" alt="">
+            <span class="search-name">Sceptile</span>
+            <span class="type-badge" style="background:#78c850">Planta</span>
+            <span class="caught-badge caught-active">⚔️ Equipo</span>
+          </div>
+          <div class="search-item">
+            <img class="search-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/245.png" alt="">
+            <span class="search-name">Suicune ✨</span>
+            <span class="type-badge" style="background:#6890f0">Agua</span>
+            <span class="caught-badge caught-boxed">📦 Box</span>
+          </div>
+        </div>
+
+        <div class="page-header">
+          <h2>Mis Runs</h2>
+          <button class="btn-primary">+ Nueva</button>
+        </div>
+
+        <div class="run-card-wrapper run-card-wrapper--active">
+          <div class="run-card">
+            <div class="run-header">
+              <div>
+                <div class="run-name">⭐ Mi run Esmeralda</div>
+                <div class="run-game">Pokémon Emerald</div>
+              </div>
+              <span class="status-badge" style="background:#22c55e">Activa</span>
+            </div>
+            <div class="run-stats">
+              <span>⚔️ 6 activos</span>
+              <span>💀 1 muerto</span>
+              <span style="margin-left:auto; font-size:14px" title="Solo seguidores">👥</span>
+            </div>
+          </div>
+          <div class="run-actions">
+            <button class="btn-pin btn-pin--active">📍 En búsqueda</button>
+            <button class="btn-ghost-sm">👥</button>
+            <button class="btn-ghost-sm">📦 Archivar</button>
+          </div>
+        </div>
+
+        <div class="run-card-wrapper">
+          <div class="run-card">
+            <div class="run-header">
+              <div>
+                <div class="run-name">Run FireRed</div>
+                <div class="run-game">Pokémon FireRed</div>
+              </div>
+              <span class="status-badge" style="background:#3b82f6">Completada</span>
+            </div>
+            <div class="run-stats">
+              <span>⚔️ 6 activos</span>
+              <span>💀 3 muertos</span>
+              <span style="margin-left:auto; font-size:14px" title="Pública">🌐</span>
+            </div>
+          </div>
+          <div class="run-actions">
+            <button class="btn-pin">📍</button>
+            <button class="btn-ghost-sm">🌐</button>
+            <button class="btn-ghost-sm">📦 Archivar</button>
+          </div>
+        </div>
+
+        <div class="route-section">
+          <div class="route-section-title">🏅 Medalla Piedra</div>
+          <div class="route-row">
+            <span class="pokeball"></span>
+            <span class="route-row-name">Ruta 101</span>
+            <div class="route-row-right">
+              <img class="route-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/261.png" alt="">
+              <span class="route-pokemon-name">Poochyena</span>
+            </div>
+          </div>
+          <div class="route-row">
+            <span class="pokeball pokeball--shiny"></span>
+            <span class="route-row-name">Ruta 102 ✨</span>
+            <div class="route-row-right">
+              <img class="route-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/280.png" alt="">
+              <span class="route-pokemon-name">Ralts ✨</span>
+            </div>
+          </div>
+          <div class="route-row">
+            <span class="outcome-failed">✕</span>
+            <span class="route-row-name">Ruta 103</span>
+            <div class="route-row-right">
+              <span class="outcome-failed">Fallido</span>
+            </div>
+          </div>
+          <div class="route-row">
+            <span class="outcome-pending">·</span>
+            <span class="route-row-name">Ruta 104</span>
+            <div class="route-row-right">
+              <span class="outcome-pending">Pendiente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="bottom-nav">
+        <div class="nav-tab active"><span>🎮</span><span>Runs</span></div>
+        <div class="nav-tab"><span>🌍</span><span>Feed</span></div>
+        <div class="nav-tab"><span>🔔</span><span>Notif.</span></div>
+        <div class="nav-tab"><span>👤</span><span>Perfil</span></div>
+      </nav>
+    </div>
+  </div>
+
+</div>
+
+<p style="color:#666; text-align:center; font-size:12px; margin-top:16px;">
+  El CSS de pokeball, cards, sombras y acciones es idéntico al que está en la app.
+</p>
+</body>
+</html>
