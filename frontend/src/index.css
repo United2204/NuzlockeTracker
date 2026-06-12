@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 /* ─── Variables & Theme ─────────────────────────────────────────── */
 :root {
   --text:        #374151;
@@ -96,6 +98,7 @@ html, body { margin: 0; padding: 0; height: 100%; }
   min-height: 100dvh;
   background: var(--bg);
 }
+
 
 h1, h2, h3 { margin: 0; color: var(--text-h); font-weight: 600; }
 p  { margin: 0; }
@@ -334,6 +337,26 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 .auth-logo    { font-size: 48px; line-height: 1; }
 .auth-title   { font-size: 26px; font-weight: 700; }
 .auth-subtitle { color: var(--text-muted); font-size: 15px; }
+
+.logo-brand {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.8;
+}
+.pokeball--logo {
+  width: 11px; height: 11px;
+  border-width: 1.5px;
+  margin: 0 1px;
+  vertical-align: middle;
+  position: relative;
+  top: -3px;
+  left: -1px;
+  transform: rotate(-45deg);
+}
+.pokeball--logo::before { height: 1.5px; left: -1.5px; right: -1.5px; }
+.pokeball--logo::after  { width: 4px; height: 4px; border-width: 1.5px; }
 
 .auth-form {
   display: flex;
@@ -1685,4 +1708,57 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   font-size: 11px;
   padding: 2px 8px;
   color: var(--text-muted);
+}
+
+/* ─── Desktop: Phone Frame ───────────────────────────────────────── */
+@media (min-width: 520px) {
+  html, body {
+    background: #111 !important;
+    height: 100%;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100dvh;
+    padding: 0;
+  }
+
+  #root {
+    width: 375px;
+    max-width: 375px;
+    height: calc(100dvh - 56px);
+    min-height: 580px;
+    max-height: 820px;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, .75), 0 0 0 1px rgba(255,255,255,.06);
+    margin: 0;
+  }
+
+  .app-shell {
+    height: 100%;
+    min-height: unset;
+  }
+
+  .app-content {
+    padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .auth-page {
+    min-height: unset;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .bottom-nav {
+    position: static;
+    left: unset;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+  }
 }

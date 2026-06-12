@@ -62,8 +62,9 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">⚡</div>
-        <h1 className="auth-title">NuzlockeTracker</h1>
+        <h1 className="auth-title logo-brand">
+          NUZL<span className="pokeball pokeball--logo" aria-hidden="true" />CKETRACKER
+        </h1>
         <p className="auth-subtitle">Iniciá sesión para continuar</p>
 
         <a
