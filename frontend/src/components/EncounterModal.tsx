@@ -138,6 +138,7 @@ export function EncounterModal({
         await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
         await qc.invalidateQueries({ queryKey: ['runs', runId] });
         await qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
+        await qc.invalidateQueries({ queryKey: ['all-caught', runId] });
       }
       onClose();
     } catch (err: unknown) {
