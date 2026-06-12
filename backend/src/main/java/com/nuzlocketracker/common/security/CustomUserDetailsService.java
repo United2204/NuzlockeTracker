@@ -28,11 +28,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Transactional(readOnly = true)
-    public UserDetails loadUserById(UUID userId) throws UsernameNotFoundException {
+    public UserDetails loadUserByIdAndVersion(UUID userId, int expectedVersion) throws UsernameNotFoundException {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userId));
         if (user.getDeletedAt() != null) {
             throw new UsernameNotFoundException("Account deactivated: " + userId);
+        }
+        if (user.getTokenVersion() != expectedVersion) {
+            throw new UsernameNotFoundException("Token invalidated");
         }
         return buildUserDetails(user);
     }
