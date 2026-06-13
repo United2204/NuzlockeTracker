@@ -13,6 +13,7 @@ import { EncounterModal } from '../components/EncounterModal';
 import { RunSocialSection } from '../components/RunSocialSection';
 import { AuthContext } from '../contexts/AuthContext';
 import { useAuth } from '../hooks/useAuth';
+import { toShinySpriteUrl } from '../utils/sprites';
 import type {
   RouteWithEncounterResponse,
   RouteEncounterSlot,
@@ -43,10 +44,6 @@ function Pokeball({ size = 20, golden = false }: { size?: number; golden?: boole
       aria-hidden="true"
     />
   );
-}
-
-function toShinySpriteUrl(url: string): string {
-  return url.replace(/\/sprites\/pokemon\/(\d+\.png)$/, '/sprites/pokemon/shiny/$1');
 }
 
 const NO_BADGE = '__NO_BADGE__';
@@ -417,7 +414,8 @@ function RunActions({ run }: { run: RunDetailResponse }) {
 }
 
 export function RunDetailPage() {
-  const { t }     = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang        = i18n.language?.split('-')[0] ?? 'en';
   const { runId } = useParams<{ runId: string }>();
   const navigate  = useNavigate();
   const qc        = useQueryClient();
@@ -438,8 +436,8 @@ export function RunDetailPage() {
   });
 
   const apiRoutesQ = useQuery({
-    queryKey: ['runs', runId, 'routes'],
-    queryFn:  () => runsApi.routes(runId!).then(r => r.data),
+    queryKey: ['runs', runId, 'routes', lang],
+    queryFn:  () => runsApi.routes(runId!, lang).then(r => r.data),
     enabled:  !!runId && !isGuest,
   });
 
@@ -451,8 +449,8 @@ export function RunDetailPage() {
   });
 
   const guestCatalogRoutesQ = useQuery({
-    queryKey: ['catalog', 'routes', guestRunQ.data?.gameId],
-    queryFn:  () => catalogApi.routes(guestRunQ.data!.gameId).then(r => r.data),
+    queryKey: ['catalog', 'routes', guestRunQ.data?.gameId, lang],
+    queryFn:  () => catalogApi.routes(guestRunQ.data!.gameId, lang).then(r => r.data),
     enabled:  isGuest && !!guestRunQ.data?.gameId,
   });
 

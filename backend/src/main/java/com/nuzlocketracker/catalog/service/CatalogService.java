@@ -1,15 +1,19 @@
 package com.nuzlocketracker.catalog.service;
 
 import com.nuzlocketracker.catalog.dto.*;
+import com.nuzlocketracker.catalog.entity.Route;
 import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonRepository;
+import com.nuzlocketracker.catalog.repository.RouteNameRepository;
 import com.nuzlocketracker.catalog.repository.RouteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +22,7 @@ public class CatalogService {
 
     private final GameRepository gameRepository;
     private final RouteRepository routeRepository;
+    private final RouteNameRepository routeNameRepository;
     private final PokemonRepository pokemonRepository;
     private final BadgeRepository badgeRepository;
 
@@ -29,10 +34,24 @@ public class CatalogService {
     }
 
     public List<RouteResponse> listRoutesByGame(Long gameId) {
-        return routeRepository.findByGameIdOrderByDisplayOrder(gameId)
-                .stream()
-                .map(RouteResponse::from)
+        return listRoutesByGame(gameId, "en");
+    }
+
+    public List<RouteResponse> listRoutesByGame(Long gameId, String lang) {
+        List<Route> routes = routeRepository.findByGameIdOrderByDisplayOrder(gameId);
+        Map<Long, String> localized = localizedRouteNames(routes, lang);
+        return routes.stream()
+                .map(r -> RouteResponse.from(r, localized.get(r.getId())))
                 .toList();
+    }
+
+    private Map<Long, String> localizedRouteNames(List<Route> routes, String lang) {
+        if (routes.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
+        List<Long> ids = routes.stream().map(Route::getId).toList();
+        return routeNameRepository.findNamesByRouteIdsAndLang(ids, lang).stream()
+                .collect(Collectors.toMap(
+                        RouteNameRepository.NameProjection::getRouteId,
+                        RouteNameRepository.NameProjection::getName));
     }
 
     public List<BadgeResponse> getBadgesForGame(Long gameId) {

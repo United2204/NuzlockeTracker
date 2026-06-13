@@ -59,8 +59,11 @@ public class RunController {
     // ─── Rutas ─────────────────────────────────────────────────────────────────
 
     @GetMapping("/{runId}/routes")
-    public List<RouteWithEncounterResponse> getRoutes(@PathVariable UUID runId, Authentication auth) {
-        return runService.getRoutes(userId(auth), runId);
+    public List<RouteWithEncounterResponse> getRoutes(
+            @PathVariable UUID runId,
+            @RequestParam(defaultValue = "en") String lang,
+            Authentication auth) {
+        return runService.getRoutes(userId(auth), runId, lang);
     }
 
     // ─── Encuentros ────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import type { CaughtPokemonResponse } from '../types/api';
 import { typeColor } from '../utils/pokemonTypes';
+import { spriteFor } from '../utils/sprites';
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE:  'Activo',
@@ -26,6 +27,8 @@ export function PokemonCard({ pokemon, onClick, selected }: Props) {
 
   const speciesLabel = pokemon.nickname ? pokemon.currentPokemonName : null;
 
+  const spriteSrc = spriteFor(pokemon.currentPokemonSpriteUrl, pokemon.shiny);
+
   return (
     <div
       className={`pokemon-card${selected ? ' selected' : ''}`}
@@ -33,8 +36,15 @@ export function PokemonCard({ pokemon, onClick, selected }: Props) {
       style={onClick ? { cursor: 'pointer' } : undefined}
     >
       <div className="pokemon-sprite">
-        {pokemon.currentPokemonSpriteUrl ? (
-          <img src={pokemon.currentPokemonSpriteUrl} alt={pokemon.currentPokemonName} />
+        {spriteSrc ? (
+          <img
+            src={spriteSrc}
+            alt={pokemon.currentPokemonName}
+            onError={e => {
+              if (pokemon.shiny && pokemon.currentPokemonSpriteUrl)
+                (e.currentTarget).src = pokemon.currentPokemonSpriteUrl;
+            }}
+          />
         ) : (
           <div className="sprite-placeholder">?</div>
         )}

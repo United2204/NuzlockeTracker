@@ -8,8 +8,8 @@ export const catalogApi = {
   badges: (gameId: number) =>
     client.get<BadgeResponse[]>(`/api/catalog/games/${gameId}/badges`),
 
-  routes: (gameId: number) =>
-    client.get<RouteResponse[]>(`/api/catalog/games/${gameId}/routes`),
+  routes: (gameId: number, lang = 'en') =>
+    client.get<RouteResponse[]>(`/api/catalog/games/${gameId}/routes`, { params: { lang } }),
 
   searchPokemon: (q: string, lang = 'en') =>
     client.get<PokemonSearchResponse[]>('/api/catalog/pokemon/search', { params: { q, lang } }),

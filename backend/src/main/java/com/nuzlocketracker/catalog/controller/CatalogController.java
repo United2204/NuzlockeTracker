@@ -21,8 +21,11 @@ public class CatalogController {
     }
 
     @GetMapping("/games/{gameId}/routes")
-    public ResponseEntity<List<RouteResponse>> listRoutes(@PathVariable Long gameId) {
-        return ResponseEntity.ok(catalogService.listRoutesByGame(gameId));
+    public ResponseEntity<List<RouteResponse>> listRoutes(
+            @PathVariable Long gameId,
+            @RequestParam(defaultValue = "en") String lang
+    ) {
+        return ResponseEntity.ok(catalogService.listRoutesByGame(gameId, lang));
     }
 
     @GetMapping("/games/{gameId}/badges")

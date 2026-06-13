@@ -11,9 +11,13 @@ public record RouteResponse(
         String requiredBadgeName
 ) {
     public static RouteResponse from(Route r) {
+        return from(r, null);
+    }
+
+    public static RouteResponse from(Route r, String localizedName) {
         return new RouteResponse(
                 r.getId(),
-                r.getName(),
+                localizedName != null ? localizedName : r.getName(),
                 r.getDisplayOrder(),
                 r.getEncounterType().name(),
                 r.getRequiredBadge() != null ? r.getRequiredBadge().getId() : null,

@@ -37,8 +37,8 @@ export const runsApi = {
   delete: (runId: string) =>
     client.delete(`/api/runs/${runId}`),
 
-  routes: (runId: string) =>
-    client.get<RouteWithEncounterResponse[]>(`/api/runs/${runId}/routes`),
+  routes: (runId: string, lang = 'en') =>
+    client.get<RouteWithEncounterResponse[]>(`/api/runs/${runId}/routes`, { params: { lang } }),
 
   recordEncounter: (runId: string, data: {
     routeId: number;

@@ -9,6 +9,7 @@ import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonNameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonRepository;
+import com.nuzlocketracker.catalog.repository.RouteNameRepository;
 import com.nuzlocketracker.catalog.repository.RouteRepository;
 import com.nuzlocketracker.common.exception.ConflictException;
 import com.nuzlocketracker.common.exception.ResourceNotFoundException;
@@ -39,6 +40,7 @@ public class RunService {
     private final RulePresetRepository rulePresetRepository;
     private final GameRepository gameRepository;
     private final RouteRepository routeRepository;
+    private final RouteNameRepository routeNameRepository;
     private final PokemonRepository pokemonRepository;
     private final PokemonNameRepository pokemonNameRepository;
     private final BadgeRepository badgeRepository;
@@ -164,8 +166,15 @@ public class RunService {
 
     @Transactional(readOnly = true)
     public List<RouteWithEncounterResponse> getRoutes(UUID userId, UUID runId) {
+        return getRoutes(userId, runId, "en");
+    }
+
+    @Transactional(readOnly = true)
+    public List<RouteWithEncounterResponse> getRoutes(UUID userId, UUID runId, String lang) {
         Run run = requireReadableRun(userId, runId);
         List<Route> routes = routeRepository.findByGameIdOrderByDisplayOrder(run.getGame().getId());
+
+        Map<Long, String> localizedNames = localizedRouteNames(routes, lang);
 
         Map<Long, List<RouteEncounter>> encountersByRouteId = routeEncounterRepository
                 .findAllByRunIdAndDeletedAtIsNull(runId).stream()
@@ -184,8 +193,17 @@ public class RunService {
             List<RouteEncounter> sorted = encs.stream()
                     .sorted(java.util.Comparator.comparing(RouteEncounter::getCreatedAt))
                     .toList();
-            return RouteWithEncounterResponse.build(route, sorted, cpByEncounterId);
+            return RouteWithEncounterResponse.build(route, localizedNames.get(route.getId()), sorted, cpByEncounterId);
         }).toList();
+    }
+
+    private Map<Long, String> localizedRouteNames(List<Route> routes, String lang) {
+        if (routes.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
+        List<Long> ids = routes.stream().map(Route::getId).toList();
+        return routeNameRepository.findNamesByRouteIdsAndLang(ids, lang).stream()
+                .collect(Collectors.toMap(
+                        RouteNameRepository.NameProjection::getRouteId,
+                        RouteNameRepository.NameProjection::getName));
     }
 
     public RouteEncounterResponse recordEncounter(UUID userId, UUID runId, RecordEncounterRequest req) {
@@ -289,10 +307,10 @@ public class RunService {
                                 + ",\"caughtPokemonId\":\"" + caughtPokemon.getId() + "\"}");
             }
         } else if (existingCp.isPresent()) {
-            CaughtPokemon old = existingCp.get();
-            old.setStatus(CaughtPokemon.Status.FAINTED);
-            caughtPokemonRepository.save(old);
-            logStatus(old, CaughtPokemon.Status.FAINTED, "Corrección: encuentro re-registrado", true);
+            // El encuentro dejó de ser una captura (postergado, fallado, etc.).
+            // El Pokémon ya no corresponde a este slot: lo eliminamos para liberar el slot
+            // en lugar de mandarlo al cementerio. Los status logs se borran en cascada (FK ON DELETE CASCADE).
+            caughtPokemonRepository.delete(existingCp.get());
         }
 
         touchRunActivity(run);

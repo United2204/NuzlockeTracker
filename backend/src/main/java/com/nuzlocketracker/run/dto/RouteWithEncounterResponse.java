@@ -26,6 +26,11 @@ public record RouteWithEncounterResponse(
 
     public static RouteWithEncounterResponse build(Route route, List<RouteEncounter> encounters,
                                                     java.util.Map<UUID, CaughtPokemonResponse> pokemonByEncounterId) {
+        return build(route, null, encounters, pokemonByEncounterId);
+    }
+
+    public static RouteWithEncounterResponse build(Route route, String localizedName, List<RouteEncounter> encounters,
+                                                    java.util.Map<UUID, CaughtPokemonResponse> pokemonByEncounterId) {
         List<EncounterSlot> slots = encounters.stream().map(enc -> {
             CaughtPokemonResponse cp = pokemonByEncounterId.get(enc.getId());
             return new EncounterSlot(enc.getId(), enc.getOutcome().name(), cp,
@@ -34,7 +39,7 @@ public record RouteWithEncounterResponse(
 
         return new RouteWithEncounterResponse(
                 route.getId(),
-                route.getName(),
+                localizedName != null ? localizedName : route.getName(),
                 route.getEncounterType().name(),
                 route.getDisplayOrder(),
                 route.getRequiredBadge() != null ? route.getRequiredBadge().getId() : null,
