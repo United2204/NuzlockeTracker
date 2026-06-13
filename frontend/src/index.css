@@ -1840,6 +1840,14 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   min-height: 80px;
 }
 
+.pokemon-detail-card--error {
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .pdc-header {
   display: flex;
   align-items: center;

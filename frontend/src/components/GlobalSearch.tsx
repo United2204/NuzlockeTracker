@@ -15,8 +15,8 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<string, { emoji: string; key: string; bg: string; color: string }> = {
-  ACTIVE:  { emoji: '⚔️', key: 'ACTIVE',  bg: 'rgba(22,163,74,.12)',   color: '#16a34a' },
-  BOXED:   { emoji: '📦', key: 'BOXED',   bg: 'rgba(217,119,6,.12)',   color: '#d97706' },
+  ACTIVE:  { emoji: '●', key: 'ACTIVE',  bg: 'rgba(22,163,74,.12)',   color: '#16a34a' },
+  BOXED:   { emoji: '●', key: 'BOXED',   bg: 'rgba(217,119,6,.12)',   color: '#d97706' },
   FAINTED: { emoji: '💀', key: 'FAINTED', bg: 'rgba(220,38,38,.12)',   color: '#dc2626' },
 };
 

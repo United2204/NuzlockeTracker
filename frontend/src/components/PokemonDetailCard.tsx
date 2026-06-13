@@ -17,10 +17,9 @@ interface Props {
 }
 
 export function PokemonDetailCard({ pokemonId }: Props) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = i18n.language?.split('-')[0] ?? 'en';
-
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['pokemon-detail', pokemonId, lang],
     queryFn: () => catalogApi.getPokemon(pokemonId, lang).then(r => r.data),
     staleTime: 10 * 60 * 1000,
@@ -33,7 +32,13 @@ export function PokemonDetailCard({ pokemonId }: Props) {
       </div>
     );
   }
-  if (!data) return null;
+  if (isError || !data) {
+    return (
+      <div className="pokemon-detail-card pokemon-detail-card--error">
+        <span>{t('pokemon.loadError', 'No se pudo cargar el detalle')}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="pokemon-detail-card">
