@@ -1,15 +1,22 @@
 package com.nuzlocketracker.catalog.service;
 
 import com.nuzlocketracker.catalog.dto.*;
+import com.nuzlocketracker.catalog.entity.Pokemon;
+import com.nuzlocketracker.catalog.entity.PokemonBaseStats;
 import com.nuzlocketracker.catalog.entity.Route;
 import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
+import com.nuzlocketracker.catalog.repository.PokemonAbilityRepository;
+import com.nuzlocketracker.catalog.repository.PokemonBaseStatsRepository;
+import com.nuzlocketracker.catalog.repository.PokemonNameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonRepository;
 import com.nuzlocketracker.catalog.repository.RouteNameRepository;
 import com.nuzlocketracker.catalog.repository.RouteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +32,9 @@ public class CatalogService {
     private final RouteNameRepository routeNameRepository;
     private final PokemonRepository pokemonRepository;
     private final BadgeRepository badgeRepository;
+    private final PokemonNameRepository pokemonNameRepository;
+    private final PokemonBaseStatsRepository pokemonBaseStatsRepository;
+    private final PokemonAbilityRepository pokemonAbilityRepository;
 
     public List<GameResponse> listGames() {
         return gameRepository.findAllByOrderByGenerationAscNameAsc()
@@ -83,5 +93,18 @@ public class CatalogService {
                 .stream()
                 .map(PokemonSearchResponse::from)
                 .toList();
+    }
+
+    public PokemonDetailResponse getPokemonDetail(Long id, String lang) {
+        Pokemon pokemon = pokemonRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pokemon not found"));
+        String effectiveLang = (lang != null && !lang.isBlank()) ? lang : "en";
+        List<PokemonNameRepository.NameProjection> nameProjs =
+                pokemonNameRepository.findNamesByPokemonIdsAndLang(List.of(id), effectiveLang);
+        String name = nameProjs.isEmpty() ? "" : nameProjs.get(0).getName();
+        PokemonBaseStats stats = pokemonBaseStatsRepository.findById(id).orElse(null);
+        List<PokemonAbilityRepository.AbilityEntryProjection> abilities =
+                pokemonAbilityRepository.findByPokemonId(id, effectiveLang);
+        return PokemonDetailResponse.from(pokemon, name, stats, abilities);
     }
 }

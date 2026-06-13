@@ -6,6 +6,7 @@ import { socialApi, type PublicProfile } from '../api/social';
 import type { PokemonSearchResponse } from '../types/api';
 import { typeColor } from '../utils/pokemonTypes';
 import { useAuth } from '../hooks/useAuth';
+import { PokemonDetailCard } from './PokemonDetailCard';
 
 // Map from chainId (or pokemonId when chain is null) → best status
 interface Props {
@@ -29,6 +30,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
+  const [selectedPokemon, setSelectedPokemon] = useState<PokemonSearchResponse | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +49,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
       setPokemonResults([]);
       setUserResults([]);
       setOpen(false);
+      setSelectedPokemon(null);
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -91,6 +94,11 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
     return caughtByPokemonId.get(p.id) ?? null;
   }
 
+  function selectPokemon(p: PokemonSearchResponse) {
+    setSelectedPokemon(p);
+    setOpen(false);
+  }
+
   function goToProfile(username: string) {
     setOpen(false);
     setQuery('');
@@ -122,6 +130,12 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
         )}
       </div>
 
+      {selectedPokemon && !open && (
+        <div className="global-search-pokemon-detail">
+          <PokemonDetailCard pokemonId={selectedPokemon.id} />
+        </div>
+      )}
+
       {open && hasResults && (
         <div className="global-search-dropdown">
           {pokemonResults.length > 0 && (
@@ -131,15 +145,20 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
                 const status = getCaughtStatus(p);
                 const cfg = status ? STATUS_CONFIG[status] : null;
                 return (
-                  <div key={p.id} className="search-item search-item--pokemon">
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="search-item search-item--pokemon"
+                    onClick={() => selectPokemon(p)}
+                  >
                     {p.spriteUrl
                       ? <img src={p.spriteUrl} alt={p.name} className="search-sprite" />
                       : <div className="search-sprite-placeholder" />
                     }
                     <span className="search-name">{p.name}</span>
                     <div className="type-badges search-types">
-                      {p.types.map(t => (
-                        <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
+                      {p.types.map(type => (
+                        <span key={type} className="type-badge" style={{ background: typeColor(type) }}>{type}</span>
                       ))}
                     </div>
                     {cfg && (
@@ -150,7 +169,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
                         {cfg.emoji} {t(`search.status.${cfg.key}`)}
                       </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </>

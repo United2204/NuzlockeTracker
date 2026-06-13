@@ -1,5 +1,5 @@
 import { client } from './client';
-import type { GameResponse, BadgeResponse, RouteResponse, PokemonSearchResponse } from '../types/api';
+import type { GameResponse, BadgeResponse, RouteResponse, PokemonSearchResponse, PokemonDetailResponse } from '../types/api';
 
 export const catalogApi = {
   games: () =>
@@ -16,4 +16,7 @@ export const catalogApi = {
 
   evolutionChain: (pokemonId: number, lang = 'en') =>
     client.get<PokemonSearchResponse[]>(`/api/catalog/pokemon/${pokemonId}/evolutions`, { params: { lang } }),
+
+  getPokemon: (id: number, lang = 'en') =>
+    client.get<PokemonDetailResponse>(`/api/catalog/pokemon/${id}`, { params: { lang } }),
 };

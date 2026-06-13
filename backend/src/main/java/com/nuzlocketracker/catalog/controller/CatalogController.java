@@ -41,6 +41,14 @@ public class CatalogController {
         return ResponseEntity.ok(catalogService.getEncounterSuggestions(routeId, gameVersion));
     }
 
+    @GetMapping("/pokemon/{id}")
+    public ResponseEntity<PokemonDetailResponse> getPokemon(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "en") String lang
+    ) {
+        return ResponseEntity.ok(catalogService.getPokemonDetail(id, lang));
+    }
+
     @GetMapping("/pokemon/search")
     public ResponseEntity<List<PokemonSearchResponse>> searchPokemon(
             @RequestParam String q,

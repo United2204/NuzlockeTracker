@@ -126,6 +126,29 @@ export interface CaughtPokemonResponse {
   chainId: number | null;
 }
 
+export interface PokemonDetailResponse {
+  id: number;
+  speciesId: number;
+  nationalDexNumber: number | null;
+  types: string[];
+  spriteUrl: string | null;
+  variant: string | null;
+  name: string;
+  baseStats: {
+    hp: number;
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  } | null;
+  abilities: Array<{
+    name: string;
+    slot: string;
+    hidden: boolean;
+  }>;
+}
+
 export interface RouteEncounterSlot {
   id: string;
   outcome: string;

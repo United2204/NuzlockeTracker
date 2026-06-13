@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { catalogApi } from '../api/catalog';
 import type { PokemonSearchResponse } from '../types/api';
 import { typeColor } from '../utils/pokemonTypes';
+import { PokemonDetailCard } from './PokemonDetailCard';
 
 interface Props {
   onSelect: (pokemon: PokemonSearchResponse) => void;
@@ -79,6 +80,7 @@ export function PokemonSearch({ onSelect, placeholder, initialPokemon }: Props) 
           ))}
         </div>
       )}
+      {selected && <PokemonDetailCard pokemonId={selected.id} />}
     </div>
   );
 }

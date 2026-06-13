@@ -1565,7 +1565,7 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 }
 
 .search-item--pokemon {
-  cursor: default;
+  cursor: pointer;
 }
 
 .search-item--user {
@@ -1820,4 +1820,130 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Pokémon Detail Card ────────────────────────────────────────── */
+.pokemon-detail-card {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pokemon-detail-card--loading {
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+
+.pdc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdc-sprite {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.pdc-sprite-placeholder {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.pdc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pdc-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-h);
+  line-height: 1.2;
+}
+
+.pdc-dex {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.pdc-types { flex-wrap: wrap; }
+
+.pdc-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pdc-stat-row {
+  display: grid;
+  grid-template-columns: 32px 28px 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdc-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.pdc-stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+}
+
+.pdc-stat-bar-bg {
+  height: 6px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.pdc-stat-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.pdc-abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pdc-ability {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pdc-ability--hidden {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.global-search-pokemon-detail {
+  padding: 0 2px;
 }
