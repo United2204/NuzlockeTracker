@@ -255,5 +255,63 @@
     "abandonConfirm": "¿Seguro que querés abandonar esta run?",
     "visibilityTitle": "Visibilidad de la run",
     "addEncounter": "Agregar otro encuentro"
+  },
+  "runStats": {
+    "title": "Estadísticas",
+    "routes": {
+      "section": "Rutas",
+      "attempted": "Intentadas",
+      "captured": "Capturadas",
+      "failed": "Fallidas",
+      "pending": "Pendientes",
+      "catchRate": "Tasa de captura:"
+    },
+    "pokemon": {
+      "section": "Pokémon",
+      "active": "En equipo",
+      "boxed": "En box",
+      "fainted": "Muertos"
+    },
+    "teamTime": {
+      "section": "Tiempo en equipo",
+      "statusActive": "En equipo",
+      "statusBoxed": "En box",
+      "statusFainted": "Muerto"
+    },
+    "graveyard": "💀 Cementerio",
+    "empty": "Todavía no hay Pokémon registrados en esta run."
+  },
+  "pokemon": {
+    "loadError": "No se pudo cargar el detalle"
+  },
+  "calc": {
+    "title": "Calculadora de daño",
+    "attacker": "Atacante",
+    "defender": "Defensor",
+    "move": "Movimiento",
+    "result": "Resultado",
+    "level": "Nivel",
+    "nature": "Naturaleza",
+    "noNature": "— ninguna —",
+    "attack": "Ataque",
+    "spAtk": "At. Esp.",
+    "defense": "Defensa",
+    "spDef": "Def. Esp.",
+    "noLearnset": "Sin learnset disponible — ingresá poder manual",
+    "chooseMove": "— elegir movimiento —",
+    "customPower": "Poder manual",
+    "searchDefender": "Buscar Pokémon defensor...",
+    "defenderLevel": "Nivel defensor",
+    "defenderNature": "Naturaleza defensor",
+    "phys": "Fís",
+    "sp": "Esp",
+    "noEffect": "Sin efecto",
+    "superEffective": "{{x}}x (¡super efectivo!)",
+    "notVeryEffective": "{{x}}x (no muy efectivo)",
+    "hitsToKO": "KO en {{n}} golpe",
+    "hitsToKO_plural": "KO en {{n}} golpes",
+    "basicView": "Vista básica",
+    "fullView": "Vista completa",
+    "close": "Cerrar"
   }
 }

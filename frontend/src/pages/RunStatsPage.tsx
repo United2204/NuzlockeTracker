@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { statsApi, type PokemonTimeRecord, type DeathRecord } from '../api/stats';
 import { Layout } from '../components/Layout';
 
@@ -22,9 +23,14 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 }
 
 function TimeRow({ record }: { record: PokemonTimeRecord }) {
+  const { t, i18n } = useTranslation();
   const statusColor =
     record.status === 'ACTIVE'  ? 'var(--success)' :
     record.status === 'FAINTED' ? 'var(--danger)'  : 'var(--text-muted)';
+  const statusLabel =
+    record.status === 'ACTIVE'  ? t('runStats.teamTime.statusActive') :
+    record.status === 'BOXED'   ? t('runStats.teamTime.statusBoxed')  :
+                                  t('runStats.teamTime.statusFainted');
 
   return (
     <div className="stats-row">
@@ -39,8 +45,7 @@ function TimeRow({ record }: { record: PokemonTimeRecord }) {
           )}
         </span>
         <span className="stats-row-sub" style={{ color: statusColor }}>
-          {record.status === 'ACTIVE' ? 'En equipo' :
-           record.status === 'BOXED'  ? 'En box'    : 'Muerto'}
+          {statusLabel}
         </span>
       </div>
       <span className="stats-row-time">{formatTime(record.secondsInTeam)}</span>
@@ -49,8 +54,9 @@ function TimeRow({ record }: { record: PokemonTimeRecord }) {
 }
 
 function DeathRow({ record }: { record: DeathRecord }) {
+  const { i18n } = useTranslation();
   const date = record.faintedAt
-    ? new Date(record.faintedAt).toLocaleDateString('es', { day: 'numeric', month: 'short' })
+    ? new Date(record.faintedAt).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })
     : null;
 
   return (
@@ -77,6 +83,7 @@ function DeathRow({ record }: { record: DeathRecord }) {
 }
 
 export function RunStatsPage() {
+  const { t } = useTranslation();
   const { runId } = useParams<{ runId: string }>();
 
   const { data, isLoading } = useQuery({
@@ -86,24 +93,23 @@ export function RunStatsPage() {
   });
 
   return (
-    <Layout title="Estadísticas" back={`/runs/${runId}`} runId={runId}>
+    <Layout title={t('runStats.title')} back={`/runs/${runId}`} runId={runId}>
       <div className="page-content">
         {isLoading && <div className="spinner" style={{ margin: '48px auto' }} />}
 
         {data && (
           <>
-            {/* Rutas */}
             <section className="stats-section">
-              <h3 className="stats-section-title">Rutas</h3>
+              <h3 className="stats-section-title">{t('runStats.routes.section')}</h3>
               <div className="stat-cards-grid">
-                <StatCard label="Intentadas" value={data.routesAttempted} />
-                <StatCard label="Capturadas" value={data.routesCaptured} color="var(--success)" />
-                <StatCard label="Fallidas"   value={data.routesFailed}   color="var(--danger)" />
-                <StatCard label="Pendientes" value={data.routesPending}  color="var(--text-muted)" />
+                <StatCard label={t('runStats.routes.attempted')} value={data.routesAttempted} />
+                <StatCard label={t('runStats.routes.captured')} value={data.routesCaptured} color="var(--success)" />
+                <StatCard label={t('runStats.routes.failed')}   value={data.routesFailed}   color="var(--danger)" />
+                <StatCard label={t('runStats.routes.pending')}  value={data.routesPending}  color="var(--text-muted)" />
               </div>
               {data.routesAttempted > 0 && (
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
-                  Tasa de captura:{' '}
+                  {t('runStats.routes.catchRate')}{' '}
                   <strong style={{ color: 'var(--success)' }}>
                     {Math.round((data.routesCaptured / data.routesAttempted) * 100)}%
                   </strong>
@@ -111,20 +117,18 @@ export function RunStatsPage() {
               )}
             </section>
 
-            {/* Equipo */}
             <section className="stats-section">
-              <h3 className="stats-section-title">Pokémon</h3>
+              <h3 className="stats-section-title">{t('runStats.pokemon.section')}</h3>
               <div className="stat-cards-grid">
-                <StatCard label="En equipo" value={data.activeCount}  color="var(--success)" />
-                <StatCard label="En box"    value={data.boxedCount}   color="var(--info)" />
-                <StatCard label="Muertos"   value={data.faintedCount} color="var(--danger)" />
+                <StatCard label={t('runStats.pokemon.active')}  value={data.activeCount}  color="var(--success)" />
+                <StatCard label={t('runStats.pokemon.boxed')}   value={data.boxedCount}   color="var(--info)" />
+                <StatCard label={t('runStats.pokemon.fainted')} value={data.faintedCount} color="var(--danger)" />
               </div>
             </section>
 
-            {/* Tiempo en equipo */}
             {data.teamTime.length > 0 && (
               <section className="stats-section">
-                <h3 className="stats-section-title">Tiempo en equipo</h3>
+                <h3 className="stats-section-title">{t('runStats.teamTime.section')}</h3>
                 <div className="stats-list">
                   {data.teamTime.map(r => (
                     <TimeRow key={r.pokemonId} record={r} />
@@ -133,10 +137,9 @@ export function RunStatsPage() {
               </section>
             )}
 
-            {/* Cementerio */}
             {data.deaths.length > 0 && (
               <section className="stats-section">
-                <h3 className="stats-section-title">💀 Cementerio</h3>
+                <h3 className="stats-section-title">{t('runStats.graveyard')}</h3>
                 <div className="stats-list">
                   {data.deaths.map(r => (
                     <DeathRow key={r.pokemonId} record={r} />
@@ -147,7 +150,7 @@ export function RunStatsPage() {
 
             {data.deaths.length === 0 && data.teamTime.length === 0 && (
               <div className="empty-state">
-                <p>Todavía no hay Pokémon registrados en esta run.</p>
+                <p>{t('runStats.empty')}</p>
               </div>
             )}
           </>

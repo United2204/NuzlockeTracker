@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { calcApi, type LearnsetEntry } from '../api/calc';
 import { PokemonSearch } from './PokemonSearch';
 import {
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [defenderPokemonId, setDefenderPokemonId] = useState<number | null>(null);
 
@@ -112,9 +114,9 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
   useEffect(() => { setSelectedMove(null); }, [attacker.currentPokemonId]);
 
   const effectLabel = result
-    ? result.effectiveness === 0 ? 'Sin efecto'
-    : result.effectiveness >= 2  ? `${result.effectiveness}x (super efectivo!)`
-    : result.effectiveness < 1   ? `${result.effectiveness}x (no muy efectivo)`
+    ? result.effectiveness === 0 ? t('calc.noEffect')
+    : result.effectiveness >= 2  ? t('calc.superEffective', { x: result.effectiveness })
+    : result.effectiveness < 1   ? t('calc.notVeryEffective', { x: result.effectiveness })
     : '1x'
     : '';
 
@@ -122,7 +124,7 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal calc-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Calculadora de daño</h2>
+          <h2>{t('calc.title')}</h2>
           <button className="btn-icon" onClick={onClose}>✕</button>
         </div>
 
@@ -142,14 +144,14 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
             </h3>
 
             <div className="calc-row">
-              <label>Nivel
+              <label>{t('calc.level')}
                 <input type="number" min={1} max={100} value={atkLevel}
                   onChange={e => setAtkLevel(+e.target.value)} />
               </label>
               {expanded && (
-                <label>Naturaleza
+                <label>{t('calc.nature')}
                   <select value={atkNature} onChange={e => setAtkNature(e.target.value)}>
-                    <option value="">— ninguna —</option>
+                    <option value="">{t('calc.noNature')}</option>
                     {NATURES.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </label>
@@ -159,14 +161,14 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
             {expanded && (
               <div className="calc-eviv">
                 <div className="calc-stat-row">
-                  <span>Ataque</span>
+                  <span>{t('calc.attack')}</span>
                   <label>EV<input type="number" min={0} max={252} value={atkEvAtk}
                     onChange={e => setAtkEvAtk(+e.target.value)} /></label>
                   <label>IV<input type="number" min={0} max={31} value={atkIvAtk}
                     onChange={e => setAtkIvAtk(+e.target.value)} /></label>
                 </div>
                 <div className="calc-stat-row">
-                  <span>At. Esp.</span>
+                  <span>{t('calc.spAtk')}</span>
                   <label>EV<input type="number" min={0} max={252} value={atkEvSpA}
                     onChange={e => setAtkEvSpA(+e.target.value)} /></label>
                   <label>IV<input type="number" min={0} max={31} value={atkIvSpA}
@@ -190,7 +192,7 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
 
           {/* Movimiento */}
           <section className="calc-section">
-            <h3>Movimiento</h3>
+            <h3>{t('calc.move')}</h3>
             {atkData && atkData.learnset.length > 0 ? (
               <select
                 value={selectedMove?.moveId ?? ''}
@@ -199,24 +201,24 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
                   setSelectedMove(atkData.learnset.find(m => m.moveId === id) ?? null);
                 }}
               >
-                <option value="">— elegir movimiento —</option>
+                <option value="">{t('calc.chooseMove')}</option>
                 {atkData.learnset
                   .filter(m => m.category !== 'STATUS')
                   .map(m => (
                     <option key={m.moveId} value={m.moveId}>
-                      {m.name} ({m.type}, {m.category === 'PHYSICAL' ? 'Fís' : 'Esp'}, P:{m.power ?? '—'})
+                      {m.name} ({m.type}, {m.category === 'PHYSICAL' ? t('calc.phys') : t('calc.sp')}, P:{m.power ?? '—'})
                     </option>
                   ))}
               </select>
             ) : (
-              <p className="calc-hint">Sin learnset disponible — ingresá poder manual</p>
+              <p className="calc-hint">{t('calc.noLearnset')}</p>
             )}
             {(selectedMove || !atkData?.learnset.length) && (
               <div className="calc-row">
                 {selectedMove && !selectedMove.power && (
-                  <label>Poder manual
+                  <label>{t('calc.customPower')}
                     <input type="number" min={1} max={999} value={customPower}
-                      onChange={e => setCustomPower(e.target.value)} placeholder="ej: 80" />
+                      onChange={e => setCustomPower(e.target.value)} placeholder="80" />
                   </label>
                 )}
               </div>
@@ -225,16 +227,16 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
 
           {/* Defensor */}
           <section className="calc-section">
-            <h3>Defensor</h3>
+            <h3>{t('calc.defender')}</h3>
             <PokemonSearch
-              placeholder="Buscar Pokémon defensor..."
+              placeholder={t('calc.searchDefender')}
               onSelect={p => setDefenderPokemonId(p.id)}
             />
             {defData && (
               <>
                 <div className="calc-types">
-                  {defData.types.map(t => (
-                    <span key={t} className={`type-badge type-${t.toLowerCase()}`}>{t}</span>
+                  {defData.types.map(type => (
+                    <span key={type} className={`type-badge type-${type.toLowerCase()}`}>{type}</span>
                   ))}
                 </div>
                 {defData.baseStats && (
@@ -257,26 +259,26 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
                         onChange={e => setDefIvHp(+e.target.value)} /></label>
                     </div>
                     <div className="calc-stat-row">
-                      <span>Defensa</span>
+                      <span>{t('calc.defense')}</span>
                       <label>EV<input type="number" min={0} max={252} value={defEvDef}
                         onChange={e => setDefEvDef(+e.target.value)} /></label>
                       <label>IV<input type="number" min={0} max={31} value={defIvDef}
                         onChange={e => setDefIvDef(+e.target.value)} /></label>
                     </div>
                     <div className="calc-stat-row">
-                      <span>Def. Esp.</span>
+                      <span>{t('calc.spDef')}</span>
                       <label>EV<input type="number" min={0} max={252} value={defEvSpD}
                         onChange={e => setDefEvSpD(+e.target.value)} /></label>
                       <label>IV<input type="number" min={0} max={31} value={defIvSpD}
                         onChange={e => setDefIvSpD(+e.target.value)} /></label>
                     </div>
-                    <label>Nivel defensor
+                    <label>{t('calc.defenderLevel')}
                       <input type="number" min={1} max={100} value={defLevel}
                         onChange={e => setDefLevel(+e.target.value)} />
                     </label>
-                    <label>Naturaleza defensor
+                    <label>{t('calc.defenderNature')}
                       <select value={defNature} onChange={e => setDefNature(e.target.value)}>
-                        <option value="">— ninguna —</option>
+                        <option value="">{t('calc.noNature')}</option>
                         {NATURES.map(n => <option key={n} value={n}>{n}</option>)}
                       </select>
                     </label>
@@ -301,7 +303,9 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
               </div>
               {result.hitsToKO < Infinity && (
                 <div className="calc-ko">
-                  KO en {result.hitsToKO} golpe{result.hitsToKO > 1 ? 's' : ''}
+                  {result.hitsToKO > 1
+                    ? t('calc.hitsToKO_plural', { n: result.hitsToKO })
+                    : t('calc.hitsToKO', { n: result.hitsToKO })}
                 </div>
               )}
             </section>
@@ -310,9 +314,9 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
 
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={() => setExpanded(v => !v)}>
-            {expanded ? 'Vista básica' : 'Vista completa'}
+            {expanded ? t('calc.basicView') : t('calc.fullView')}
           </button>
-          <button className="btn btn-primary" onClick={onClose}>Cerrar</button>
+          <button className="btn btn-primary" onClick={onClose}>{t('calc.close')}</button>
         </div>
       </div>
     </div>

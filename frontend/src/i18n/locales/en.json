@@ -255,5 +255,63 @@
     "abandonConfirm": "Are you sure you want to abandon this run?",
     "visibilityTitle": "Run visibility",
     "addEncounter": "Add another encounter"
+  },
+  "runStats": {
+    "title": "Statistics",
+    "routes": {
+      "section": "Routes",
+      "attempted": "Attempted",
+      "captured": "Captured",
+      "failed": "Failed",
+      "pending": "Pending",
+      "catchRate": "Catch rate:"
+    },
+    "pokemon": {
+      "section": "Pokémon",
+      "active": "On team",
+      "boxed": "Boxed",
+      "fainted": "Fainted"
+    },
+    "teamTime": {
+      "section": "Time on team",
+      "statusActive": "On team",
+      "statusBoxed": "Boxed",
+      "statusFainted": "Fainted"
+    },
+    "graveyard": "💀 Graveyard",
+    "empty": "No Pokémon registered in this run yet."
+  },
+  "pokemon": {
+    "loadError": "Could not load details"
+  },
+  "calc": {
+    "title": "Damage calculator",
+    "attacker": "Attacker",
+    "defender": "Defender",
+    "move": "Move",
+    "result": "Result",
+    "level": "Level",
+    "nature": "Nature",
+    "noNature": "— none —",
+    "attack": "Attack",
+    "spAtk": "Sp. Atk",
+    "defense": "Defense",
+    "spDef": "Sp. Def",
+    "noLearnset": "No learnset available — enter power manually",
+    "chooseMove": "— choose a move —",
+    "customPower": "Custom power",
+    "searchDefender": "Search defender Pokémon...",
+    "defenderLevel": "Defender level",
+    "defenderNature": "Defender nature",
+    "phys": "Phys",
+    "sp": "Sp",
+    "noEffect": "No effect",
+    "superEffective": "{{x}}x (super effective!)",
+    "notVeryEffective": "{{x}}x (not very effective)",
+    "hitsToKO": "KO in {{n}} hit",
+    "hitsToKO_plural": "KO in {{n}} hits",
+    "basicView": "Basic view",
+    "fullView": "Full view",
+    "close": "Close"
   }
 }
