@@ -10,7 +10,7 @@ import { PokemonCard } from '../components/PokemonCard';
 import { PokemonSearch } from '../components/PokemonSearch';
 import { typeColor, typeLabel } from '../utils/pokemonTypes';
 import { useAuth } from '../hooks/useAuth';
-import type { CaughtPokemonResponse, PokemonSearchResponse, RunDetailResponse } from '../types/api';
+import type { CaughtPokemonResponse, PokemonSearchResponse } from '../types/api';
 
 type Tab = 'team' | 'box' | 'graveyard';
 
@@ -152,12 +152,6 @@ export function TeamPage() {
   const qc = useQueryClient();
 
   // ── API queries ────────────────────────────────────────────────────────────
-  const apiRunQ = useQuery({
-    queryKey: ['runs', runId],
-    queryFn:  () => runsApi.get(runId!).then(r => r.data),
-    enabled:  !!runId && !isGuest,
-  });
-
   const apiTeamQ = useQuery({
     queryKey: ['runs', runId, 'team', lang],
     queryFn:  () => runsApi.team(runId!, lang).then(r => r.data),
@@ -177,12 +171,6 @@ export function TeamPage() {
   });
 
   // ── Guest queries ──────────────────────────────────────────────────────────
-  const guestRunQ = useQuery({
-    queryKey: ['guest', 'runs', runId],
-    queryFn:  () => guestStore.getRun(runId!),
-    enabled:  !!runId && isGuest,
-  });
-
   const guestTabQ = useQuery({
     queryKey: ['guest', 'runs', runId, tab],
     queryFn:  () => guestStore.getByStatus(
@@ -191,8 +179,6 @@ export function TeamPage() {
     ),
     enabled:  !!runId && isGuest,
   });
-
-  const run: RunDetailResponse | undefined = isGuest ? guestRunQ.data ?? undefined : apiRunQ.data;
 
   const currentData: CaughtPokemonResponse[] | undefined = isGuest
     ? guestTabQ.data
