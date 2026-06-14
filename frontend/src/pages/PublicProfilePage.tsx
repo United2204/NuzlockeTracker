@@ -12,10 +12,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  ACTIVE:    '#22c55e',
-  COMPLETED: '#3b82f6',
-  GAME_OVER: '#ef4444',
-  ABANDONED: '#6b7280',
+  ACTIVE:    'var(--success)',
+  COMPLETED: 'var(--info)',
+  GAME_OVER: 'var(--danger)',
+  ABANDONED: 'var(--text-muted)',
 };
 
 const VISIBILITY_ICON: Record<string, string> = {

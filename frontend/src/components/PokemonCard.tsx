@@ -4,9 +4,9 @@ import { typeColor } from '../utils/pokemonTypes';
 import { spriteFor } from '../utils/sprites';
 
 const STATUS_COLOR: Record<string, string> = {
-  ACTIVE:  '#22c55e',
-  BOXED:   '#3b82f6',
-  FAINTED: '#ef4444',
+  ACTIVE:  'var(--success)',
+  BOXED:   'var(--info)',
+  FAINTED: 'var(--danger)',
 };
 
 interface Props {

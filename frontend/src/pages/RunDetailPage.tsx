@@ -24,12 +24,12 @@ import type { GuestEncounterSaveData } from '../components/EncounterModal';
 type ActiveEncounter = { route: RouteWithEncounterResponse; slot: RouteEncounterSlot | null };
 
 const OUTCOME_COLOR: Record<string, string> = {
-  PENDING:           '#6b7280',
-  DEFERRED:          '#f59e0b',
-  CAPTURED:          '#22c55e',
-  FAILED:            '#ef4444',
-  DIED_IN_ENCOUNTER: '#ef4444',
-  NOT_FOUND:         '#6b7280',
+  PENDING:           'var(--text-muted)',
+  DEFERRED:          'var(--warning)',
+  CAPTURED:          'var(--success)',
+  FAILED:            'var(--danger)',
+  DIED_IN_ENCOUNTER: 'var(--danger)',
+  NOT_FOUND:         'var(--text-muted)',
 };
 
 function Pokeball({ size = 20, golden = false }: { size?: number; golden?: boolean }) {

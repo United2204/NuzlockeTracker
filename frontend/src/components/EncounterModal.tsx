@@ -9,11 +9,11 @@ import { PokemonSearch } from './PokemonSearch';
 import { runsApi } from '../api/runs';
 
 const OUTCOMES = [
-  { value: 'CAPTURED',          color: '#22c55e' },
-  { value: 'FAILED',            color: '#ef4444' },
-  { value: 'DIED_IN_ENCOUNTER', color: '#ef4444' },
-  { value: 'NOT_FOUND',         color: '#6b7280' },
-  { value: 'DEFERRED',          color: '#f59e0b' },
+  { value: 'CAPTURED',          color: 'var(--success)' },
+  { value: 'FAILED',            color: 'var(--danger)' },
+  { value: 'DIED_IN_ENCOUNTER', color: 'var(--danger)' },
+  { value: 'NOT_FOUND',         color: 'var(--text-muted)' },
+  { value: 'DEFERRED',          color: 'var(--warning)' },
 ];
 
 const schema = z.object({
@@ -196,7 +196,7 @@ export function EncounterModal({
             )}
 
             {isForced ? (
-              <p className="form-label" style={{ marginBottom: 8, color: '#22c55e' }}>
+              <p className="form-label" style={{ marginBottom: 8, color: 'var(--success)' }}>
                 {route.encounterType === 'STARTER' ? t('encounter.chooseStarter') : t('encounter.guaranteed')}
               </p>
             ) : (

@@ -592,7 +592,13 @@ public class RunService {
     }
 
     private int resolveMaxCatches(UUID runId) {
-        return runRuleRepository.findAllByRunId(runId).stream()
+        List<RunRule> rules = runRuleRepository.findAllByRunId(runId);
+
+        boolean firstEncounterOnly = rules.stream()
+                .anyMatch(r -> r.getRuleType() == RunRule.RuleType.FIRST_ENCOUNTER_ONLY && r.isEnabled());
+        if (firstEncounterOnly) return 1;
+
+        return rules.stream()
                 .filter(r -> r.getRuleType() == RunRule.RuleType.MAX_CATCHES_PER_ROUTE && r.isEnabled())
                 .findFirst()
                 .map(r -> {
@@ -603,7 +609,7 @@ public class RunService {
                     }
                     return 1;
                 })
-                .orElse(1);
+                .orElse(Integer.MAX_VALUE);
     }
 
     private RulePreset resolvePreset(Long presetId) {
