@@ -9,6 +9,7 @@ public record NotificationResponse(
         String type,
         Long referenceId,
         String actorUsername,
+        String actorId,
         boolean read,
         OffsetDateTime createdAt
 ) {
@@ -18,6 +19,7 @@ public record NotificationResponse(
                 n.getType().name(),
                 n.getReferenceId(),
                 n.getActor() != null ? n.getActor().getUsername() : null,
+                n.getActor() != null ? n.getActor().getId().toString() : null,
                 n.isRead(),
                 n.getCreatedAt()
         );

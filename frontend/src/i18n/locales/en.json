@@ -256,6 +256,19 @@
     "visibilityTitle": "Run visibility",
     "addEncounter": "Add another encounter"
   },
+  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading...",
+    "empty": "No notifications",
+    "newFollower": "started following you",
+    "pokemonCaptured": "caught a Pokémon",
+    "pokemonFainted": "a Pokémon fainted",
+    "badgeObtained": "obtained a badge",
+    "runEnded": "ended a run",
+    "newComment": "commented on your run",
+    "newReaction": "reacted to your run",
+    "following": "✓ Following"
+  },
   "runNav": {
     "routes": "Routes",
     "team": "Team",

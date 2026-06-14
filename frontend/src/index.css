@@ -1375,9 +1375,22 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 .notif-item:last-child { border-bottom: none; }
 .notif-item:hover { background: var(--bg); }
 .notif-item--unread { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.notif-item-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .notif-text {
   font-size: 13px;
   color: var(--text-h);
+  flex: 1;
+  min-width: 0;
+}
+.notif-follow-btn {
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  height: auto !important;
+  flex-shrink: 0;
 }
 .notif-date {
   font-size: 11px;

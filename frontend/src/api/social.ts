@@ -47,6 +47,7 @@ export interface Notification {
   type: string;
   referenceId: number;
   actorUsername: string | null;
+  actorId: string | null;
   read: boolean;
   createdAt: string;
 }

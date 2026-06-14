@@ -256,6 +256,19 @@
     "visibilityTitle": "Visibilidad de la run",
     "addEncounter": "Agregar otro encuentro"
   },
+  "notifications": {
+    "title": "Notificaciones",
+    "loading": "Cargando...",
+    "empty": "Sin notificaciones",
+    "newFollower": "te empezó a seguir",
+    "pokemonCaptured": "capturó un Pokémon",
+    "pokemonFainted": "un Pokémon cayó",
+    "badgeObtained": "obtuvo una medalla",
+    "runEnded": "terminó una run",
+    "newComment": "comentó en tu run",
+    "newReaction": "reaccionó a tu run",
+    "following": "✓ Siguiendo"
+  },
   "runNav": {
     "routes": "Rutas",
     "team": "Equipo",
