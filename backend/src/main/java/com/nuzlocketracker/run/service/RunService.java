@@ -233,10 +233,10 @@ public class RunService {
 
     private Map<Long, String> localizedRouteNames(List<Route> routes, String lang) {
         List<Long> ids = routes.stream().map(Route::getId).toList();
-        return localizedRouteNames(ids, lang);
+        return localizedRouteNamesByIds(ids, lang);
     }
 
-    private Map<Long, String> localizedRouteNames(List<Long> ids, String lang) {
+    private Map<Long, String> localizedRouteNamesByIds(List<Long> ids, String lang) {
         if (ids.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
         return routeNameRepository.findNamesByRouteIdsAndLang(ids, lang).stream()
                 .collect(Collectors.toMap(
@@ -683,7 +683,7 @@ public class RunService {
         List<Long> routeIds = pokemons.stream()
                 .map(cp -> cp.getRouteEncounter().getRoute().getId())
                 .distinct().toList();
-        Map<Long, String> routeNames = localizedRouteNames(routeIds, effectiveLang);
+        Map<Long, String> routeNames = localizedRouteNamesByIds(routeIds, effectiveLang);
 
         final Map<Long, String> finalNames = names;
         return pokemons.stream()
