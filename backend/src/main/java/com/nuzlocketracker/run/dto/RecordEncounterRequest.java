@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record RecordEncounterRequest(
-        @NotNull Long routeId,
+        Long routeId,                // null para encuentros custom (en ese caso encounterId es obligatorio)
         @NotNull String outcome,     // CAPTURED, FAILED, DIED_IN_ENCOUNTER, NOT_FOUND, DEFERRED
         UUID encounterId,            // null = usar/crear slot disponible; no-null = editar slot específico
         Long pokemonId,              // requerido si outcome = CAPTURED

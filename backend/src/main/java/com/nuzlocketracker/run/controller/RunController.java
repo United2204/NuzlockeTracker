@@ -84,6 +84,14 @@ public class RunController {
         return runService.recordEncounter(userId(auth), runId, req);
     }
 
+    @PostMapping("/{runId}/custom-encounters")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RouteWithEncounterResponse createCustomEncounter(@PathVariable UUID runId,
+                                                             @Valid @RequestBody CreateCustomEncounterRequest req,
+                                                             Authentication auth) {
+        return runService.createCustomEncounter(userId(auth), runId, req);
+    }
+
     // ─── Equipo y caja ─────────────────────────────────────────────────────────
 
     @GetMapping("/{runId}/team")

@@ -131,7 +131,8 @@
       "STARTER": "Inicial",
       "FOSSIL": "Fósil",
       "LEGENDARY": "Legendario",
-      "TRADE": "Intercambio"
+      "TRADE": "Intercambio",
+      "EGG": "Huevo"
     }
   },
   "rule": {
@@ -255,7 +256,14 @@
     "abandonConfirm": "¿Seguro que querés abandonar esta run?",
     "visibilityTitle": "Visibilidad de la run",
     "addEncounter": "Agregar otro encuentro",
-    "levelCap": "Cap Nv. {{level}}"
+    "levelCap": "Cap Nv. {{level}}",
+    "pokemonLeague": "Liga Pokémon",
+    "specialEncounters": "Encuentros especiales",
+    "addSpecial": "Agregar encuentro especial",
+    "specialName": "Ubicación / descripción",
+    "specialNamePlaceholder": "ej. Ciudad Calosil – Huevo Lucario",
+    "specialNameRequired": "El nombre es obligatorio",
+    "specialType": "Tipo de encuentro"
   },
   "notifications": {
     "title": "Notificaciones",

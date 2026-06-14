@@ -25,9 +25,15 @@ public class RouteEncounter {
     @JoinColumn(name = "run_id")
     private Run run;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "route_id")
     private Route route;
+
+    @Column(name = "custom_name", length = 200)
+    private String customName;
+
+    @Column(name = "custom_encounter_type", length = 20)
+    private String customEncounterType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 25)

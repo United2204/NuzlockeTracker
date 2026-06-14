@@ -14,6 +14,7 @@ public record RouteWithEncounterResponse(
         int routeOrder,
         Long requiredBadgeId,
         String requiredBadgeName,
+        boolean isCustom,
         List<EncounterSlot> slots
 ) {
     public record EncounterSlot(
@@ -49,6 +50,25 @@ public record RouteWithEncounterResponse(
                 route.getDisplayOrder(),
                 route.getRequiredBadge() != null ? route.getRequiredBadge().getId() : null,
                 badgeName,
+                false,
+                slots
+        );
+    }
+
+    public static RouteWithEncounterResponse buildCustom(RouteEncounter enc,
+                                                          java.util.Map<UUID, CaughtPokemonResponse> cpMap) {
+        CaughtPokemonResponse cp = cpMap.get(enc.getId());
+        List<EncounterSlot> slots = List.of(
+                new EncounterSlot(enc.getId(), enc.getOutcome().name(), cp, enc.getNotes(), enc.getEncounteredAt())
+        );
+        return new RouteWithEncounterResponse(
+                null,
+                enc.getCustomName(),
+                enc.getCustomEncounterType(),
+                Integer.MAX_VALUE,
+                null,
+                null,
+                true,
                 slots
         );
     }

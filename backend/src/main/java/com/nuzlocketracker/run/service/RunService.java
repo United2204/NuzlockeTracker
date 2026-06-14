@@ -190,9 +190,16 @@ public class RunService {
         Map<Long, String> localizedNames = localizedRouteNames(routes, lang);
         Map<Long, String> localizedBadgeNames = localizedBadgeNamesForRoutes(routes, lang);
 
-        Map<Long, List<RouteEncounter>> encountersByRouteId = routeEncounterRepository
-                .findAllByRunIdAndDeletedAtIsNull(runId).stream()
+        List<RouteEncounter> allEncounters = routeEncounterRepository.findAllByRunIdAndDeletedAtIsNull(runId);
+
+        Map<Long, List<RouteEncounter>> encountersByRouteId = allEncounters.stream()
+                .filter(e -> e.getRoute() != null)
                 .collect(Collectors.groupingBy(e -> e.getRoute().getId()));
+
+        List<RouteEncounter> customEncounters = allEncounters.stream()
+                .filter(e -> e.getRoute() == null)
+                .sorted(java.util.Comparator.comparing(RouteEncounter::getCreatedAt))
+                .toList();
 
         List<CaughtPokemon> caught = caughtPokemonRepository.findAllByRunId(runId);
         List<CaughtPokemonResponse> cpResponses = toCaughtPokemonResponses(caught, lang);
@@ -201,7 +208,7 @@ public class RunService {
             cpByEncounterId.put(caught.get(i).getRouteEncounter().getId(), cpResponses.get(i));
         }
 
-        return routes.stream().map(route -> {
+        List<RouteWithEncounterResponse> result = new java.util.ArrayList<>(routes.stream().map(route -> {
             List<RouteEncounter> encs = encountersByRouteId.getOrDefault(route.getId(), List.of());
             List<RouteEncounter> sorted = encs.stream()
                     .sorted(java.util.Comparator.comparing(RouteEncounter::getCreatedAt))
@@ -210,7 +217,13 @@ public class RunService {
                     ? localizedBadgeNames.get(route.getRequiredBadge().getId()) : null;
             return RouteWithEncounterResponse.build(route, localizedNames.get(route.getId()),
                     localizedBadgeName, sorted, cpByEncounterId);
-        }).toList();
+        }).toList());
+
+        for (RouteEncounter enc : customEncounters) {
+            result.add(RouteWithEncounterResponse.buildCustom(enc, cpByEncounterId));
+        }
+
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -233,8 +246,8 @@ public class RunService {
 
         double multiplier = 1.0 + modifierPercent / 100.0;
         return gyms.stream().map(gym -> new GymCapResponse(
-                gym.getBadge().getId(),
-                gym.getBadge().getName(),
+                gym.getBadge() != null ? gym.getBadge().getId() : null,
+                gym.getBadge() != null ? gym.getBadge().getName() : "Pokémon League",
                 gym.getLeaderName(),
                 gym.getAcePokemonLevel(),
                 (int) Math.floor(gym.getAcePokemonLevel() * multiplier)
@@ -292,18 +305,24 @@ public class RunService {
             throw new IllegalArgumentException("pokemonId is required when outcome is CAPTURED");
         }
 
-        Route route = routeRepository.findById(req.routeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Route", req.routeId()));
+        if (req.routeId() == null && req.encounterId() == null) {
+            throw new IllegalArgumentException("routeId o encounterId es requerido");
+        }
+
+        Route route = req.routeId() != null
+                ? routeRepository.findById(req.routeId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Route", req.routeId()))
+                : null;
 
         int maxCatches = resolveMaxCatches(runId);
 
         RouteEncounter encounter;
         if (req.encounterId() != null) {
-            // editar slot específico
+            // editar slot específico (siempre para custom; opcional para catalog)
             encounter = routeEncounterRepository.findById(req.encounterId())
                     .orElseThrow(() -> new ResourceNotFoundException("RouteEncounter", req.encounterId()));
         } else {
-            // buscar slot libre o crear uno nuevo
+            // buscar slot libre o crear uno nuevo (solo para rutas del catálogo)
             List<RouteEncounter> existing = routeEncounterRepository
                     .findAllByRunIdAndRouteIdAndDeletedAtIsNullOrderByCreatedAtAsc(runId, req.routeId());
 
@@ -369,10 +388,13 @@ public class RunService {
             if (existingCp.isEmpty()) {
                 logStatus(caughtPokemon, caughtPokemon.getStatus(), null, false);
                 String pokemonName = resolveName(pokemon.getId());
+                String locationJson = route != null
+                        ? ",\"routeId\":" + route.getId()
+                        : ",\"customName\":\"" + encounter.getCustomName() + "\"";
                 emitEvent(run, RunEvent.EventType.POKEMON_CAPTURED,
                         "{\"pokemonId\":" + pokemon.getId()
                                 + ",\"pokemonName\":\"" + pokemonName + "\""
-                                + ",\"routeId\":" + route.getId()
+                                + locationJson
                                 + ",\"caughtPokemonId\":\"" + caughtPokemon.getId() + "\"}");
             }
         } else if (existingCp.isPresent()) {
@@ -385,6 +407,24 @@ public class RunService {
         touchRunActivity(run);
         CaughtPokemonResponse cpResp = caughtPokemon != null ? toCaughtPokemonResponse(caughtPokemon) : null;
         return RouteEncounterResponse.from(encounter, cpResp);
+    }
+
+    @Transactional
+    public RouteWithEncounterResponse createCustomEncounter(UUID userId, UUID runId,
+                                                             CreateCustomEncounterRequest req) {
+        Run run = requireOwnedRun(userId, runId);
+        if (run.getStatus() != Run.Status.ACTIVE) {
+            throw new IllegalArgumentException("Cannot modify a run that is not ACTIVE");
+        }
+
+        RouteEncounter enc = new RouteEncounter();
+        enc.setRun(run);
+        enc.setCustomName(req.name());
+        enc.setCustomEncounterType(req.encounterType());
+        enc = routeEncounterRepository.save(enc);
+
+        touchRunActivity(run);
+        return RouteWithEncounterResponse.buildCustom(enc, java.util.Map.of());
     }
 
     // ─── Pokémon capturados ────────────────────────────────────────────────────

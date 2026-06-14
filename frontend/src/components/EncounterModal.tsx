@@ -26,7 +26,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export interface GuestEncounterSaveData {
-  routeId: number;
+  routeId: number | null;
   routeName: string;
   outcome: string;
   encounterId?: string;
@@ -53,7 +53,7 @@ interface Props {
   guestTeamMembers?: CaughtPokemonResponse[];
 }
 
-const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL']);
+const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL', 'EGG', 'TRADE']);
 const TERMINAL_OUTCOMES    = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER', 'NOT_FOUND']);
 
 export function EncounterModal({

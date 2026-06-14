@@ -131,7 +131,8 @@
       "STARTER": "Starter",
       "FOSSIL": "Fossil",
       "LEGENDARY": "Legendary",
-      "TRADE": "Trade"
+      "TRADE": "Trade",
+      "EGG": "Egg"
     }
   },
   "rule": {
@@ -255,7 +256,14 @@
     "abandonConfirm": "Are you sure you want to abandon this run?",
     "visibilityTitle": "Run visibility",
     "addEncounter": "Add another encounter",
-    "levelCap": "Cap Lv. {{level}}"
+    "levelCap": "Cap Lv. {{level}}",
+    "pokemonLeague": "Pokémon League",
+    "specialEncounters": "Special Encounters",
+    "addSpecial": "Add special encounter",
+    "specialName": "Location / description",
+    "specialNamePlaceholder": "e.g. Shalour City – Lucario Egg",
+    "specialNameRequired": "A name is required",
+    "specialType": "Encounter type"
   },
   "notifications": {
     "title": "Notifications",

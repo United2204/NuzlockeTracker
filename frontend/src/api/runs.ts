@@ -7,8 +7,9 @@ import type {
   RunBadgeResponse,
 } from '../types/api';
 
+
 export interface GymCap {
-  badgeId: number;
+  badgeId: number | null;
   badgeName: string;
   leaderName: string;
   acePokemonLevel: number;
@@ -49,7 +50,7 @@ export const runsApi = {
     client.get<RouteWithEncounterResponse[]>(`/api/runs/${runId}/routes`, { params: { lang } }),
 
   recordEncounter: (runId: string, data: {
-    routeId: number;
+    routeId?: number | null;
     outcome: string;
     encounterId?: string;
     pokemonId?: number;
@@ -58,6 +59,9 @@ export const runsApi = {
     notes?: string;
   }) =>
     client.post(`/api/runs/${runId}/encounters`, data),
+
+  createCustomEncounter: (runId: string, data: { name: string; encounterType: string }) =>
+    client.post<RouteWithEncounterResponse>(`/api/runs/${runId}/custom-encounters`, data),
 
   team: (runId: string, lang = 'en') =>
     client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/team`, { params: { lang } }),

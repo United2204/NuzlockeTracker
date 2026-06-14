@@ -51,6 +51,7 @@ const NO_BADGE = '__NO_BADGE__';
 function groupByBadge(routes: RouteWithEncounterResponse[]): Map<string, RouteWithEncounterResponse[]> {
   const groups = new Map<string, RouteWithEncounterResponse[]>();
   for (const r of routes) {
+    if (r.isCustom) continue;
     const key = r.requiredBadgeName ?? NO_BADGE;
     const group = groups.get(key);
     if (group) group.push(r);
@@ -508,6 +509,7 @@ export function RunDetailPage() {
   const [confirmAction, setConfirmAction] = useState<'COMPLETED' | 'ABANDONED' | null>(null);
   const [visModal, setVisModal] = useState(false);
   const [rulesModal, setRulesModal] = useState(false);
+  const [customEncounterModal, setCustomEncounterModal] = useState(false);
 
   // ── API queries (logged-in) ────────────────────────────────────────────────
   const apiRunQ = useQuery({
@@ -631,12 +633,19 @@ export function RunDetailPage() {
   })();
 
   const groups = groupByBadge(routes);
+  const customRoutes = useMemo(() => routes.filter(r => r.isCustom), [routes]);
 
   const gymCapsMap = useMemo(() => {
     const map = new Map<number, GymCap>();
-    for (const cap of gymCapsQ.data ?? []) map.set(cap.badgeId, cap);
+    for (const cap of gymCapsQ.data ?? []) {
+      if (cap.badgeId !== null) map.set(cap.badgeId, cap);
+    }
     return map;
   }, [gymCapsQ.data]);
+
+  const leagueCap = useMemo(() =>
+    gymCapsQ.data?.find(c => c.badgeId === null) ?? null,
+  [gymCapsQ.data]);
 
   // Derived from already-loaded routes — no extra API calls
   // Priority: ACTIVE > BOXED > FAINTED (keeps best status when same chain appears multiple times)
@@ -884,6 +893,79 @@ export function RunDetailPage() {
           </div>
           );
         })}
+
+        {(customRoutes.length > 0 || (isOwner && run?.status === 'ACTIVE')) && (
+          <div className="route-group">
+            <div className="route-group-header">
+              <h3 className="route-group-title">{t('runDetail.specialEncounters')}</h3>
+              {isOwner && run?.status === 'ACTIVE' && (
+                <button
+                  className="btn btn-ghost"
+                  style={{ fontSize: 13, padding: '4px 10px' }}
+                  onClick={() => setCustomEncounterModal(true)}
+                >
+                  + {t('runDetail.addSpecial')}
+                </button>
+              )}
+            </div>
+            {customRoutes.map(route => {
+              const slot = route.slots[0] ?? null;
+              const outcome = slot?.outcome ?? 'PENDING';
+              const cfgColor = OUTCOME_COLOR[outcome] ?? OUTCOME_COLOR['PENDING'];
+              return (
+                <button
+                  key={slot?.id ?? route.routeName}
+                  className="route-card"
+                  style={{ width: '100%', cursor: isOwner ? 'pointer' : 'default' }}
+                  onClick={() => isOwner && setActiveEncounter({ route, slot })}
+                  disabled={!isOwner}
+                >
+                  <div className="route-card-left">
+                    <span className="route-name">{route.routeName}</span>
+                    <span className="route-type">{t(`route.type.${route.encounterType}`, route.encounterType)}</span>
+                  </div>
+                  <div className="route-card-right">
+                    {slot?.outcome === 'CAPTURED' && slot.caughtPokemon ? (
+                      slot.caughtPokemon.currentPokemonSpriteUrl ? (
+                        <img
+                          src={slot.caughtPokemon.shiny
+                            ? toShinySpriteUrl(slot.caughtPokemon.currentPokemonSpriteUrl)
+                            : slot.caughtPokemon.currentPokemonSpriteUrl}
+                          alt={slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
+                          title={slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
+                          style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <span className="route-pokemon">
+                          {slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
+                        </span>
+                      )
+                    ) : (
+                      <span className="outcome-tag" style={{ color: cfgColor }}>{t(`outcome.${outcome}`)}</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {leagueCap && run && (
+          <div className="route-group">
+            <div className="route-group-header">
+              <h3 className="route-group-title">
+                {t('runDetail.badgeGroup', { badge: t('runDetail.pokemonLeague') })}
+              </h3>
+              <LevelCapChip
+                gymCap={leagueCap}
+                run={run}
+                runId={runId!}
+                isOwner={isOwner}
+                qc={qc}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {runId && !isGuest && <RunSocialSection runId={runId} />}
@@ -923,6 +1005,84 @@ export function RunDetailPage() {
       {rulesModal && run && isOwner && (
         <RulesModal run={run} onClose={() => setRulesModal(false)} />
       )}
+
+      {customEncounterModal && runId && (
+        <CustomEncounterModal
+          runId={runId}
+          onClose={() => setCustomEncounterModal(false)}
+        />
+      )}
     </Layout>
+  );
+}
+
+const CUSTOM_ENCOUNTER_TYPES = ['STATIC', 'GIFT', 'EGG', 'FOSSIL', 'LEGENDARY', 'TRADE', 'STARTER'] as const;
+
+function CustomEncounterModal({ runId, onClose }: { runId: string; onClose: () => void }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [name, setName] = useState('');
+  const [encounterType, setEncounterType] = useState<string>('STATIC');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { setError(t('runDetail.specialNameRequired')); return; }
+    setSaving(true);
+    try {
+      await runsApi.createCustomEncounter(runId, { name: name.trim(), encounterType });
+      await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
+      onClose();
+    } catch {
+      setError(t('encounter.error'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">{t('runDetail.addSpecial')}</h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="modal-body">
+          <div className="form-group">
+            <label className="form-label">{t('runDetail.specialName')}</label>
+            <input
+              className="form-input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder={t('runDetail.specialNamePlaceholder')}
+              maxLength={200}
+              autoFocus
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">{t('runDetail.specialType')}</label>
+            <div className="outcome-grid">
+              {CUSTOM_ENCOUNTER_TYPES.map(type => (
+                <label key={type} style={{ display: 'contents' }}>
+                  <input type="radio" value={type} checked={encounterType === type}
+                    onChange={() => setEncounterType(type)} hidden />
+                  <span
+                    className={`outcome-btn${encounterType === type ? ' selected' : ''}`}
+                    onClick={() => setEncounterType(type)}
+                  >
+                    {t(`route.type.${type}`, type)}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {error && <p className="form-error">{error}</p>}
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? t('btn.saving') : t('btn.confirm')}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

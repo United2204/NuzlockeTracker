@@ -158,11 +158,12 @@ export interface RouteEncounterSlot {
 }
 
 export interface RouteWithEncounterResponse {
-  routeId: number;
+  routeId: number | null;
   routeName: string;
   encounterType: string;
   routeOrder: number;
   requiredBadgeId: number | null;
   requiredBadgeName: string | null;
+  isCustom: boolean;
   slots: RouteEncounterSlot[];
 }
