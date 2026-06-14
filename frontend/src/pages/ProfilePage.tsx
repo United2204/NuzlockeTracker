@@ -70,29 +70,6 @@ export function ProfilePage() {
           </button>
           <button
             className="btn btn-ghost btn-full"
-            style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0 }}
-            onClick={() => navigate('/me/contributions')}
-          >
-            {t('myProfile.myContributions')}
-          </button>
-          <button
-            className="btn btn-ghost btn-full"
-            style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0 }}
-            onClick={() => navigate('/contributions/new')}
-          >
-            {t('myProfile.submitContribution')}
-          </button>
-          {user?.role === 'ADMIN' && (
-            <button
-              className="btn btn-ghost btn-full"
-              style={{ textAlign: 'left', padding: '12px 0', borderBottom: '1px solid var(--border)', borderRadius: 0, color: 'var(--accent)' }}
-              onClick={() => navigate('/admin/contributions')}
-            >
-              {t('myProfile.adminPanel')}
-            </button>
-          )}
-          <button
-            className="btn btn-ghost btn-full"
             style={{ textAlign: 'left', padding: '12px 0', color: 'var(--danger)', borderRadius: 0 }}
             onClick={handleLogout}
           >

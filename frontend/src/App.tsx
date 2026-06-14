@@ -14,10 +14,6 @@ import { RunStatsPage } from './pages/RunStatsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { FeedPage } from './pages/FeedPage';
 import { PublicProfilePage } from './pages/PublicProfilePage';
-import { ContributionFormPage } from './pages/ContributionFormPage';
-import { MyContributionsPage } from './pages/MyContributionsPage';
-import { ResubmitContributionPage } from './pages/ResubmitContributionPage';
-import { AdminContributionsPage } from './pages/AdminContributionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -61,10 +57,6 @@ function App() {
             <Route path="/feed"              element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/u/:username"       element={<ProtectedRoute><PublicProfilePage /></ProtectedRoute>} />
 
-            <Route path="/contributions/new"              element={<ProtectedRoute><ContributionFormPage /></ProtectedRoute>} />
-            <Route path="/contributions/:id/resubmit"    element={<ProtectedRoute><ResubmitContributionPage /></ProtectedRoute>} />
-            <Route path="/me/contributions"              element={<ProtectedRoute><MyContributionsPage /></ProtectedRoute>} />
-            <Route path="/admin/contributions"           element={<ProtectedRoute><AdminContributionsPage /></ProtectedRoute>} />
             <Route path="/settings"                      element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/runs" replace />} />

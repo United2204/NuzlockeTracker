@@ -8,7 +8,6 @@ import { guestStore } from '../services/guestStore';
 import { Layout } from '../components/Layout';
 import { PokemonCard } from '../components/PokemonCard';
 import { PokemonSearch } from '../components/PokemonSearch';
-import { DamageCalcModal } from '../components/DamageCalcModal';
 import { typeColor, typeLabel } from '../utils/pokemonTypes';
 import { useAuth } from '../hooks/useAuth';
 import type { CaughtPokemonResponse, PokemonSearchResponse, RunDetailResponse } from '../types/api';
@@ -148,7 +147,6 @@ export function TeamPage() {
   const [tab, setTab] = useState<Tab>('team');
   const [selected, setSelected]         = useState<CaughtPokemonResponse | null>(null);
   const [evolving, setEvolving]         = useState<CaughtPokemonResponse | null>(null);
-  const [calcTarget, setCalcTarget]     = useState<CaughtPokemonResponse | null>(null);
   const [pendingToTeam, setPendingToTeam] = useState<CaughtPokemonResponse | null>(null);
   const [swapTarget, setSwapTarget]     = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
@@ -361,14 +359,6 @@ export function TeamPage() {
                   {t('team.action.revertEvolution')}
                 </button>
               )}
-              {!isGuest && (
-                <button
-                  className="btn btn-info"
-                  onClick={() => { setCalcTarget(selected); setSelected(null); }}
-                >
-                  {t('team.action.damageCalc')}
-                </button>
-              )}
               <button className="btn btn-ghost" onClick={() => setSelected(null)}>
                 {t('btn.cancel')}
               </button>
@@ -385,14 +375,6 @@ export function TeamPage() {
         />
       )}
 
-      {calcTarget && runId && run && !isGuest && (
-        <DamageCalcModal
-          runId={runId}
-          gameId={run.gameId}
-          attacker={calcTarget}
-          onClose={() => setCalcTarget(null)}
-        />
-      )}
 
       {pendingToTeam && (
         <div className="modal-overlay" style={{ zIndex: 210 }} onClick={() => { setPendingToTeam(null); setSwapTarget(null); }}>
