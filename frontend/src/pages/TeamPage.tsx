@@ -9,7 +9,7 @@ import { Layout } from '../components/Layout';
 import { PokemonCard } from '../components/PokemonCard';
 import { PokemonSearch } from '../components/PokemonSearch';
 import { DamageCalcModal } from '../components/DamageCalcModal';
-import { typeColor } from '../utils/pokemonTypes';
+import { typeColor, typeLabel } from '../utils/pokemonTypes';
 import { useAuth } from '../hooks/useAuth';
 import type { CaughtPokemonResponse, PokemonSearchResponse, RunDetailResponse } from '../types/api';
 
@@ -92,8 +92,8 @@ function EvolveModal({
                     {p.spriteUrl && <img src={p.spriteUrl} alt={p.name} style={{ width: 32, height: 32 }} />}
                     <span style={{ fontWeight: 500 }}>{p.name}</span>
                     <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                      {p.types.map(t => (
-                        <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
+                      {p.types.map(typeName => (
+                        <span key={typeName} className="type-badge" style={{ background: typeColor(typeName) }}>{typeLabel(typeName, t)}</span>
                       ))}
                     </div>
                   </button>

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { catalogApi } from '../api/catalog';
 import { socialApi, type PublicProfile } from '../api/social';
 import type { PokemonSearchResponse } from '../types/api';
-import { typeColor } from '../utils/pokemonTypes';
+import { typeColor, typeLabel } from '../utils/pokemonTypes';
 import { useAuth } from '../hooks/useAuth';
 import { PokemonDetailCard } from './PokemonDetailCard';
 
@@ -158,7 +158,7 @@ export function GlobalSearch({ caughtByChainId, caughtByPokemonId }: Props) {
                     <span className="search-name">{p.name}</span>
                     <div className="type-badges search-types">
                       {p.types.map(type => (
-                        <span key={type} className="type-badge" style={{ background: typeColor(type) }}>{type}</span>
+                        <span key={type} className="type-badge" style={{ background: typeColor(type) }}>{typeLabel(type, t)}</span>
                       ))}
                     </div>
                     {cfg && (

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { catalogApi } from '../api/catalog';
-import { typeColor } from '../utils/pokemonTypes';
+import { typeColor, typeLabel } from '../utils/pokemonTypes';
 
 const STAT_CONFIG = [
   { key: 'hp',      label: 'HP',  color: '#ff5959' },
@@ -53,8 +53,8 @@ export function PokemonDetailCard({ pokemonId }: Props) {
             <span className="pdc-dex">#{String(data.nationalDexNumber).padStart(3, '0')}</span>
           )}
           <div className="type-badges pdc-types">
-            {data.types.map(t => (
-              <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
+            {data.types.map(typeName => (
+              <span key={typeName} className="type-badge" style={{ background: typeColor(typeName) }}>{typeLabel(typeName, t)}</span>
             ))}
           </div>
         </div>

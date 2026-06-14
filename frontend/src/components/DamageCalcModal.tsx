@@ -10,6 +10,7 @@ import {
   type MoveConfig,
 } from '../utils/damageCalc';
 import type { CaughtPokemonResponse } from '../types/api';
+import { typeLabel } from '../utils/pokemonTypes';
 
 const NATURES = [
   'HARDY','LONELY','BRAVE','ADAMANT','NAUGHTY',
@@ -137,8 +138,8 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
               )}
               {attacker.nickname ?? attacker.currentPokemonName}
               <span className="calc-types">
-                {attacker.currentPokemonTypes.map(t => (
-                  <span key={t} className={`type-badge type-${t.toLowerCase()}`}>{t}</span>
+                {attacker.currentPokemonTypes.map(typeName => (
+                  <span key={typeName} className={`type-badge type-${typeName.toLowerCase()}`}>{typeLabel(typeName, t)}</span>
                 ))}
               </span>
             </h3>
@@ -236,7 +237,7 @@ export function DamageCalcModal({ runId, gameId, attacker, onClose }: Props) {
               <>
                 <div className="calc-types">
                   {defData.types.map(type => (
-                    <span key={type} className={`type-badge type-${type.toLowerCase()}`}>{type}</span>
+                    <span key={type} className={`type-badge type-${type.toLowerCase()}`}>{typeLabel(type, t)}</span>
                   ))}
                 </div>
                 {defData.baseStats && (

@@ -10,7 +10,7 @@
     "following": "Siguiendo",
     "status": {
       "ACTIVE": "En equipo",
-      "BOXED": "En box",
+      "BOXED": "En caja",
       "FAINTED": "Muerto"
     }
   },
@@ -175,21 +175,21 @@
     "title": "Equipo",
     "tab": {
       "team": "⚔️ Equipo",
-      "box": "📦 Box",
+      "box": "📦 Caja",
       "graveyard": "💀 Cementerio"
     },
     "empty": "Sin Pokémon aquí aún.",
     "action": {
       "team": "⚔️ Equipo",
-      "box": "📦 Box",
+      "box": "📦 Caja",
       "fainted": "💀 Muerto",
       "evolve": "🧬 Evolucionar",
       "revertEvolution": "↩️ Revertir evolución",
       "damageCalc": "⚡ Calcular daño"
     },
     "teamFull": "⚔️ Equipo lleno",
-    "chooseSwap": "Elegí quién va al box para hacerle lugar a {{name}}:",
-    "confirmSwap": "✅ Confirmar — {{name}} va al box",
+    "chooseSwap": "Elegí quién va a la caja para hacerle lugar a {{name}}:",
+    "confirmSwap": "✅ Confirmar — {{name}} va a la caja",
     "swapError": "Error al hacer el cambio. Intentá de nuevo.",
     "statusError": "Error al cambiar el estado. Intentá de nuevo.",
     "revertError": "Error al revertir la evolución. Intentá de nuevo.",
@@ -234,9 +234,9 @@
     "error": "Error al registrar el encuentro. Intenta de nuevo.",
     "teamFull": "⚔️ Equipo lleno",
     "teamFullQuestion": "Tu equipo tiene 6 Pokémon. ¿Qué hacemos con el nuevo?",
-    "sendToBox": "📦 Mandarlo directo al box",
-    "orChooseSwap": "O elegí quién va al box para hacer lugar en el equipo:",
-    "confirmSwap": "✅ Confirmar — {{name}} va al box"
+    "sendToBox": "📦 Mandarlo directo a la caja",
+    "orChooseSwap": "O elegí quién va a la caja para hacer lugar en el equipo:",
+    "confirmSwap": "✅ Confirmar — {{name}} va a la caja"
   },
   "runDetail": {
     "title": "Run",
@@ -273,7 +273,7 @@
   "runNav": {
     "routes": "Rutas",
     "team": "Equipo",
-    "stats": "Stats"
+    "stats": "Estadísticas"
   },
   "runStats": {
     "title": "Estadísticas",
@@ -288,13 +288,13 @@
     "pokemon": {
       "section": "Pokémon",
       "active": "En equipo",
-      "boxed": "En box",
+      "boxed": "En caja",
       "fainted": "Muertos"
     },
     "teamTime": {
       "section": "Tiempo en equipo",
       "statusActive": "En equipo",
-      "statusBoxed": "En box",
+      "statusBoxed": "En caja",
       "statusFainted": "Muerto"
     },
     "graveyard": "💀 Cementerio",
@@ -332,5 +332,25 @@
     "basicView": "Vista básica",
     "fullView": "Vista completa",
     "close": "Cerrar"
+  },
+  "pokemonType": {
+    "normal": "Normal",
+    "fire": "Fuego",
+    "water": "Agua",
+    "grass": "Planta",
+    "electric": "Eléctrico",
+    "ice": "Hielo",
+    "fighting": "Lucha",
+    "poison": "Veneno",
+    "ground": "Tierra",
+    "flying": "Volador",
+    "psychic": "Psíquico",
+    "bug": "Bicho",
+    "rock": "Roca",
+    "ghost": "Fantasma",
+    "dragon": "Dragón",
+    "dark": "Siniestro",
+    "steel": "Acero",
+    "fairy": "Hada"
   }
 }

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { CaughtPokemonResponse } from '../types/api';
-import { typeColor } from '../utils/pokemonTypes';
+import { typeColor, typeLabel } from '../utils/pokemonTypes';
 import { spriteFor } from '../utils/sprites';
 
 const STATUS_COLOR: Record<string, string> = {
@@ -57,7 +57,7 @@ export function PokemonCard({ pokemon, onClick, selected }: Props) {
                 className="type-badge"
                 style={{ background: typeColor(type) }}
               >
-                {type}
+                {typeLabel(type, t)}
               </span>
             ))}
           </div>

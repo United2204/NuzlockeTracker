@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { catalogApi } from '../api/catalog';
 import type { PokemonSearchResponse } from '../types/api';
-import { typeColor } from '../utils/pokemonTypes';
+import { typeColor, typeLabel } from '../utils/pokemonTypes';
 import { PokemonDetailCard } from './PokemonDetailCard';
 
 interface Props {
@@ -72,8 +72,8 @@ export function PokemonSearch({ onSelect, placeholder, initialPokemon }: Props) 
               {p.spriteUrl && <img src={p.spriteUrl} alt={p.name} className="search-sprite" />}
               <span className="search-name">{p.name}</span>
               <div className="type-badges">
-                {p.types.map(t => (
-                  <span key={t} className="type-badge" style={{ background: typeColor(t) }}>{t}</span>
+                {p.types.map(typeName => (
+                  <span key={typeName} className="type-badge" style={{ background: typeColor(typeName) }}>{typeLabel(typeName, t)}</span>
                 ))}
               </div>
             </button>

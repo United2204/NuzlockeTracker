@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 const TYPE_COLORS: Record<string, string> = {
   normal:   '#A8A878',
   fire:     '#F08030',
@@ -21,4 +23,8 @@ const TYPE_COLORS: Record<string, string> = {
 
 export function typeColor(type: string): string {
   return TYPE_COLORS[type.toLowerCase()] ?? '#888';
+}
+
+export function typeLabel(type: string, t: TFunction): string {
+  return t(`pokemonType.${type.toLowerCase()}`, { defaultValue: type }) as string;
 }
