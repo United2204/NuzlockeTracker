@@ -17,7 +17,7 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { theme, toggle } = useTheme();
+  const { isDark, toggle } = useTheme();
   const { t } = useTranslation();
 
   return (
@@ -41,10 +41,10 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
           <button
             className="btn btn-ghost theme-toggle"
             onClick={toggle}
-            title={theme === 'firered' ? 'Cambiar a Esmeralda' : 'Cambiar a Rojo Fuego'}
-            aria-label="Cambiar tema"
+            title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            aria-label={isDark ? 'Modo claro' : 'Modo oscuro'}
           >
-            {theme === 'firered' ? '💚' : '🔴'}
+            {isDark ? '☀️' : '🌙'}
           </button>
           {action}
           {user ? (

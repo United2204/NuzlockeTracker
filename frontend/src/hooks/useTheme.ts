@@ -1,23 +1,35 @@
 import { useState, useEffect } from 'react';
 
-export type Theme = 'firered' | 'emerald';
-const THEME_KEY = 'nuzlocke_theme';
+const SCHEME_KEY = 'nuzlocke_color_scheme';
+
+function systemIsDark() {
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+}
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(THEME_KEY) as Theme) ?? 'firered',
+  const [scheme, setScheme] = useState<'light' | 'dark' | null>(
+    () => (localStorage.getItem(SCHEME_KEY) as 'light' | 'dark') ?? null,
   );
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    const html = document.documentElement;
+    if (scheme) {
+      html.setAttribute('data-color-scheme', scheme);
+      localStorage.setItem(SCHEME_KEY, scheme);
+    } else {
+      html.removeAttribute('data-color-scheme');
+      localStorage.removeItem(SCHEME_KEY);
+    }
+    const isDark = scheme === 'dark' || (scheme === null && systemIsDark());
     document.querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'firered' ? '#CC0000' : '#1B6B2E');
-    localStorage.setItem(THEME_KEY, theme);
-  }, [theme]);
+      ?.setAttribute('content', isDark ? '#0E1118' : '#1A5DAE');
+  }, [scheme]);
+
+  const isDark = scheme === 'dark' || (scheme === null && systemIsDark());
 
   function toggle() {
-    setTheme(t => (t === 'firered' ? 'emerald' : 'firered'));
+    setScheme(isDark ? 'light' : 'dark');
   }
 
-  return { theme, toggle };
+  return { isDark, toggle };
 }

@@ -49,67 +49,72 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Dark palette — auto (sistema) ─────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Texto */
     --text:        #C5D1DF;
     --text-muted:  #7A8FA3;
     --placeholder: #6A7F90;
     --text-h:      #E3EDF8;
 
-    /* Fondos — negro profundo */
     --bg:          #0E1118;
     --bg-card:     #181F2B;
     --border:      #273347;
 
-    /* Squirtle — azul agua claro (contraste ~10:1 sobre fondo oscuro) */
     --accent:      #5CA8F8;
     --accent-h:    #4A98E8;
     --accent-bg:   rgba(92, 168, 248, 0.12);
 
-    /* Semánticos */
-    --success:     #58C84A;   /* Bulbasaur verde hierba brillante */
+    --success:     #58C84A;
     --danger:      #F06060;
-    --warning:     #F08030;   /* Charmander naranja fuego */
+    --warning:     #F08030;
     --info:        #5CA8F8;
   }
 }
 
-/* ─── Theme: FireRed ─────────────────────────────────────────────── */
-html[data-theme="firered"] {
-  --accent:    #CC0000;
-  --accent-h:  #AA0000;
-  --accent-bg: rgba(204, 0, 0, 0.08);
-  --bg:        #FDF6E3;
-  --bg-card:   #FFFEF8;
-  --border:    #E8D5B0;
-  --text:      #3D1A00;
-  --text-muted:  #8B6E52;
-  --placeholder: #6B4E32;
-  --text-h:      #1A0500;
-  --success:   #2E7D32;
-  --warning:   #E65100;
-  --danger:    #B71C1C;
-  --info:      #1565C0;
+/* ─── Dark palette — override manual ────────────────────────────── */
+html[data-color-scheme="dark"] {
+  --text:        #C5D1DF;
+  --text-muted:  #7A8FA3;
+  --placeholder: #6A7F90;
+  --text-h:      #E3EDF8;
+
+  --bg:          #0E1118;
+  --bg-card:     #181F2B;
+  --border:      #273347;
+
+  --accent:      #5CA8F8;
+  --accent-h:    #4A98E8;
+  --accent-bg:   rgba(92, 168, 248, 0.12);
+
+  --success:     #58C84A;
+  --danger:      #F06060;
+  --warning:     #F08030;
+  --info:        #5CA8F8;
 }
 
-/* ─── Theme: Emerald ─────────────────────────────────────────────── */
-html[data-theme="emerald"] {
-  --accent:    #1B6B2E;
-  --accent-h:  #145224;
-  --accent-bg: rgba(27, 107, 46, 0.08);
-  --bg:        #F0F7F1;
-  --bg-card:   #FFFFFF;
-  --border:    #C8DFC9;
-  --text:      #1A3520;
-  --text-muted:  #5A7D5E;
-  --placeholder: #3A5D3E;
-  --text-h:      #0A1F0D;
-  --success:   #2E7D32;
-  --warning:   #E65100;
-  --danger:    #C62828;
-  --info:      #1565C0;
+/* ─── Light palette — override manual (para usuarios con dark system) */
+html[data-color-scheme="light"] {
+  --text:        #1C2B3A;
+  --text-muted:  #556070;
+  --placeholder: #788A97;
+  --text-h:      #0D1825;
+
+  --bg:          #FFFFFF;
+  --bg-card:     #F5F8FF;
+  --border:      #D4E0EE;
+
+  --accent:      #1A5DAE;
+  --accent-h:    #144D98;
+  --accent-bg:   rgba(26, 93, 174, 0.07);
+
+  --success:     #1E7A30;
+  --danger:      #C01818;
+  --warning:     #B84E00;
+  --info:        #1A5DAE;
 }
+
+/* ─── Temas alternativos archivados → src/styles/themes-archive.css */
 
 /* ─── Reset ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }

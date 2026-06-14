@@ -1,0 +1,44 @@
+/*
+  Temas alternativos archivados — NO importado en la app.
+
+  Para reactivar:
+    1. import './styles/themes-archive.css'  en main.tsx
+    2. Agregar 'firered' | 'emerald' al tipo Theme en useTheme.ts
+    3. Usar html[data-theme="firered"] / html[data-theme="emerald"]
+*/
+
+/* ─── Theme: FireRed ─────────────────────────────────────────────── */
+html[data-theme="firered"] {
+  --accent:      #CC0000;
+  --accent-h:    #AA0000;
+  --accent-bg:   rgba(204, 0, 0, 0.08);
+  --bg:          #FDF6E3;
+  --bg-card:     #FFFEF8;
+  --border:      #E8D5B0;
+  --text:        #3D1A00;
+  --text-muted:  #8B6E52;
+  --placeholder: #6B4E32;
+  --text-h:      #1A0500;
+  --success:     #2E7D32;
+  --warning:     #E65100;
+  --danger:      #B71C1C;
+  --info:        #1565C0;
+}
+
+/* ─── Theme: Emerald ─────────────────────────────────────────────── */
+html[data-theme="emerald"] {
+  --accent:      #1B6B2E;
+  --accent-h:    #145224;
+  --accent-bg:   rgba(27, 107, 46, 0.08);
+  --bg:          #F0F7F1;
+  --bg-card:     #FFFFFF;
+  --border:      #C8DFC9;
+  --text:        #1A3520;
+  --text-muted:  #5A7D5E;
+  --placeholder: #3A5D3E;
+  --text-h:      #0A1F0D;
+  --success:     #2E7D32;
+  --warning:     #E65100;
+  --danger:      #C62828;
+  --info:        #1565C0;
+}
