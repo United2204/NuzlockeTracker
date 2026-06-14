@@ -776,7 +776,7 @@ export function RunDetailPage() {
           <div key={badge} className="route-group">
             <div className="route-group-header">
               <h3 className="route-group-title">{t('runDetail.badgeGroup', { badge: badge === NO_BADGE ? t('runDetail.noBadge') : badge })}</h3>
-              {gymCap && (
+              {gymCap && run && (
                 <LevelCapChip
                   gymCap={gymCap}
                   run={run}
