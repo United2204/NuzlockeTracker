@@ -19,8 +19,8 @@ export const runsApi = {
   list: () =>
     client.get<RunSummaryResponse[]>('/api/runs'),
 
-  get: (runId: string) =>
-    client.get<RunDetailResponse>(`/api/runs/${runId}`),
+  get: (runId: string, lang = 'en') =>
+    client.get<RunDetailResponse>(`/api/runs/${runId}`, { params: { lang } }),
 
   create: (data: {
     gameId: number;

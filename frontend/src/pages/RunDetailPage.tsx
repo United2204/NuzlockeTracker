@@ -304,17 +304,19 @@ function RunMenu({
 
 function BadgeModal({
   run,
+  lang,
   onClose,
   onObtain,
 }: {
   run: RunDetailResponse;
+  lang: string;
   onClose: () => void;
   onObtain: (badgeId: number, badgeName: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const { data: allBadges = [] } = useQuery({
-    queryKey: ['catalog', 'badges', run.gameId],
-    queryFn: () => catalogApi.badges(run.gameId).then(r => r.data),
+    queryKey: ['catalog', 'badges', run.gameId, lang],
+    queryFn: () => catalogApi.badges(run.gameId, lang).then(r => r.data),
   });
 
   const [pending, setPending] = useState(false);
@@ -509,8 +511,8 @@ export function RunDetailPage() {
 
   // ── API queries (logged-in) ────────────────────────────────────────────────
   const apiRunQ = useQuery({
-    queryKey: ['runs', runId],
-    queryFn:  () => runsApi.get(runId!).then(r => r.data),
+    queryKey: ['runs', runId, lang],
+    queryFn:  () => runsApi.get(runId!, lang).then(r => r.data),
     enabled:  !!runId && !isGuest,
   });
 
@@ -889,6 +891,7 @@ export function RunDetailPage() {
       {badgeModal && run && (
         <BadgeModal
           run={run}
+          lang={lang}
           onClose={() => setBadgeModal(false)}
           onObtain={handleBadgeObtain}
         />

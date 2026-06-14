@@ -6,6 +6,7 @@ import com.nuzlocketracker.catalog.entity.Game;
 import com.nuzlocketracker.catalog.entity.Pokemon;
 import com.nuzlocketracker.catalog.entity.Route;
 import com.nuzlocketracker.catalog.entity.Gym;
+import com.nuzlocketracker.catalog.repository.BadgeNameRepository;
 import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
 import com.nuzlocketracker.catalog.repository.GymRepository;
@@ -48,6 +49,7 @@ public class RunService {
     private final PokemonRepository pokemonRepository;
     private final PokemonNameRepository pokemonNameRepository;
     private final BadgeRepository badgeRepository;
+    private final BadgeNameRepository badgeNameRepository;
     private final GymRepository gymRepository;
     private final UserFollowRepository userFollowRepository;
     private final ObjectMapper objectMapper;
@@ -101,8 +103,13 @@ public class RunService {
 
     @Transactional(readOnly = true)
     public RunDetailResponse getRun(UUID userId, UUID runId) {
+        return getRun(userId, runId, "en");
+    }
+
+    @Transactional(readOnly = true)
+    public RunDetailResponse getRun(UUID userId, UUID runId, String lang) {
         Run run = requireReadableRun(userId, runId);
-        return buildDetail(run);
+        return buildDetail(run, lang);
     }
 
     public RunDetailResponse updateRun(UUID userId, UUID runId, UpdateRunRequest req) {
@@ -181,6 +188,7 @@ public class RunService {
         List<Route> routes = routeRepository.findByGameIdOrderByDisplayOrder(run.getGame().getId());
 
         Map<Long, String> localizedNames = localizedRouteNames(routes, lang);
+        Map<Long, String> localizedBadgeNames = localizedBadgeNamesForRoutes(routes, lang);
 
         Map<Long, List<RouteEncounter>> encountersByRouteId = routeEncounterRepository
                 .findAllByRunIdAndDeletedAtIsNull(runId).stream()
@@ -195,11 +203,13 @@ public class RunService {
 
         return routes.stream().map(route -> {
             List<RouteEncounter> encs = encountersByRouteId.getOrDefault(route.getId(), List.of());
-            // orden cronológico por createdAt
             List<RouteEncounter> sorted = encs.stream()
                     .sorted(java.util.Comparator.comparing(RouteEncounter::getCreatedAt))
                     .toList();
-            return RouteWithEncounterResponse.build(route, localizedNames.get(route.getId()), sorted, cpByEncounterId);
+            String localizedBadgeName = route.getRequiredBadge() != null
+                    ? localizedBadgeNames.get(route.getRequiredBadge().getId()) : null;
+            return RouteWithEncounterResponse.build(route, localizedNames.get(route.getId()),
+                    localizedBadgeName, sorted, cpByEncounterId);
         }).toList();
     }
 
@@ -242,6 +252,27 @@ public class RunService {
                 .collect(Collectors.toMap(
                         RouteNameRepository.NameProjection::getRouteId,
                         RouteNameRepository.NameProjection::getName));
+    }
+
+    private Map<Long, String> localizedBadgeNamesForRoutes(List<Route> routes, String lang) {
+        if (routes.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
+        List<Long> badgeIds = routes.stream()
+                .filter(r -> r.getRequiredBadge() != null)
+                .map(r -> r.getRequiredBadge().getId())
+                .distinct().toList();
+        if (badgeIds.isEmpty()) return Map.of();
+        return badgeNameRepository.findNamesByBadgeIdsAndLang(badgeIds, lang).stream()
+                .collect(Collectors.toMap(
+                        BadgeNameRepository.NameProjection::getBadgeId,
+                        BadgeNameRepository.NameProjection::getName));
+    }
+
+    private Map<Long, String> localizedBadgeNamesByIds(List<Long> ids, String lang) {
+        if (ids.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
+        return badgeNameRepository.findNamesByBadgeIdsAndLang(ids, lang).stream()
+                .collect(Collectors.toMap(
+                        BadgeNameRepository.NameProjection::getBadgeId,
+                        BadgeNameRepository.NameProjection::getName));
     }
 
     public RouteEncounterResponse recordEncounter(UUID userId, UUID runId, RecordEncounterRequest req) {
@@ -469,6 +500,10 @@ public class RunService {
     // ─── Medallas ──────────────────────────────────────────────────────────────
 
     public RunBadgeResponse obtainBadge(UUID userId, UUID runId, ObtainBadgeRequest req) {
+        return obtainBadge(userId, runId, req, "en");
+    }
+
+    public RunBadgeResponse obtainBadge(UUID userId, UUID runId, ObtainBadgeRequest req, String lang) {
         Run run = requireOwnedRun(userId, runId);
 
         Badge badge = badgeRepository.findById(req.badgeId())
@@ -500,7 +535,9 @@ public class RunService {
         }
 
         touchRunActivity(run);
-        return RunBadgeResponse.from(primaryBadge);
+        String localizedName = localizedBadgeNamesByIds(List.of(primaryBadge.getBadge().getId()), lang)
+                .get(primaryBadge.getBadge().getId());
+        return RunBadgeResponse.from(primaryBadge, localizedName);
     }
 
     public void removeBadge(UUID userId, UUID runId, long badgeId) {
@@ -510,9 +547,19 @@ public class RunService {
 
     @Transactional(readOnly = true)
     public List<RunBadgeResponse> getBadges(UUID userId, UUID runId) {
+        return getBadges(userId, runId, "en");
+    }
+
+    @Transactional(readOnly = true)
+    public List<RunBadgeResponse> getBadges(UUID userId, UUID runId, String lang) {
         requireOwnedRun(userId, runId);
-        return runBadgeRepository.findAllByRunIdOrderByObtainedAtAsc(runId)
-                .stream().map(RunBadgeResponse::from).toList();
+        List<com.nuzlocketracker.run.entity.RunBadge> runBadges =
+                runBadgeRepository.findAllByRunIdOrderByObtainedAtAsc(runId);
+        List<Long> badgeIds = runBadges.stream().map(rb -> rb.getBadge().getId()).toList();
+        Map<Long, String> badgeNames = localizedBadgeNamesByIds(badgeIds, lang);
+        return runBadges.stream()
+                .map(rb -> RunBadgeResponse.from(rb, badgeNames.get(rb.getBadge().getId())))
+                .toList();
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -542,10 +589,19 @@ public class RunService {
     }
 
     private RunDetailResponse buildDetail(Run run) {
+        return buildDetail(run, "en");
+    }
+
+    private RunDetailResponse buildDetail(Run run, String lang) {
         List<RunRuleResponse> rules = runRuleRepository.findAllByRunId(run.getId())
                 .stream().map(RunRuleResponse::from).toList();
-        List<RunBadgeResponse> badges = runBadgeRepository.findAllByRunIdOrderByObtainedAtAsc(run.getId())
-                .stream().map(RunBadgeResponse::from).toList();
+        List<com.nuzlocketracker.run.entity.RunBadge> runBadges =
+                runBadgeRepository.findAllByRunIdOrderByObtainedAtAsc(run.getId());
+        List<Long> badgeIds = runBadges.stream().map(rb -> rb.getBadge().getId()).toList();
+        Map<Long, String> badgeNames = localizedBadgeNamesByIds(badgeIds, lang);
+        List<RunBadgeResponse> badges = runBadges.stream()
+                .map(rb -> RunBadgeResponse.from(rb, badgeNames.get(rb.getBadge().getId())))
+                .toList();
         long active = caughtPokemonRepository.countByRunIdAndStatus(run.getId(), CaughtPokemon.Status.ACTIVE);
         long fainted = caughtPokemonRepository.countByRunIdAndStatus(run.getId(), CaughtPokemon.Status.FAINTED);
         long boxed = caughtPokemonRepository.countByRunIdAndStatus(run.getId(), CaughtPokemon.Status.BOXED);

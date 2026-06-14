@@ -4,6 +4,7 @@ import com.nuzlocketracker.catalog.dto.*;
 import com.nuzlocketracker.catalog.entity.Pokemon;
 import com.nuzlocketracker.catalog.entity.PokemonBaseStats;
 import com.nuzlocketracker.catalog.entity.Route;
+import com.nuzlocketracker.catalog.repository.BadgeNameRepository;
 import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonAbilityRepository;
@@ -30,6 +31,7 @@ public class CatalogService {
     private final GameRepository gameRepository;
     private final RouteRepository routeRepository;
     private final RouteNameRepository routeNameRepository;
+    private final BadgeNameRepository badgeNameRepository;
     private final PokemonRepository pokemonRepository;
     private final BadgeRepository badgeRepository;
     private final PokemonNameRepository pokemonNameRepository;
@@ -49,9 +51,11 @@ public class CatalogService {
 
     public List<RouteResponse> listRoutesByGame(Long gameId, String lang) {
         List<Route> routes = routeRepository.findByGameIdOrderByDisplayOrder(gameId);
-        Map<Long, String> localized = localizedRouteNames(routes, lang);
+        Map<Long, String> localizedRoutes = localizedRouteNames(routes, lang);
+        Map<Long, String> localizedBadges = localizedBadgeNamesForRoutes(routes, lang);
         return routes.stream()
-                .map(r -> RouteResponse.from(r, localized.get(r.getId())))
+                .map(r -> RouteResponse.from(r, localizedRoutes.get(r.getId()),
+                        r.getRequiredBadge() != null ? localizedBadges.get(r.getRequiredBadge().getId()) : null))
                 .toList();
     }
 
@@ -64,11 +68,39 @@ public class CatalogService {
                         RouteNameRepository.NameProjection::getName));
     }
 
+    private Map<Long, String> localizedBadgeNamesForRoutes(List<Route> routes, String lang) {
+        if (routes.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
+        List<Long> badgeIds = routes.stream()
+                .filter(r -> r.getRequiredBadge() != null)
+                .map(r -> r.getRequiredBadge().getId())
+                .distinct().toList();
+        if (badgeIds.isEmpty()) return Map.of();
+        return badgeNameRepository.findNamesByBadgeIdsAndLang(badgeIds, lang).stream()
+                .collect(Collectors.toMap(
+                        BadgeNameRepository.NameProjection::getBadgeId,
+                        BadgeNameRepository.NameProjection::getName));
+    }
+
     public List<BadgeResponse> getBadgesForGame(Long gameId) {
-        return badgeRepository.findByGameIdOrderByDisplayOrderAsc(gameId)
-                .stream()
-                .map(BadgeResponse::from)
+        return getBadgesForGame(gameId, "en");
+    }
+
+    public List<BadgeResponse> getBadgesForGame(Long gameId, String lang) {
+        List<com.nuzlocketracker.catalog.entity.Badge> badges =
+                badgeRepository.findByGameIdOrderByDisplayOrderAsc(gameId);
+        Map<Long, String> localized = localizedBadgeNames(badges, lang);
+        return badges.stream()
+                .map(b -> BadgeResponse.from(b, localized.get(b.getId())))
                 .toList();
+    }
+
+    private Map<Long, String> localizedBadgeNames(List<com.nuzlocketracker.catalog.entity.Badge> badges, String lang) {
+        if (badges.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
+        List<Long> ids = badges.stream().map(com.nuzlocketracker.catalog.entity.Badge::getId).toList();
+        return badgeNameRepository.findNamesByBadgeIdsAndLang(ids, lang).stream()
+                .collect(Collectors.toMap(
+                        BadgeNameRepository.NameProjection::getBadgeId,
+                        BadgeNameRepository.NameProjection::getName));
     }
 
     public List<EncounterSuggestionResponse> getEncounterSuggestions(Long routeId, String gameVersion) {

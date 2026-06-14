@@ -5,8 +5,8 @@ export const catalogApi = {
   games: () =>
     client.get<GameResponse[]>('/api/catalog/games'),
 
-  badges: (gameId: number) =>
-    client.get<BadgeResponse[]>(`/api/catalog/games/${gameId}/badges`),
+  badges: (gameId: number, lang = 'en') =>
+    client.get<BadgeResponse[]>(`/api/catalog/games/${gameId}/badges`, { params: { lang } }),
 
   routes: (gameId: number, lang = 'en') =>
     client.get<RouteResponse[]>(`/api/catalog/games/${gameId}/routes`, { params: { lang } }),

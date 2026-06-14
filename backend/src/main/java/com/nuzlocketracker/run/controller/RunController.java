@@ -32,8 +32,11 @@ public class RunController {
     }
 
     @GetMapping("/{runId}")
-    public RunDetailResponse getRun(@PathVariable UUID runId, Authentication auth) {
-        return runService.getRun(userId(auth), runId);
+    public RunDetailResponse getRun(
+            @PathVariable UUID runId,
+            @RequestParam(defaultValue = "en") String lang,
+            Authentication auth) {
+        return runService.getRun(userId(auth), runId, lang);
     }
 
     @PatchMapping("/{runId}")
@@ -138,13 +141,17 @@ public class RunController {
     @ResponseStatus(HttpStatus.CREATED)
     public RunBadgeResponse obtainBadge(@PathVariable UUID runId,
                                          @Valid @RequestBody ObtainBadgeRequest req,
+                                         @RequestParam(defaultValue = "en") String lang,
                                          Authentication auth) {
-        return runService.obtainBadge(userId(auth), runId, req);
+        return runService.obtainBadge(userId(auth), runId, req, lang);
     }
 
     @GetMapping("/{runId}/badges")
-    public List<RunBadgeResponse> getBadges(@PathVariable UUID runId, Authentication auth) {
-        return runService.getBadges(userId(auth), runId);
+    public List<RunBadgeResponse> getBadges(
+            @PathVariable UUID runId,
+            @RequestParam(defaultValue = "en") String lang,
+            Authentication auth) {
+        return runService.getBadges(userId(auth), runId, lang);
     }
 
     @DeleteMapping("/{runId}/badges/{badgeId}")
