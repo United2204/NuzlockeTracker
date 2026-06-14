@@ -180,6 +180,7 @@ export const guestStore = {
         routeOrder:       route.displayOrder,
         requiredBadgeId:  route.requiredBadgeId,
         requiredBadgeName: route.requiredBadgeName,
+        isCustom:         false,
         slots: routeSlots.map(s => ({
           id:            s.id,
           outcome:       s.outcome,

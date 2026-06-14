@@ -595,7 +595,7 @@ export function RunDetailPage() {
       await guestStore.updatePokemonStatus(runId!, data.swapPokemonId, 'BOXED');
     }
     await guestStore.recordEncounter(runId!, {
-      routeId:     data.routeId,
+      routeId:     data.routeId!,  // custom encounters require auth; guest always has a routeId
       routeName:   data.routeName,
       outcome:     data.outcome,
       encounterId: data.encounterId,
