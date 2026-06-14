@@ -23,7 +23,7 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 }
 
 function TimeRow({ record }: { record: PokemonTimeRecord }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const statusColor =
     record.status === 'ACTIVE'  ? 'var(--success)' :
     record.status === 'FAINTED' ? 'var(--danger)'  : 'var(--text-muted)';
