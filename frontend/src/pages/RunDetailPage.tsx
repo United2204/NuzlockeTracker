@@ -359,6 +359,85 @@ function BadgeModal({
   );
 }
 
+function LevelCapChip({
+  gymCap,
+  run,
+  runId,
+  isOwner,
+  qc,
+}: {
+  gymCap: GymCap;
+  run: RunDetailResponse;
+  runId: string;
+  isOwner: boolean;
+  qc: ReturnType<typeof useQueryClient>;
+}) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
+
+  const mut = useMutation({
+    mutationFn: (newLevel: number) => {
+      const modifier = Math.round(((newLevel / gymCap.acePokemonLevel) - 1) * 100);
+      const otherRules = (run.rules ?? [])
+        .filter(r => r.ruleType !== 'LEVEL_CAP')
+        .map(r => ({ ruleType: r.ruleType, enabled: r.enabled, value: r.value }));
+      return runsApi.updateRules(runId, [
+        ...otherRules,
+        { ruleType: 'LEVEL_CAP', enabled: true, value: `{"modifierPercent":${modifier}}` },
+      ]);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['runs', runId, 'gym-caps'] });
+      qc.invalidateQueries({ queryKey: ['runs', runId] });
+    },
+  });
+
+  function openEdit(e: React.MouseEvent) {
+    e.stopPropagation();
+    setValue(String(gymCap.levelCap));
+    setEditing(true);
+  }
+
+  function commit() {
+    const newLevel = parseInt(value, 10);
+    if (!isNaN(newLevel) && newLevel > 0 && newLevel !== gymCap.levelCap) {
+      mut.mutate(newLevel);
+    }
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="number"
+        min={1}
+        max={100}
+        className="level-cap-chip level-cap-chip--editing"
+        value={value}
+        autoFocus
+        onChange={e => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') { setValue(String(gymCap.levelCap)); setEditing(false); }
+        }}
+        onClick={e => e.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`level-cap-chip${isOwner ? ' level-cap-chip--editable' : ''}`}
+      title={isOwner ? `${gymCap.leaderName} — tap to edit` : gymCap.leaderName}
+      onClick={isOwner ? openEdit : undefined}
+    >
+      {t('runDetail.levelCap', { level: gymCap.levelCap })}
+    </span>
+  );
+}
+
 function RunActions({ run }: { run: RunDetailResponse }) {
   const { t } = useTranslation();
   const auth = useContext(AuthContext);
@@ -698,9 +777,13 @@ export function RunDetailPage() {
             <div className="route-group-header">
               <h3 className="route-group-title">{t('runDetail.badgeGroup', { badge: badge === NO_BADGE ? t('runDetail.noBadge') : badge })}</h3>
               {gymCap && (
-                <span className="level-cap-chip" title={gymCap.leaderName}>
-                  {t('runDetail.levelCap', { level: gymCap.levelCap })}
-                </span>
+                <LevelCapChip
+                  gymCap={gymCap}
+                  run={run}
+                  runId={runId!}
+                  isOwner={isOwner}
+                  qc={qc}
+                />
               )}
             </div>
             {groupRoutes.map(route => {

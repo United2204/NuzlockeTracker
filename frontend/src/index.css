@@ -568,6 +568,22 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   padding: 1px 7px;
   white-space: nowrap;
   flex-shrink: 0;
+  line-height: 1.6;
+}
+.level-cap-chip--editable {
+  cursor: pointer;
+  user-select: none;
+}
+.level-cap-chip--editable:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+}
+.level-cap-chip--editing {
+  width: 64px;
+  text-align: center;
+  outline: none;
+  cursor: text;
+  padding: 1px 4px;
 }
 
 .route-group-title {
