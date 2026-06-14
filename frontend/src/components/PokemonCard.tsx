@@ -1,12 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import type { CaughtPokemonResponse } from '../types/api';
 import { typeColor } from '../utils/pokemonTypes';
 import { spriteFor } from '../utils/sprites';
-
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE:  'Activo',
-  BOXED:   'Box',
-  FAINTED: 'Muerto',
-};
 
 const STATUS_COLOR: Record<string, string> = {
   ACTIVE:  '#22c55e',
@@ -21,6 +16,7 @@ interface Props {
 }
 
 export function PokemonCard({ pokemon, onClick, selected }: Props) {
+  const { t } = useTranslation();
   const displayName = pokemon.nickname
     ? `${pokemon.nickname}`
     : pokemon.currentPokemonName;
@@ -69,7 +65,7 @@ export function PokemonCard({ pokemon, onClick, selected }: Props) {
             className="status-badge"
             style={{ background: STATUS_COLOR[pokemon.status] ?? '#888' }}
           >
-            {STATUS_LABEL[pokemon.status] ?? pokemon.status}
+            {t(`search.status.${pokemon.status}`, pokemon.status)}
           </span>
         </div>
         <div className="pokemon-route">📍 {pokemon.routeName}</div>

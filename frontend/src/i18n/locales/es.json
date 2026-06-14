@@ -256,6 +256,11 @@
     "visibilityTitle": "Visibilidad de la run",
     "addEncounter": "Agregar otro encuentro"
   },
+  "runNav": {
+    "routes": "Rutas",
+    "team": "Equipo",
+    "stats": "Stats"
+  },
   "runStats": {
     "title": "Estadísticas",
     "routes": {

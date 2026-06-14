@@ -256,6 +256,11 @@
     "visibilityTitle": "Run visibility",
     "addEncounter": "Add another encounter"
   },
+  "runNav": {
+    "routes": "Routes",
+    "team": "Team",
+    "stats": "Stats"
+  },
   "runStats": {
     "title": "Statistics",
     "routes": {

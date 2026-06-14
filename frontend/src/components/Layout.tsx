@@ -68,21 +68,21 @@ export function Layout({ children, title, back, action, runId }: LayoutProps) {
             className={`nav-tab ${location.pathname === `/runs/${runId}` ? 'active' : ''}`}
           >
             <span>🗺️</span>
-            <span>Rutas</span>
+            <span>{t('runNav.routes')}</span>
           </Link>
           <Link
             to={`/runs/${runId}/team`}
             className={`nav-tab ${location.pathname === `/runs/${runId}/team` ? 'active' : ''}`}
           >
             <span>⚔️</span>
-            <span>Equipo</span>
+            <span>{t('runNav.team')}</span>
           </Link>
           <Link
             to={`/runs/${runId}/stats`}
             className={`nav-tab ${location.pathname === `/runs/${runId}/stats` ? 'active' : ''}`}
           >
             <span>📊</span>
-            <span>Stats</span>
+            <span>{t('runNav.stats')}</span>
           </Link>
         </nav>
       ) : (
