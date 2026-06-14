@@ -30,7 +30,8 @@ export function RunsPage() {
   const { user, logout } = useAuth();
   const qc = useQueryClient();
   const { showToast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.split('-')[0] ?? 'en';
   const [showArchived, setShowArchived] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_RUN_KEY),
@@ -53,12 +54,12 @@ export function RunsPage() {
 
   // Fetch all caught Pokémon (team + box + graveyard) for the active run
   const { data: allCaught = [] } = useQuery({
-    queryKey: ['all-caught', activeRunId],
+    queryKey: ['all-caught', activeRunId, lang],
     queryFn: async () => {
       const [team, box, grave] = await Promise.all([
-        runsApi.team(activeRunId!).then(r => r.data),
-        runsApi.box(activeRunId!).then(r => r.data),
-        runsApi.graveyard(activeRunId!).then(r => r.data),
+        runsApi.team(activeRunId!, lang).then(r => r.data),
+        runsApi.box(activeRunId!, lang).then(r => r.data),
+        runsApi.graveyard(activeRunId!, lang).then(r => r.data),
       ]);
       return [...team, ...box, ...grave];
     },

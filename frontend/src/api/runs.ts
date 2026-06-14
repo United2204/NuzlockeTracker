@@ -59,14 +59,14 @@ export const runsApi = {
   }) =>
     client.post(`/api/runs/${runId}/encounters`, data),
 
-  team: (runId: string) =>
-    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/team`),
+  team: (runId: string, lang = 'en') =>
+    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/team`, { params: { lang } }),
 
-  graveyard: (runId: string) =>
-    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/graveyard`),
+  graveyard: (runId: string, lang = 'en') =>
+    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/graveyard`, { params: { lang } }),
 
-  box: (runId: string) =>
-    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/box`),
+  box: (runId: string, lang = 'en') =>
+    client.get<CaughtPokemonResponse[]>(`/api/runs/${runId}/box`, { params: { lang } }),
 
   updatePokemonStatus: (runId: string, pokemonId: string, data: {
     status: string;

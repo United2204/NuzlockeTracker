@@ -187,7 +187,7 @@ public class RunService {
                 .collect(Collectors.groupingBy(e -> e.getRoute().getId()));
 
         List<CaughtPokemon> caught = caughtPokemonRepository.findAllByRunId(runId);
-        List<CaughtPokemonResponse> cpResponses = toCaughtPokemonResponses(caught);
+        List<CaughtPokemonResponse> cpResponses = toCaughtPokemonResponses(caught, lang);
         Map<UUID, CaughtPokemonResponse> cpByEncounterId = new HashMap<>();
         for (int i = 0; i < caught.size(); i++) {
             cpByEncounterId.put(caught.get(i).getRouteEncounter().getId(), cpResponses.get(i));
@@ -232,8 +232,12 @@ public class RunService {
     }
 
     private Map<Long, String> localizedRouteNames(List<Route> routes, String lang) {
-        if (routes.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
         List<Long> ids = routes.stream().map(Route::getId).toList();
+        return localizedRouteNames(ids, lang);
+    }
+
+    private Map<Long, String> localizedRouteNames(List<Long> ids, String lang) {
+        if (ids.isEmpty() || lang == null || lang.isBlank() || "en".equals(lang)) return Map.of();
         return routeNameRepository.findNamesByRouteIdsAndLang(ids, lang).stream()
                 .collect(Collectors.toMap(
                         RouteNameRepository.NameProjection::getRouteId,
@@ -355,24 +359,24 @@ public class RunService {
     // ─── Pokémon capturados ────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public List<CaughtPokemonResponse> getTeam(UUID userId, UUID runId) {
+    public List<CaughtPokemonResponse> getTeam(UUID userId, UUID runId, String lang) {
         requireOwnedRun(userId, runId);
         return toCaughtPokemonResponses(
-                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.ACTIVE));
+                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.ACTIVE), lang);
     }
 
     @Transactional(readOnly = true)
-    public List<CaughtPokemonResponse> getGraveyard(UUID userId, UUID runId) {
+    public List<CaughtPokemonResponse> getGraveyard(UUID userId, UUID runId, String lang) {
         requireOwnedRun(userId, runId);
         return toCaughtPokemonResponses(
-                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.FAINTED));
+                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.FAINTED), lang);
     }
 
     @Transactional(readOnly = true)
-    public List<CaughtPokemonResponse> getBox(UUID userId, UUID runId) {
+    public List<CaughtPokemonResponse> getBox(UUID userId, UUID runId, String lang) {
         requireOwnedRun(userId, runId);
         return toCaughtPokemonResponses(
-                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.BOXED));
+                caughtPokemonRepository.findAllByRunIdAndStatus(runId, CaughtPokemon.Status.BOXED), lang);
     }
 
     public CaughtPokemonResponse updatePokemonStatus(UUID userId, UUID runId, UUID pokemonId,
@@ -646,8 +650,8 @@ public class RunService {
         return CaughtPokemonResponse.from(cp, resolveName(cp.getCurrentPokemon().getId()), chainId);
     }
 
-    /** Versión en lote: resuelve nombres y chainIds con una query cada uno, en vez de 2 por Pokémon. */
-    private List<CaughtPokemonResponse> toCaughtPokemonResponses(List<CaughtPokemon> pokemons) {
+    /** Versión en lote: resuelve nombres, chainIds y nombres de ruta localizados. */
+    private List<CaughtPokemonResponse> toCaughtPokemonResponses(List<CaughtPokemon> pokemons, String lang) {
         if (pokemons.isEmpty()) return List.of();
 
         Set<Long> currentIds = pokemons.stream()
@@ -655,22 +659,44 @@ public class RunService {
         Set<Long> originalIds = pokemons.stream()
                 .map(cp -> cp.getOriginalPokemon().getId()).collect(Collectors.toSet());
 
+        String effectiveLang = (lang == null || lang.isBlank()) ? "en" : lang;
+
         Map<Long, String> names = pokemonNameRepository
-                .findNamesByPokemonIdsAndLang(currentIds, "en").stream()
+                .findNamesByPokemonIdsAndLang(currentIds, effectiveLang).stream()
                 .collect(Collectors.toMap(
                         PokemonNameRepository.NameProjection::getPokemonId,
                         PokemonNameRepository.NameProjection::getName));
+
+        if (names.isEmpty() && !"en".equals(effectiveLang)) {
+            names = pokemonNameRepository
+                    .findNamesByPokemonIdsAndLang(currentIds, "en").stream()
+                    .collect(Collectors.toMap(
+                            PokemonNameRepository.NameProjection::getPokemonId,
+                            PokemonNameRepository.NameProjection::getName));
+        }
 
         Map<Long, Long> chainIds = pokemonRepository.findChainIds(originalIds).stream()
                 .collect(Collectors.toMap(
                         PokemonRepository.ChainIdProjection::getPokemonId,
                         PokemonRepository.ChainIdProjection::getChainId));
 
+        List<Long> routeIds = pokemons.stream()
+                .map(cp -> cp.getRouteEncounter().getRoute().getId())
+                .distinct().toList();
+        Map<Long, String> routeNames = localizedRouteNames(routeIds, effectiveLang);
+
+        final Map<Long, String> finalNames = names;
         return pokemons.stream()
-                .map(cp -> CaughtPokemonResponse.from(
-                        cp,
-                        names.getOrDefault(cp.getCurrentPokemon().getId(), "Unknown"),
-                        chainIds.get(cp.getOriginalPokemon().getId())))
+                .map(cp -> {
+                    String routeName = routeNames.getOrDefault(
+                            cp.getRouteEncounter().getRoute().getId(),
+                            cp.getRouteEncounter().getRoute().getName());
+                    return CaughtPokemonResponse.from(
+                            cp,
+                            finalNames.getOrDefault(cp.getCurrentPokemon().getId(), "Unknown"),
+                            chainIds.get(cp.getOriginalPokemon().getId()),
+                            routeName);
+                })
                 .toList();
     }
 

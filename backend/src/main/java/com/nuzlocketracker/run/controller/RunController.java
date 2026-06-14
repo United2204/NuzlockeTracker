@@ -84,18 +84,27 @@ public class RunController {
     // ─── Equipo y caja ─────────────────────────────────────────────────────────
 
     @GetMapping("/{runId}/team")
-    public List<CaughtPokemonResponse> getTeam(@PathVariable UUID runId, Authentication auth) {
-        return runService.getTeam(userId(auth), runId);
+    public List<CaughtPokemonResponse> getTeam(
+            @PathVariable UUID runId,
+            @RequestParam(defaultValue = "en") String lang,
+            Authentication auth) {
+        return runService.getTeam(userId(auth), runId, lang);
     }
 
     @GetMapping("/{runId}/graveyard")
-    public List<CaughtPokemonResponse> getGraveyard(@PathVariable UUID runId, Authentication auth) {
-        return runService.getGraveyard(userId(auth), runId);
+    public List<CaughtPokemonResponse> getGraveyard(
+            @PathVariable UUID runId,
+            @RequestParam(defaultValue = "en") String lang,
+            Authentication auth) {
+        return runService.getGraveyard(userId(auth), runId, lang);
     }
 
     @GetMapping("/{runId}/box")
-    public List<CaughtPokemonResponse> getBox(@PathVariable UUID runId, Authentication auth) {
-        return runService.getBox(userId(auth), runId);
+    public List<CaughtPokemonResponse> getBox(
+            @PathVariable UUID runId,
+            @RequestParam(defaultValue = "en") String lang,
+            Authentication auth) {
+        return runService.getBox(userId(auth), runId, lang);
     }
 
     // ─── Estado del Pokémon ────────────────────────────────────────────────────

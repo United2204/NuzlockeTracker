@@ -140,7 +140,8 @@ function EvolveModal({
 }
 
 export function TeamPage() {
-  const { t }      = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang        = i18n.language?.split('-')[0] ?? 'en';
   const { runId }  = useParams<{ runId: string }>();
   const { user }   = useAuth();
   const isGuest    = !user;
@@ -160,20 +161,20 @@ export function TeamPage() {
   });
 
   const apiTeamQ = useQuery({
-    queryKey: ['runs', runId, 'team'],
-    queryFn:  () => runsApi.team(runId!).then(r => r.data),
+    queryKey: ['runs', runId, 'team', lang],
+    queryFn:  () => runsApi.team(runId!, lang).then(r => r.data),
     enabled:  !!runId && !isGuest,
   });
 
   const apiBoxQ = useQuery({
-    queryKey: ['runs', runId, 'box'],
-    queryFn:  () => runsApi.box(runId!).then(r => r.data),
+    queryKey: ['runs', runId, 'box', lang],
+    queryFn:  () => runsApi.box(runId!, lang).then(r => r.data),
     enabled:  !!runId && !isGuest && tab === 'box',
   });
 
   const apiGraveyardQ = useQuery({
-    queryKey: ['runs', runId, 'graveyard'],
-    queryFn:  () => runsApi.graveyard(runId!).then(r => r.data),
+    queryKey: ['runs', runId, 'graveyard', lang],
+    queryFn:  () => runsApi.graveyard(runId!, lang).then(r => r.data),
     enabled:  !!runId && !isGuest && tab === 'graveyard',
   });
 

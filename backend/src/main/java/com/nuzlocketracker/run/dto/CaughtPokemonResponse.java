@@ -22,6 +22,10 @@ public record CaughtPokemonResponse(
         Long chainId
 ) {
     public static CaughtPokemonResponse from(CaughtPokemon cp, String pokemonName, Long chainId) {
+        return from(cp, pokemonName, chainId, cp.getRouteEncounter().getRoute().getName());
+    }
+
+    public static CaughtPokemonResponse from(CaughtPokemon cp, String pokemonName, Long chainId, String routeName) {
         return new CaughtPokemonResponse(
                 cp.getId(),
                 cp.getOriginalPokemon().getId(),
@@ -34,7 +38,7 @@ public record CaughtPokemonResponse(
                 cp.getStatus().name(),
                 cp.getCaughtAt(),
                 cp.getRouteEncounter().getRoute().getId(),
-                cp.getRouteEncounter().getRoute().getName(),
+                routeName,
                 chainId
         );
     }
