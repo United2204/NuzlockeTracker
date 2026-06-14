@@ -254,7 +254,8 @@
     "completeConfirm": "Confirm you finished this run? Your Hall of Fame will be saved.",
     "abandonConfirm": "Are you sure you want to abandon this run?",
     "visibilityTitle": "Run visibility",
-    "addEncounter": "Add another encounter"
+    "addEncounter": "Add another encounter",
+    "levelCap": "Cap Lv. {{level}}"
   },
   "notifications": {
     "title": "Notifications",

@@ -66,6 +66,11 @@ public class RunController {
         return runService.getRoutes(userId(auth), runId, lang);
     }
 
+    @GetMapping("/{runId}/gym-caps")
+    public List<GymCapResponse> getGymCaps(@PathVariable UUID runId, Authentication auth) {
+        return runService.getGymCaps(userId(auth), runId);
+    }
+
     // ─── Encuentros ────────────────────────────────────────────────────────────
 
     @PostMapping("/{runId}/encounters")

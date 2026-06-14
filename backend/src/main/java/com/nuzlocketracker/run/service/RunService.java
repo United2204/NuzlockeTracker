@@ -5,8 +5,10 @@ import com.nuzlocketracker.catalog.entity.Badge;
 import com.nuzlocketracker.catalog.entity.Game;
 import com.nuzlocketracker.catalog.entity.Pokemon;
 import com.nuzlocketracker.catalog.entity.Route;
+import com.nuzlocketracker.catalog.entity.Gym;
 import com.nuzlocketracker.catalog.repository.BadgeRepository;
 import com.nuzlocketracker.catalog.repository.GameRepository;
+import com.nuzlocketracker.catalog.repository.GymRepository;
 import com.nuzlocketracker.catalog.repository.PokemonNameRepository;
 import com.nuzlocketracker.catalog.repository.PokemonRepository;
 import com.nuzlocketracker.catalog.repository.RouteNameRepository;
@@ -17,6 +19,8 @@ import com.nuzlocketracker.run.dto.*;
 import com.nuzlocketracker.run.entity.*;
 import com.nuzlocketracker.run.repository.*;
 import com.nuzlocketracker.social.repository.UserFollowRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +48,9 @@ public class RunService {
     private final PokemonRepository pokemonRepository;
     private final PokemonNameRepository pokemonNameRepository;
     private final BadgeRepository badgeRepository;
+    private final GymRepository gymRepository;
     private final UserFollowRepository userFollowRepository;
+    private final ObjectMapper objectMapper;
 
     // ─── Runs ──────────────────────────────────────────────────────────────────
 
@@ -195,6 +201,34 @@ public class RunService {
                     .toList();
             return RouteWithEncounterResponse.build(route, localizedNames.get(route.getId()), sorted, cpByEncounterId);
         }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GymCapResponse> getGymCaps(UUID userId, UUID runId) {
+        Run run = requireReadableRun(userId, runId);
+        List<Gym> gyms = gymRepository.findByGameIdOrderByDisplayOrderAsc(run.getGame().getId());
+        if (gyms.isEmpty()) return List.of();
+
+        int modifierPercent = 0;
+        Optional<RunRule> levelCapRule = runRuleRepository.findByRunIdAndRuleType(runId, RunRule.RuleType.LEVEL_CAP);
+        if (levelCapRule.isPresent() && levelCapRule.get().isEnabled()
+                && levelCapRule.get().getValue() != null) {
+            try {
+                Map<String, Object> parsed = objectMapper.readValue(
+                        levelCapRule.get().getValue(), new TypeReference<>() {});
+                Object mod = parsed.get("modifierPercent");
+                if (mod instanceof Number n) modifierPercent = n.intValue();
+            } catch (Exception ignored) {}
+        }
+
+        double multiplier = 1.0 + modifierPercent / 100.0;
+        return gyms.stream().map(gym -> new GymCapResponse(
+                gym.getBadge().getId(),
+                gym.getBadge().getName(),
+                gym.getLeaderName(),
+                gym.getAcePokemonLevel(),
+                (int) Math.floor(gym.getAcePokemonLevel() * multiplier)
+        )).toList();
     }
 
     private Map<Long, String> localizedRouteNames(List<Route> routes, String lang) {

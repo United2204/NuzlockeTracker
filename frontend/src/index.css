@@ -552,6 +552,24 @@ textarea.form-input { resize: vertical; min-height: 72px; }
 /* ─── Route Cards ────────────────────────────────────────────────── */
 .route-group { display: flex; flex-direction: column; gap: 6px; }
 
+.route-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.level-cap-chip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 10px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .route-group-title {
   font-size: 12px;
   font-weight: 600;

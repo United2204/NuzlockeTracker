@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { runsApi } from '../api/runs';
+import { runsApi, type GymCap } from '../api/runs';
 import { catalogApi } from '../api/catalog';
 import { socialApi } from '../api/social';
 import { guestStore } from '../services/guestStore';
@@ -441,6 +441,12 @@ export function RunDetailPage() {
     enabled:  !!runId && !isGuest,
   });
 
+  const gymCapsQ = useQuery({
+    queryKey: ['runs', runId, 'gym-caps'],
+    queryFn:  () => runsApi.gymCaps(runId!).then(r => r.data),
+    enabled:  !!runId && !isGuest,
+  });
+
   // ── Guest queries ──────────────────────────────────────────────────────────
   const guestRunQ = useQuery({
     queryKey: ['guest', 'runs', runId],
@@ -544,6 +550,12 @@ export function RunDetailPage() {
   })();
 
   const groups = groupByBadge(routes);
+
+  const gymCapsMap = useMemo(() => {
+    const map = new Map<number, GymCap>();
+    for (const cap of gymCapsQ.data ?? []) map.set(cap.badgeId, cap);
+    return map;
+  }, [gymCapsQ.data]);
 
   // Derived from already-loaded routes — no extra API calls
   // Priority: ACTIVE > BOXED > FAINTED (keeps best status when same chain appears multiple times)
@@ -678,9 +690,19 @@ export function RunDetailPage() {
           </div>
         )}
 
-        {Array.from(groups.entries()).map(([badge, groupRoutes]) => (
+        {Array.from(groups.entries()).map(([badge, groupRoutes]) => {
+          const badgeId = groupRoutes[0]?.requiredBadgeId ?? null;
+          const gymCap  = badgeId ? gymCapsMap.get(badgeId) : null;
+          return (
           <div key={badge} className="route-group">
-            <h3 className="route-group-title">{t('runDetail.badgeGroup', { badge: badge === NO_BADGE ? t('runDetail.noBadge') : badge })}</h3>
+            <div className="route-group-header">
+              <h3 className="route-group-title">{t('runDetail.badgeGroup', { badge: badge === NO_BADGE ? t('runDetail.noBadge') : badge })}</h3>
+              {gymCap && (
+                <span className="level-cap-chip" title={gymCap.leaderName}>
+                  {t('runDetail.levelCap', { level: gymCap.levelCap })}
+                </span>
+              )}
+            </div>
             {groupRoutes.map(route => {
               const slots      = route.slots;
               const hasSlots   = slots.length > 0;
@@ -775,7 +797,8 @@ export function RunDetailPage() {
               );
             })}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {runId && !isGuest && <RunSocialSection runId={runId} />}

@@ -7,6 +7,14 @@ import type {
   RunBadgeResponse,
 } from '../types/api';
 
+export interface GymCap {
+  badgeId: number;
+  badgeName: string;
+  leaderName: string;
+  acePokemonLevel: number;
+  levelCap: number;
+}
+
 export const runsApi = {
   list: () =>
     client.get<RunSummaryResponse[]>('/api/runs'),
@@ -84,4 +92,7 @@ export const runsApi = {
 
   deleteBadge: (runId: string, badgeId: number) =>
     client.delete(`/api/runs/${runId}/badges/${badgeId}`),
+
+  gymCaps: (runId: string) =>
+    client.get<GymCap[]>(`/api/runs/${runId}/gym-caps`),
 };

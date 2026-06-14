@@ -254,7 +254,8 @@
     "completeConfirm": "¿Confirmás que terminaste esta run? Se guardará tu Hall of Fame.",
     "abandonConfirm": "¿Seguro que querés abandonar esta run?",
     "visibilityTitle": "Visibilidad de la run",
-    "addEncounter": "Agregar otro encuentro"
+    "addEncounter": "Agregar otro encuentro",
+    "levelCap": "Cap Nv. {{level}}"
   },
   "notifications": {
     "title": "Notificaciones",
