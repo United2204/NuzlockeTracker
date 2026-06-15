@@ -917,20 +917,30 @@ export function RunDetailPage() {
                   </div>
                   <div className="route-card-right">
                     {slot?.outcome === 'CAPTURED' && slot.caughtPokemon ? (
-                      slot.caughtPokemon.currentPokemonSpriteUrl ? (
-                        <img
-                          src={slot.caughtPokemon.shiny
-                            ? toShinySpriteUrl(slot.caughtPokemon.currentPokemonSpriteUrl)
-                            : slot.caughtPokemon.currentPokemonSpriteUrl}
-                          alt={slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
-                          title={slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
-                          style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain' }}
-                        />
-                      ) : (
-                        <span className="route-pokemon">
-                          {slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
-                        </span>
-                      )
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {slot.caughtPokemon.currentPokemonSpriteUrl ? (
+                          <img
+                            src={slot.caughtPokemon.shiny
+                              ? toShinySpriteUrl(slot.caughtPokemon.currentPokemonSpriteUrl)
+                              : slot.caughtPokemon.currentPokemonSpriteUrl}
+                            alt={slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
+                            title={slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
+                            style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain' }}
+                          />
+                        ) : (
+                          <span className="route-pokemon">
+                            {slot.caughtPokemon.nickname ?? slot.caughtPokemon.currentPokemonName}
+                          </span>
+                        )}
+                        {CUSTOM_TYPE_BADGE[route.encounterType] && (
+                          <span
+                            title={t(`route.type.${route.encounterType}`, route.encounterType)}
+                            style={{ fontSize: 14, lineHeight: 1 }}
+                          >
+                            {CUSTOM_TYPE_BADGE[route.encounterType]}
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span className="outcome-tag" style={{ color: cfgColor }}>{t(`outcome.${outcome}`)}</span>
                     )}
@@ -1004,6 +1014,10 @@ export function RunDetailPage() {
       {customEncounterModal && runId && (
         <CustomEncounterModal
           runId={runId}
+          onCreated={(route) => {
+            setCustomEncounterModal(false);
+            setActiveEncounter({ route, slot: null });
+          }}
           onClose={() => setCustomEncounterModal(false)}
         />
       )}
@@ -1022,9 +1036,18 @@ export function RunDetailPage() {
   );
 }
 
-const CUSTOM_ENCOUNTER_TYPES = ['STATIC', 'GIFT', 'EGG', 'FOSSIL', 'LEGENDARY', 'TRADE', 'STARTER'] as const;
+const CUSTOM_ENCOUNTER_TYPES = ['STATIC', 'GIFT', 'EGG', 'FOSSIL', 'LEGENDARY', 'TRADE'] as const;
+const CUSTOM_TYPE_BADGE: Record<string, string> = { FOSSIL: '🪨', EGG: '🥚', GIFT: '🎁', TRADE: '🔄' };
 
-function CustomEncounterModal({ runId, onClose }: { runId: string; onClose: () => void }) {
+function CustomEncounterModal({
+  runId,
+  onCreated,
+  onClose,
+}: {
+  runId: string;
+  onCreated: (route: RouteWithEncounterResponse) => void;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [name, setName] = useState('');
@@ -1037,12 +1060,11 @@ function CustomEncounterModal({ runId, onClose }: { runId: string; onClose: () =
     if (!name.trim()) { setError(t('runDetail.specialNameRequired')); return; }
     setSaving(true);
     try {
-      await runsApi.createCustomEncounter(runId, { name: name.trim(), encounterType });
+      const res = await runsApi.createCustomEncounter(runId, { name: name.trim(), encounterType });
       await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
-      onClose();
+      onCreated(res.data);
     } catch {
       setError(t('encounter.error'));
-    } finally {
       setSaving(false);
     }
   }

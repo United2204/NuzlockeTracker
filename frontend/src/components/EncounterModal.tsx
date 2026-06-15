@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { RouteWithEncounterResponse, RouteEncounterSlot, PokemonSearchResponse, CaughtPokemonResponse } from '../types/api';
 import { PokemonSearch } from './PokemonSearch';
 import { runsApi } from '../api/runs';
+import { toShinySpriteUrl } from '../utils/sprites';
 
 const OUTCOMES = [
   { value: 'CAPTURED',          color: 'var(--success)' },
@@ -56,6 +57,8 @@ interface Props {
 const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL', 'EGG', 'TRADE']);
 const TERMINAL_OUTCOMES    = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER', 'NOT_FOUND']);
 
+const TYPE_BADGE: Record<string, string> = { FOSSIL: '🪨', EGG: '🥚', GIFT: '🎁', TRADE: '🔄' };
+
 export function EncounterModal({
   route, slot, runId, activePokemonCount,
   nicknameRequired, firstEncounterOnly, speciesClauseEnabled,
@@ -75,27 +78,36 @@ export function EncounterModal({
 
   const isEditing = slot !== null && TERMINAL_OUTCOMES.has(slot.outcome);
   const isForced  = FORCED_CAPTURE_TYPES.has(route.encounterType);
+  const isTrade   = route.encounterType === 'TRADE';
 
-  const [selectedPokemon, setSelectedPokemon] = useState<PokemonSearchResponse | null>(existingPokemon);
-  const [submitError, setSubmitError]         = useState('');
-  const [pendingData, setPendingData]         = useState<FormData | null>(null);
-  const [memberToBox, setMemberToBox]         = useState<CaughtPokemonResponse | null>(null);
+  const [selectedPokemon, setSelectedPokemon]     = useState<PokemonSearchResponse | null>(existingPokemon);
+  const [tradeAwayPokemon, setTradeAwayPokemon]   = useState<CaughtPokemonResponse | null>(null);
+  const [submitError, setSubmitError]             = useState('');
+  const [pendingData, setPendingData]             = useState<FormData | null>(null);
+  const [memberToBox, setMemberToBox]             = useState<CaughtPokemonResponse | null>(null);
   const qc = useQueryClient();
 
-  const teamFull       = activePokemonCount >= 6;
+  const teamFull        = activePokemonCount >= 6;
   const speciesConflict = speciesClauseEnabled &&
     selectedPokemon?.chainId != null &&
     (caughtChainIds?.includes(selectedPokemon.chainId) ?? false);
-  const showSwapModal  = pendingData !== null;
+  const showSwapModal   = pendingData !== null;
 
-  // API team query — only used when no guestTeamMembers provided
+  // API team query — reused for swap modal and TRADE give-away selector
   const { data: apiTeamMembers = [] } = useQuery({
     queryKey: ['runs', runId, 'team'],
     queryFn:  () => runsApi.team(runId).then(r => r.data),
-    enabled:  showSwapModal && !onSave,
+    enabled:  (showSwapModal || isTrade) && !onSave,
+  });
+  // Box query — needed only for TRADE give-away (can give away a boxed Pokémon)
+  const { data: tradeBoxMembers = [] } = useQuery({
+    queryKey: ['runs', runId, 'box'],
+    queryFn:  () => runsApi.box(runId).then(r => r.data),
+    enabled:  isTrade && !onSave && !isEditing,
   });
 
-  const teamMembers = guestTeamMembers ?? apiTeamMembers;
+  const teamMembers     = guestTeamMembers ?? apiTeamMembers;
+  const tradeCandidates = isTrade ? [...apiTeamMembers, ...tradeBoxMembers] : [];
 
   const { register, handleSubmit, watch, setValue, formState: { isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -128,6 +140,7 @@ export function EncounterModal({
         if (swap && swap !== 'box') {
           await runsApi.updatePokemonStatus(runId, swap.id, { status: 'BOXED' });
         }
+        // For trades: record the received Pokémon first, then remove the given-away one
         await runsApi.recordEncounter(runId, {
           routeId:     route.routeId,
           outcome:     data.outcome,
@@ -137,9 +150,13 @@ export function EncounterModal({
           shiny:       data.shiny,
           notes:       data.notes || undefined,
         });
+        if (isTrade && tradeAwayPokemon) {
+          await runsApi.updatePokemonStatus(runId, tradeAwayPokemon.id, { status: 'FAINTED' });
+        }
         await qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
         await qc.invalidateQueries({ queryKey: ['runs', runId] });
         await qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
+        await qc.invalidateQueries({ queryKey: ['runs', runId, 'box'] });
         await qc.invalidateQueries({ queryKey: ['all-caught', runId] });
       }
       onClose();
@@ -163,8 +180,13 @@ export function EncounterModal({
       setSubmitError(t('encounter.nicknameRequired'));
       return;
     }
+    if (isTrade && tradeCandidates.length > 0 && !tradeAwayPokemon && !isEditing) {
+      setSubmitError(t('encounter.selectTradedAway'));
+      return;
+    }
     setSubmitError('');
-    if (data.outcome === 'CAPTURED' && teamFull && !isEditing) {
+    // For trades, skip team-full check — giving away a Pokémon frees a slot
+    if (data.outcome === 'CAPTURED' && teamFull && !isEditing && !isTrade) {
       setPendingData(data);
       return;
     }
@@ -196,8 +218,12 @@ export function EncounterModal({
             )}
 
             {isForced ? (
-              <p className="form-label" style={{ marginBottom: 8, color: 'var(--success)' }}>
-                {route.encounterType === 'STARTER' ? t('encounter.chooseStarter') : t('encounter.guaranteed')}
+              <p className="form-label" style={{ marginBottom: 8, color: isTrade ? 'var(--accent)' : 'var(--success)' }}>
+                {route.encounterType === 'STARTER'
+                  ? t('encounter.chooseStarter')
+                  : isTrade
+                    ? t('encounter.tradeReceive')
+                    : t('encounter.guaranteed')}
               </p>
             ) : (
               <div className="form-group">
@@ -223,7 +249,11 @@ export function EncounterModal({
               <>
                 <div className="form-group">
                   <label className="form-label">
-                    {route.encounterType === 'STARTER' ? t('encounter.starterLabel') : t('encounter.capturedLabel')}
+                    {route.encounterType === 'STARTER'
+                      ? t('encounter.starterLabel')
+                      : isTrade
+                        ? t('encounter.tradeReceivedLabel')
+                        : t('encounter.capturedLabel')}
                   </label>
                   <PokemonSearch onSelect={setSelectedPokemon} initialPokemon={existingPokemon} />
                 </div>
@@ -240,6 +270,35 @@ export function EncounterModal({
                   <label htmlFor="shiny">{t('encounter.isShiny')}</label>
                 </div>
               </>
+            )}
+
+            {isTrade && !isEditing && tradeCandidates.length > 0 && (
+              <div className="form-group">
+                <label className="form-label">{t('encounter.tradedAwayLabel')}</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {tradeCandidates.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`btn btn-ghost btn-full${tradeAwayPokemon?.id === p.id ? ' btn-primary' : ''}`}
+                      style={{ textAlign: 'left', justifyContent: 'flex-start', gap: 8 }}
+                      onClick={() => setTradeAwayPokemon(prev => prev?.id === p.id ? null : p)}
+                    >
+                      {p.currentPokemonSpriteUrl && (
+                        <img
+                          src={p.shiny ? toShinySpriteUrl(p.currentPokemonSpriteUrl) : p.currentPokemonSpriteUrl}
+                          alt=""
+                          style={{ width: 24, height: 24, imageRendering: 'pixelated', flexShrink: 0 }}
+                        />
+                      )}
+                      <span>{p.nickname ?? p.currentPokemonName}</span>
+                      {p.status === 'BOXED' && (
+                        <span style={{ opacity: 0.6, fontSize: 12, marginLeft: 'auto' }}>📦</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             <div className="form-group">
