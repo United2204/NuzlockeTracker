@@ -1016,7 +1016,7 @@ export function RunDetailPage() {
           runId={runId}
           onCreated={(route) => {
             setCustomEncounterModal(false);
-            setActiveEncounter({ route, slot: null });
+            setActiveEncounter({ route, slot: route.slots[0] ?? null });
           }}
           onClose={() => setCustomEncounterModal(false)}
         />
