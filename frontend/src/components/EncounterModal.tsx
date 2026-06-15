@@ -57,7 +57,6 @@ interface Props {
 const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL', 'EGG', 'TRADE']);
 const TERMINAL_OUTCOMES    = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER', 'NOT_FOUND']);
 
-const TYPE_BADGE: Record<string, string> = { FOSSIL: '🪨', EGG: '🥚', GIFT: '🎁', TRADE: '🔄' };
 
 export function EncounterModal({
   route, slot, runId, activePokemonCount,
