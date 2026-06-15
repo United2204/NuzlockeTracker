@@ -279,6 +279,32 @@ img    { max-width: 100%; display: block; }
 .btn-danger  { background: var(--danger);  color: #fff; }
 .btn-info    { background: var(--info);    color: #fff; }
 
+/* ─── FAB (Floating Action Button) ──────────────────────────────── */
+.fab-special {
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 16px);
+  right: 16px;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 0 16px;
+  height: 48px;
+  border-radius: 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+  transition: transform .15s, box-shadow .15s, filter .15s;
+  white-space: nowrap;
+}
+.fab-special:hover  { filter: brightness(1.1); }
+.fab-special:active { transform: scale(.95); box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+.fab-special__icon  { font-size: 18px; line-height: 1; }
+
 /* ─── Forms ──────────────────────────────────────────────────────── */
 .form-group {
   display: flex;

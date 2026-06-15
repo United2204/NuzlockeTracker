@@ -894,19 +894,10 @@ export function RunDetailPage() {
           );
         })}
 
-        {(customRoutes.length > 0 || (isOwner && run?.status === 'ACTIVE')) && (
+        {customRoutes.length > 0 && (
           <div className="route-group">
             <div className="route-group-header">
               <h3 className="route-group-title">{t('runDetail.specialEncounters')}</h3>
-              {isOwner && run?.status === 'ACTIVE' && (
-                <button
-                  className="btn btn-ghost"
-                  style={{ fontSize: 13, padding: '4px 10px' }}
-                  onClick={() => setCustomEncounterModal(true)}
-                >
-                  + {t('runDetail.addSpecial')}
-                </button>
-              )}
             </div>
             {customRoutes.map(route => {
               const slot = route.slots[0] ?? null;
@@ -966,6 +957,10 @@ export function RunDetailPage() {
             </div>
           </div>
         )}
+
+        {isOwner && run?.status === 'ACTIVE' && !isGuest && (
+          <div style={{ height: 72 }} aria-hidden="true" />
+        )}
       </div>
 
       {runId && !isGuest && <RunSocialSection runId={runId} />}
@@ -1011,6 +1006,17 @@ export function RunDetailPage() {
           runId={runId}
           onClose={() => setCustomEncounterModal(false)}
         />
+      )}
+
+      {isOwner && run?.status === 'ACTIVE' && !isGuest && (
+        <button
+          className="fab-special"
+          onClick={() => setCustomEncounterModal(true)}
+          aria-label={t('runDetail.addSpecial')}
+        >
+          <span className="fab-special__icon">✦</span>
+          <span className="fab-special__label">{t('runDetail.addSpecial')}</span>
+        </button>
       )}
     </Layout>
   );
