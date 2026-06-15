@@ -200,6 +200,9 @@ img    { max-width: 100%; display: block; }
   padding-bottom: 72px;
 }
 
+/* ─── Sidebar Brand (hidden on mobile, shown in desktop sidebar) ── */
+.sidebar-brand { display: none; }
+
 /* ─── Bottom Nav ─────────────────────────────────────────────────── */
 .bottom-nav {
   position: fixed;
@@ -1814,56 +1817,112 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   color: var(--text-muted);
 }
 
-/* ─── Desktop: Phone Frame ───────────────────────────────────────── */
-@media (min-width: 520px) {
-  html, body {
-    background: #111 !important;
-    height: 100%;
-  }
-
-  body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100dvh;
-    padding: 0;
-  }
-
+/* ─── Desktop Layout ─────────────────────────────────────────────── */
+@media (min-width: 768px) {
   #root {
-    width: 375px;
-    max-width: 375px;
-    height: calc(100dvh - 56px);
-    min-height: 580px;
-    max-height: 820px;
-    border-radius: 40px;
-    overflow: hidden;
-    box-shadow: 0 32px 80px rgba(0, 0, 0, .75), 0 0 0 1px rgba(255,255,255,.06);
-    margin: 0;
+    max-width: 100%;
   }
 
+  /* CSS Grid: sidebar | main */
   .app-shell {
-    height: 100%;
-    min-height: unset;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-areas:
+      "sidebar header"
+      "sidebar content";
+    grid-template-rows: auto 1fr;
+    height: 100dvh;
+  }
+
+  .app-header {
+    grid-area: header;
+    position: static; /* stays at top naturally — app-content scrolls independently */
+    border-left: 1px solid var(--border);
   }
 
   .app-content {
-    padding-bottom: 0;
-    display: flex;
-    flex-direction: column;
+    grid-area: content;
+    padding-bottom: 24px;
+    border-left: 1px solid var(--border);
   }
 
-  .auth-page {
-    min-height: unset;
-    height: 100%;
+  /* ── Sidebar ── */
+  .bottom-nav {
+    grid-area: sidebar;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    width: auto;
+    max-width: none;
+    transform: none;
+    left: auto;
+    padding: 0;
+    border-top: none;
+    border-right: 1px solid var(--border);
     overflow-y: auto;
   }
 
-  .bottom-nav {
-    position: static;
-    left: unset;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 16px 16px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 15px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    text-decoration: none !important;
+  }
+
+  .nav-tab {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 14px;
+    font-size: 14px;
+    height: auto;
+    border-radius: var(--radius-sm);
+    margin: 2px 8px;
+  }
+
+  .nav-tab span:first-child { font-size: 20px; }
+
+  .nav-tab.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  /* ── Content area ── */
+  .page-content {
+    max-width: 1100px;
+    padding: 24px;
+    gap: 16px;
+  }
+
+  /* Route cards: 2 columns */
+  .route-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .route-group-header { grid-column: 1 / -1; }
+
+  /* FAB: no bottom nav */
+  .fab-special {
+    bottom: 24px;
+    right: 24px;
+  }
+
+  /* Toast: centrado en el área de contenido */
+  .toast-container {
+    left: calc(50vw + 120px);
   }
 }
 
