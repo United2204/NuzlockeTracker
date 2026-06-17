@@ -43,22 +43,34 @@ public class PokeApiDataLoader implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         long existing = pokemonRepository.count();
-        if (existing > 0) {
-            log.info("Pokémon catalog already seeded ({} entries), skipping.", existing);
-            return;
+        if (existing == 0) {
+            log.info("Seeding Pokémon catalog from PokéAPI (#{}-#{})...", 1, GEN_1_TO_6);
+            runSeed(false);
+        } else {
+            Long missingWeight = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pokemon WHERE weight IS NULL AND national_dex_number IS NOT NULL",
+                    Long.class);
+            if (missingWeight != null && missingWeight > 0) {
+                log.info("Backfilling weight for {} Pokémon...", missingWeight);
+                runSeed(true);
+            } else {
+                log.info("Pokémon catalog already seeded ({} entries), skipping.", existing);
+            }
         }
+    }
 
-        log.info("Seeding Pokémon catalog from PokéAPI (#{}-#{})...", 1, GEN_1_TO_6);
+    private void runSeed(boolean weightOnly) {
         int seeded = 0;
         int failed = 0;
-
         for (int i = 1; i <= GEN_1_TO_6; i++) {
             try {
-                seedOne(i);
-                seeded++;
-                if (i % 100 == 0) {
-                    log.info("  Progress: {}/{}", i, GEN_1_TO_6);
+                if (weightOnly) {
+                    backfillWeight(i);
+                } else {
+                    seedOne(i);
                 }
+                seeded++;
+                if (i % 100 == 0) log.info("  Progress: {}/{}", i, GEN_1_TO_6);
                 Thread.sleep(REQUEST_DELAY_MS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -66,10 +78,21 @@ public class PokeApiDataLoader implements ApplicationRunner {
                 break;
             } catch (Exception e) {
                 failed++;
-                log.warn("Failed to seed Pokémon #{}: {}", i, e.getMessage());
+                log.warn("Failed #{}: {}", i, e.getMessage());
             }
         }
-        log.info("Pokémon catalog seed finished. Seeded: {}, Failed: {}", seeded, failed);
+        log.info("Done. Processed: {}, Failed: {}", seeded, failed);
+    }
+
+    private void backfillWeight(int dexNum) {
+        PokeApiDto.Pokemon dto = restClient.get()
+                .uri("/pokemon/{id}", dexNum)
+                .retrieve()
+                .body(PokeApiDto.Pokemon.class);
+        if (dto == null) return;
+        jdbcTemplate.update(
+                "UPDATE pokemon SET weight = ? WHERE national_dex_number = ? AND weight IS NULL",
+                dto.weight(), (short) dexNum);
     }
 
     private void seedOne(int dexNum) {
@@ -119,6 +142,7 @@ public class PokeApiDataLoader implements ApplicationRunner {
         pokemon.setSpriteUrl(pokemonDto.sprites().frontDefault());
         pokemon.setFromFangame(false);
         pokemon.setEvolvesFromPokemonId(evolvesFromPokemonId);
+        pokemon.setWeight(pokemonDto.weight());
         Long pokemonId = pokemonRepository.save(pokemon).getId();
 
         // Usar JDBC para el resto: evita el problema de entidades detached con @MapsId

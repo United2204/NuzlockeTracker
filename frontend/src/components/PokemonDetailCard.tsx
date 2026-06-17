@@ -89,6 +89,13 @@ export function PokemonDetailCard({ pokemonId }: Props) {
           ))}
         </div>
       )}
+
+      {data.weight != null && (
+        <div className="pdc-weight">
+          <span className="pdc-weight-label">{t('pokemon.weight', 'Peso')}</span>
+          <span className="pdc-weight-value">{(data.weight / 10).toFixed(1)} kg</span>
+        </div>
+      )}
     </div>
   );
 }

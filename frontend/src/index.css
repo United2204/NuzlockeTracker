@@ -2109,6 +2109,17 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   border: 1px solid var(--border);
 }
 
+.pdc-weight {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+.pdc-weight-label { color: var(--text-muted); }
+.pdc-weight-value { font-weight: 600; }
+
 .global-search-pokemon-detail {
   padding: 0 2px;
 }

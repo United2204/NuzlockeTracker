@@ -147,6 +147,7 @@ export interface PokemonDetailResponse {
     slot: string;
     hidden: boolean;
   }>;
+  weight: number | null;
 }
 
 export interface RouteEncounterSlot {

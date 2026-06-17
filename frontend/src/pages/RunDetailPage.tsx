@@ -831,17 +831,21 @@ export function RunDetailPage() {
                             const src   = cp.currentPokemonSpriteUrl
                               ? (cp.shiny ? toShinySpriteUrl(cp.currentPokemonSpriteUrl) : cp.currentPokemonSpriteUrl)
                               : null;
+                            const handleClick = isOwner
+                              ? (e: React.MouseEvent) => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }
+                              : undefined;
                             return src ? (
                               <img
                                 key={s.id}
                                 src={src}
                                 alt={label}
                                 title={label}
+                                onClick={handleClick}
                                 onError={e => { if (cp.shiny && cp.currentPokemonSpriteUrl) (e.currentTarget).src = cp.currentPokemonSpriteUrl; }}
-                                style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain' }}
+                                style={{ width: 36, height: 36, imageRendering: 'pixelated', objectFit: 'contain', cursor: isOwner ? 'pointer' : 'default' }}
                               />
                             ) : (
-                              <span key={s.id} className="route-pokemon">{label}</span>
+                              <span key={s.id} className="route-pokemon" onClick={handleClick} style={{ cursor: isOwner ? 'pointer' : 'default' }}>{label}</span>
                             );
                           })}
                       </span>

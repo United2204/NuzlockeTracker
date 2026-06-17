@@ -15,7 +15,8 @@ public record PokemonDetailResponse(
         String variant,
         String name,
         BaseStats baseStats,
-        List<AbilityEntry> abilities
+        List<AbilityEntry> abilities,
+        Integer weight
 ) {
     public record BaseStats(int hp, int attack, int defense, int spAtk, int spDef, int speed) {
         static BaseStats from(PokemonBaseStats s) {
@@ -44,7 +45,8 @@ public record PokemonDetailResponse(
                 p.getVariant(),
                 name,
                 stats != null ? BaseStats.from(stats) : null,
-                abilities.stream().map(AbilityEntry::from).toList()
+                abilities.stream().map(AbilityEntry::from).toList(),
+                p.getWeight()
         );
     }
 }

@@ -15,6 +15,7 @@ public class PokeApiDto {
     public record Pokemon(
             int id,
             String name,
+            int weight,
             Sprites sprites,
             List<TypeSlot> types,
             List<StatSlot> stats,

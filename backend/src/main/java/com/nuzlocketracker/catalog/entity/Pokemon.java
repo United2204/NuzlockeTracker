@@ -42,4 +42,8 @@ public class Pokemon {
 
     @Column(name = "evolves_from_pokemon_id")
     private Long evolvesFromPokemonId;
+
+    /** Weight in hectograms (PokéAPI unit). Divide by 10 for kg. */
+    @Column
+    private Integer weight;
 }
