@@ -284,73 +284,73 @@ export function TeamPage() {
         )}
 
         <div className="pokemon-grid">
-          {currentData?.map(p => (
-            <PokemonCard
-              key={p.id}
-              pokemon={p}
-              selected={selected?.id === p.id}
-              onClick={() => toggleSelect(p)}
-            />
-          ))}
+          {currentData?.map(p => {
+            const isSelected = selected?.id === p.id;
+            return (
+              <div key={p.id} style={{ position: 'relative', zIndex: isSelected ? 20 : 'auto' }}>
+                <PokemonCard
+                  pokemon={p}
+                  selected={isSelected}
+                  onClick={() => toggleSelect(p)}
+                />
+                {isSelected && (
+                  <div className="pokemon-actions pokemon-actions--overlay">
+                    <div className="actions-row">
+                      {selected.status !== 'ACTIVE' && (
+                        <button
+                          className="btn btn-success"
+                          onClick={() => handleMoveToTeam(selected)}
+                          disabled={statusMutation.isPending}
+                        >
+                          {t('team.action.team')}
+                        </button>
+                      )}
+                      {selected.status !== 'BOXED' && (
+                        <button
+                          className="btn btn-info"
+                          onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'BOXED' })}
+                          disabled={statusMutation.isPending}
+                        >
+                          {t('team.action.box')}
+                        </button>
+                      )}
+                      {selected.status !== 'FAINTED' && (
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'FAINTED' })}
+                          disabled={statusMutation.isPending}
+                        >
+                          {t('team.action.fainted')}
+                        </button>
+                      )}
+                      {!isGuest && selected.status !== 'FAINTED' && (
+                        <button
+                          className="btn btn-outline"
+                          onClick={() => { setEvolving(selected); setSelected(null); }}
+                        >
+                          {t('team.action.evolve')}
+                        </button>
+                      )}
+                      {!isGuest && selected.currentPokemonId !== selected.originalPokemonId && (
+                        <button
+                          className="btn btn-ghost"
+                          style={{ fontSize: 13 }}
+                          onClick={() => devolveMutation.mutate(selected.id)}
+                          disabled={devolveMutation.isPending}
+                        >
+                          {t('team.action.revertEvolution')}
+                        </button>
+                      )}
+                      <button className="btn btn-ghost" onClick={() => setSelected(null)}>
+                        {t('btn.cancel')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-
-        {selected && (
-          <div className="pokemon-actions">
-            <p className="pokemon-actions-title">
-              <strong>{selected.nickname ?? selected.currentPokemonName}</strong>
-            </p>
-            <div className="actions-row">
-              {selected.status !== 'ACTIVE' && (
-                <button
-                  className="btn btn-success"
-                  onClick={() => handleMoveToTeam(selected)}
-                  disabled={statusMutation.isPending}
-                >
-                  {t('team.action.team')}
-                </button>
-              )}
-              {selected.status !== 'BOXED' && (
-                <button
-                  className="btn btn-info"
-                  onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'BOXED' })}
-                  disabled={statusMutation.isPending}
-                >
-                  {t('team.action.box')}
-                </button>
-              )}
-              {selected.status !== 'FAINTED' && (
-                <button
-                  className="btn btn-danger"
-                  onClick={() => statusMutation.mutate({ pokemonId: selected.id, status: 'FAINTED' })}
-                  disabled={statusMutation.isPending}
-                >
-                  {t('team.action.fainted')}
-                </button>
-              )}
-              {!isGuest && selected.status !== 'FAINTED' && (
-                <button
-                  className="btn btn-outline"
-                  onClick={() => { setEvolving(selected); setSelected(null); }}
-                >
-                  {t('team.action.evolve')}
-                </button>
-              )}
-              {!isGuest && selected.currentPokemonId !== selected.originalPokemonId && (
-                <button
-                  className="btn btn-ghost"
-                  style={{ fontSize: 13 }}
-                  onClick={() => devolveMutation.mutate(selected.id)}
-                  disabled={devolveMutation.isPending}
-                >
-                  {t('team.action.revertEvolution')}
-                </button>
-              )}
-              <button className="btn btn-ghost" onClick={() => setSelected(null)}>
-                {t('btn.cancel')}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {evolving && runId && !isGuest && (

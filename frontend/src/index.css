@@ -801,14 +801,19 @@ textarea.form-input { resize: vertical; min-height: 72px; }
   background: var(--bg-card);
   border: 1.5px solid var(--accent);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  position: sticky;
-  bottom: 72px;
-  z-index: 5;
-  margin-top: 12px;
+  gap: 8px;
+}
+
+.pokemon-actions--overlay {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
 }
 
 .pokemon-actions-title {
