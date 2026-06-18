@@ -808,6 +808,9 @@ export function RunDetailPage() {
               );
               const canAddSlot = isOwner && run?.status === 'ACTIVE' && route.encounterType === 'RANDOM'
                 && maxCatches > 1 && slots.length < maxCatches && allTerminal;
+              const hasCapturedSprite = slots.some(s =>
+                s.outcome === 'CAPTURED' && s.caughtPokemon?.currentPokemonSpriteUrl
+              );
 
               return (
                 <div key={route.routeId} style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
@@ -856,7 +859,7 @@ export function RunDetailPage() {
                             return s.outcome === 'CAPTURED' ? (
                               <span
                                 key={s.id}
-                                style={{ cursor: isOwner ? 'pointer' : 'default', lineHeight: 0 }}
+                                style={{ cursor: isOwner ? 'pointer' : 'default', lineHeight: 0, padding: '6px 4px' }}
                                 onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
                                 <Pokeball size={16} golden={s.caughtPokemon?.shiny ?? false} />
@@ -865,7 +868,7 @@ export function RunDetailPage() {
                               <span
                                 key={s.id}
                                 style={{ fontSize: 10, color: cColor, border: `1px solid ${cColor}`,
-                                  borderRadius: 4, padding: '1px 4px', cursor: isOwner ? 'pointer' : 'default' }}
+                                  borderRadius: 4, padding: '3px 6px', cursor: isOwner ? 'pointer' : 'default' }}
                                 onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
                                 {t(`outcome.${s.outcome}`)}
@@ -874,9 +877,11 @@ export function RunDetailPage() {
                           })}
                         </span>
                       ) : (
-                        displayOutcome === 'CAPTURED'
+                        displayOutcome === 'CAPTURED' && !hasCapturedSprite
                           ? <Pokeball size={20} golden={lastSlot?.caughtPokemon?.shiny ?? false} />
-                          : <span className="outcome-tag" style={{ color: cfgColor }}>{t(`outcome.${displayOutcome}`)}</span>
+                          : displayOutcome !== 'CAPTURED'
+                            ? <span className="outcome-tag" style={{ color: cfgColor }}>{t(`outcome.${displayOutcome}`)}</span>
+                            : null
                       )}
                     </div>
                   </button>
