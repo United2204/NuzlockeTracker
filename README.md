@@ -2,7 +2,7 @@
 
 A full-stack PWA for managing Pokémon Nuzlocke runs. Built as a learning project to solidify Spring Boot 3, Spring Security, and a production-grade full-stack architecture.
 
-**Live:** [nuzlocke-tracker.vercel.app](https://nuzlocke-tracker.vercel.app) · Backend on Railway · Frontend on Vercel
+**Frontend:** [nuzlocke-tracker.vercel.app](https://nuzlocke-tracker.vercel.app) (Vercel, always up) · **Backend:** not running — see Status section below
 
 ---
 
@@ -136,3 +136,5 @@ Copy `.env.example` files in `backend/` and `frontend/` and fill in your values.
 ## Status
 
 **Archived.** The core loop works end-to-end: create run → register encounters → track team and deaths, including guest mode, authentication, and cloud sync. Not actively maintained.
+
+The backend is no longer hosted. The frontend at [nuzlocke-tracker.vercel.app](https://nuzlocke-tracker.vercel.app) stays up and the full app is usable in **guest mode** (no account needed) — routes, captures, team, deaths, all stored locally in IndexedDB. Auth and cloud sync require running the backend locally.
