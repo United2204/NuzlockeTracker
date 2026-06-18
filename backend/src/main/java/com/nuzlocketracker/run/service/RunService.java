@@ -551,8 +551,7 @@ public class RunService {
 
         caughtPokemonRepository.delete(cp);
 
-        enc.setDeletedAt(OffsetDateTime.now());
-        routeEncounterRepository.save(enc);
+        routeEncounterRepository.delete(enc);
     }
 
     // ─── Medallas ──────────────────────────────────────────────────────────────

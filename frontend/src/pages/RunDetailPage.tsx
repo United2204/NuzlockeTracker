@@ -818,7 +818,7 @@ export function RunDetailPage() {
               )}
             </div>
             {groupRoutes.map(route => {
-              const slots      = route.slots;
+              const slots      = route.slots.filter(s => s.outcome !== 'PENDING');
               const hasSlots   = slots.length > 0;
               const lastSlot   = hasSlots ? slots[slots.length - 1] : null;
               const displayOutcome = lastSlot?.outcome ?? 'PENDING';
