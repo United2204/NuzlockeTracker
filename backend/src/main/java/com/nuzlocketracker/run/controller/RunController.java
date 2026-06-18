@@ -143,6 +143,14 @@ public class RunController {
         return runService.devolvePokemon(userId(auth), runId, pokemonId);
     }
 
+    @DeleteMapping("/{runId}/pokemon/{pokemonId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCaughtPokemon(@PathVariable UUID runId,
+                                     @PathVariable UUID pokemonId,
+                                     Authentication auth) {
+        runService.deleteCaughtPokemon(userId(auth), runId, pokemonId);
+    }
+
     // ─── Medallas ──────────────────────────────────────────────────────────────
 
     @PostMapping("/{runId}/badges")

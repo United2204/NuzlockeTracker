@@ -186,7 +186,9 @@
       "fainted": "💀 Fainted",
       "evolve": "🧬 Evolve",
       "revertEvolution": "↩️ Revert evolution",
-      "damageCalc": "⚡ Damage calc"
+      "damageCalc": "⚡ Damage calc",
+      "delete": "🗑️ Delete capture",
+      "deleteConfirm": "Delete {{name}}? This will reset the encounter to pending."
     },
     "teamFull": "⚔️ Team full",
     "chooseSwap": "Choose who goes to the box to make room for {{name}}:",
@@ -194,6 +196,7 @@
     "swapError": "Error making the swap. Try again.",
     "statusError": "Error changing status. Try again.",
     "revertError": "Error reverting the evolution. Try again.",
+    "deleteError": "Error deleting the Pokémon. Try again.",
     "evolve": {
       "title": "Evolve: {{name}}",
       "label": "Evolution *",

@@ -186,7 +186,9 @@
       "fainted": "💀 Muerto",
       "evolve": "🧬 Evolucionar",
       "revertEvolution": "↩️ Revertir evolución",
-      "damageCalc": "⚡ Calcular daño"
+      "damageCalc": "⚡ Calcular daño",
+      "delete": "🗑️ Eliminar captura",
+      "deleteConfirm": "¿Eliminar a {{name}}? Esto reiniciará el encuentro a pendiente."
     },
     "teamFull": "⚔️ Equipo lleno",
     "chooseSwap": "Elegí quién va a la caja para hacerle lugar a {{name}}:",
@@ -194,6 +196,7 @@
     "swapError": "Error al hacer el cambio. Intentá de nuevo.",
     "statusError": "Error al cambiar el estado. Intentá de nuevo.",
     "revertError": "Error al revertir la evolución. Intentá de nuevo.",
+    "deleteError": "Error al eliminar el Pokémon. Intentá de nuevo.",
     "evolve": {
       "title": "Evolucionar: {{name}}",
       "label": "Evolución *",

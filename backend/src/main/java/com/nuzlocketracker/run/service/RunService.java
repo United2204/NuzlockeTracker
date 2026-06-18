@@ -537,6 +537,25 @@ public class RunService {
         return toCaughtPokemonResponse(cp);
     }
 
+    public void deleteCaughtPokemon(UUID userId, UUID runId, UUID pokemonId) {
+        requireOwnedRun(userId, runId);
+        CaughtPokemon cp = caughtPokemonRepository.findById(pokemonId)
+                .filter(p -> p.getRun().getId().equals(runId))
+                .orElseThrow(() -> new ResourceNotFoundException("CaughtPokemon", pokemonId));
+
+        RouteEncounter enc = cp.getRouteEncounter();
+
+        List<PokemonStatusLog> logs = pokemonStatusLogRepository
+                .findAllByCaughtPokemonIdOrderByOccurredAtAsc(pokemonId);
+        pokemonStatusLogRepository.deleteAll(logs);
+
+        caughtPokemonRepository.delete(cp);
+
+        enc.setOutcome(RouteEncounter.Outcome.PENDING);
+        enc.setEncounteredAt(null);
+        routeEncounterRepository.save(enc);
+    }
+
     // ─── Medallas ──────────────────────────────────────────────────────────────
 
     public RunBadgeResponse obtainBadge(UUID userId, UUID runId, ObtainBadgeRequest req) {

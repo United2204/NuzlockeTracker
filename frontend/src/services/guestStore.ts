@@ -326,6 +326,20 @@ export const guestStore = {
     }
   },
 
+  async deleteCaughtPokemon(runId: string, pokemonId: string): Promise<void> {
+    const db = await getDb();
+    const cp = await db.get('guestCaughtPokemon', pokemonId);
+    if (!cp || cp.runId !== runId) return;
+
+    // Reset the encounter slot back to PENDING
+    const slot = await db.get('guestEncounterSlots', cp.encounterId);
+    if (slot) {
+      await db.put('guestEncounterSlots', { ...slot, outcome: 'PENDING', caughtPokemonId: null });
+    }
+
+    await db.delete('guestCaughtPokemon', pokemonId);
+  },
+
   async obtainBadge(runId: string, badge: RunBadgeResponse): Promise<void> {
     const db = await getDb();
     const run = await db.get('guestRuns', runId);

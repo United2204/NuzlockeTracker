@@ -85,6 +85,9 @@ export const runsApi = {
   devolve: (runId: string, pokemonId: string) =>
     client.patch<CaughtPokemonResponse>(`/api/runs/${runId}/pokemon/${pokemonId}/devolve`, {}),
 
+  deleteCaughtPokemon: (runId: string, pokemonId: string) =>
+    client.delete(`/api/runs/${runId}/pokemon/${pokemonId}`),
+
   updateRules: (runId: string, rules: { ruleType: string; enabled: boolean; value: string | null }[]) =>
     client.patch(`/api/runs/${runId}/rules`, { rules }),
 

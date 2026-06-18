@@ -223,6 +223,15 @@ export function TeamPage() {
     onError: () => alert(t('team.revertError')),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (pokemonId: string) => {
+      if (isGuest) { await guestStore.deleteCaughtPokemon(runId!, pokemonId); }
+      else { await runsApi.deleteCaughtPokemon(runId!, pokemonId); }
+    },
+    onSuccess: () => { invalidateAll(); setSelected(null); },
+    onError: () => alert(t('team.deleteError')),
+  });
+
   function toggleSelect(p: CaughtPokemonResponse) {
     setSelected(prev => prev?.id === p.id ? null : p);
   }
@@ -341,7 +350,19 @@ export function TeamPage() {
                           {t('team.action.revertEvolution')}
                         </button>
                       )}
-                      <button className="btn btn-ghost" onClick={() => setSelected(null)}>
+                      <button
+                          className="btn btn-danger"
+                          style={{ fontSize: 12, opacity: 0.75 }}
+                          onClick={() => {
+                            if (window.confirm(t('team.action.deleteConfirm', { name: selected.nickname ?? selected.currentPokemonName }))) {
+                              deleteMutation.mutate(selected.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          {t('team.action.delete')}
+                        </button>
+                        <button className="btn btn-ghost" onClick={() => setSelected(null)}>
                         {t('btn.cancel')}
                       </button>
                     </div>
