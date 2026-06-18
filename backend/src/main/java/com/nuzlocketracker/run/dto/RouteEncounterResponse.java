@@ -17,8 +17,8 @@ public record RouteEncounterResponse(
     public static RouteEncounterResponse from(RouteEncounter enc, CaughtPokemonResponse caught) {
         return new RouteEncounterResponse(
                 enc.getId(),
-                enc.getRoute().getId(),
-                enc.getRoute().getName(),
+                enc.getRoute() != null ? enc.getRoute().getId() : null,
+                enc.getRoute() != null ? enc.getRoute().getName() : enc.getCustomName(),
                 enc.getOutcome().name(),
                 caught,
                 enc.getNotes(),
