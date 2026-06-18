@@ -551,8 +551,7 @@ public class RunService {
 
         caughtPokemonRepository.delete(cp);
 
-        enc.setOutcome(RouteEncounter.Outcome.PENDING);
-        enc.setEncounteredAt(null);
+        enc.setDeletedAt(OffsetDateTime.now());
         routeEncounterRepository.save(enc);
     }
 

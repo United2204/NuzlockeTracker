@@ -331,12 +331,7 @@ export const guestStore = {
     const cp = await db.get('guestCaughtPokemon', pokemonId);
     if (!cp || cp.runId !== runId) return;
 
-    // Reset the encounter slot back to PENDING
-    const slot = await db.get('guestEncounterSlots', cp.encounterId);
-    if (slot) {
-      await db.put('guestEncounterSlots', { ...slot, outcome: 'PENDING', caughtPokemonId: null });
-    }
-
+    await db.delete('guestEncounterSlots', cp.encounterId);
     await db.delete('guestCaughtPokemon', pokemonId);
   },
 

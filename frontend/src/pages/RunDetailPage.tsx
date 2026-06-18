@@ -876,33 +876,20 @@ export function RunDetailPage() {
                         <span style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                           {slots.map(s => {
                             const cColor = OUTCOME_COLOR[s.outcome] ?? OUTCOME_COLOR['PENDING'];
-                            const handleSlotClick = isOwner
-                              ? (e: React.MouseEvent) => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }
-                              : undefined;
-                            if (s.outcome === 'CAPTURED') return (
+                            return s.outcome === 'CAPTURED' ? (
                               <span
                                 key={s.id}
                                 style={{ cursor: isOwner ? 'pointer' : 'default', lineHeight: 0, padding: '6px 4px' }}
-                                onClick={handleSlotClick}
+                                onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
                                 <Pokeball size={16} golden={s.caughtPokemon?.shiny ?? false} />
                               </span>
-                            );
-                            if (s.outcome === 'PENDING') return (
-                              <span
-                                key={s.id}
-                                style={{ fontSize: 14, color: 'var(--text-muted)', cursor: isOwner ? 'pointer' : 'default', lineHeight: 1 }}
-                                onClick={handleSlotClick}
-                              >
-                                ○
-                              </span>
-                            );
-                            return (
+                            ) : (
                               <span
                                 key={s.id}
                                 style={{ fontSize: 10, color: cColor, border: `1px solid ${cColor}`,
                                   borderRadius: 4, padding: '3px 6px', cursor: isOwner ? 'pointer' : 'default' }}
-                                onClick={handleSlotClick}
+                                onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
                               >
                                 {t(`outcome.${s.outcome}`)}
                               </span>
