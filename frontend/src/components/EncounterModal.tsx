@@ -52,6 +52,8 @@ interface Props {
   onSave?: (data: GuestEncounterSaveData) => Promise<void>;
   /** Team members to show in the swap modal — used for guest mode */
   guestTeamMembers?: CaughtPokemonResponse[];
+  /** Called when the user wants to delete the captured Pokémon from this slot */
+  onDelete?: () => Promise<void>;
 }
 
 const FORCED_CAPTURE_TYPES = new Set(['STARTER', 'GIFT', 'FOSSIL', 'EGG', 'TRADE']);
@@ -61,7 +63,7 @@ const TERMINAL_OUTCOMES    = new Set(['CAPTURED', 'FAILED', 'DIED_IN_ENCOUNTER',
 export function EncounterModal({
   route, slot, runId, activePokemonCount,
   nicknameRequired, firstEncounterOnly, speciesClauseEnabled,
-  caughtChainIds, onClose, onSave, guestTeamMembers,
+  caughtChainIds, onClose, onSave, guestTeamMembers, onDelete,
 }: Props) {
   const { t } = useTranslation();
   const existingPokemon: PokemonSearchResponse | null = slot?.caughtPokemon ? {
@@ -84,6 +86,7 @@ export function EncounterModal({
   const [submitError, setSubmitError]             = useState('');
   const [pendingData, setPendingData]             = useState<FormData | null>(null);
   const [memberToBox, setMemberToBox]             = useState<CaughtPokemonResponse | null>(null);
+  const [isDeleting, setIsDeleting]               = useState(false);
   const qc = useQueryClient();
 
   const teamFull        = activePokemonCount >= 6;
@@ -328,6 +331,23 @@ export function EncounterModal({
             >
               {isSubmitting ? t('btn.saving') : isForced ? t('btn.confirm') : t('encounter.record')}
             </button>
+
+            {onDelete && slot?.caughtPokemon && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ marginTop: 6, fontSize: 12, color: 'var(--danger)', opacity: 0.8 }}
+                disabled={isDeleting}
+                onClick={async () => {
+                  const name = slot.caughtPokemon!.nickname ?? slot.caughtPokemon!.currentPokemonName;
+                  if (!window.confirm(t('team.action.deleteConfirm', { name }))) return;
+                  setIsDeleting(true);
+                  try { await onDelete(); } finally { setIsDeleting(false); }
+                }}
+              >
+                {isDeleting ? t('btn.saving') : t('team.action.delete')}
+              </button>
+            )}
           </form>
         </div>
       </div>

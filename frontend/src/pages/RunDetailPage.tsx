@@ -563,6 +563,26 @@ export function RunDetailPage() {
   const isOwner = isGuest ? true : (user?.id === run?.userId);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
+  const deleteCaughtMut = useMutation({
+    mutationFn: async (pokemonId: string) => {
+      if (isGuest) await guestStore.deleteCaughtPokemon(runId!, pokemonId);
+      else await runsApi.deleteCaughtPokemon(runId!, pokemonId);
+    },
+    onSuccess: () => {
+      if (isGuest) {
+        qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'routes'] });
+        qc.invalidateQueries({ queryKey: ['guest', 'runs', runId] });
+        qc.invalidateQueries({ queryKey: ['guest', 'runs', runId, 'team'] });
+      } else {
+        qc.invalidateQueries({ queryKey: ['runs', runId, 'routes'] });
+        qc.invalidateQueries({ queryKey: ['runs', runId] });
+        qc.invalidateQueries({ queryKey: ['runs', runId, 'team'] });
+        qc.invalidateQueries({ queryKey: ['all-caught', runId] });
+      }
+      setActiveEncounter(null);
+    },
+  });
+
   const statusMut = useMutation({
     mutationFn: async (status: string) => {
       if (isGuest) { await guestStore.updateRun(runId!, { status: status as 'COMPLETED' | 'ABANDONED' }); }
@@ -856,20 +876,33 @@ export function RunDetailPage() {
                         <span style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                           {slots.map(s => {
                             const cColor = OUTCOME_COLOR[s.outcome] ?? OUTCOME_COLOR['PENDING'];
-                            return s.outcome === 'CAPTURED' ? (
+                            const handleSlotClick = isOwner
+                              ? (e: React.MouseEvent) => { e.stopPropagation(); setActiveEncounter({ route, slot: s }); }
+                              : undefined;
+                            if (s.outcome === 'CAPTURED') return (
                               <span
                                 key={s.id}
                                 style={{ cursor: isOwner ? 'pointer' : 'default', lineHeight: 0, padding: '6px 4px' }}
-                                onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
+                                onClick={handleSlotClick}
                               >
                                 <Pokeball size={16} golden={s.caughtPokemon?.shiny ?? false} />
                               </span>
-                            ) : (
+                            );
+                            if (s.outcome === 'PENDING') return (
+                              <span
+                                key={s.id}
+                                style={{ fontSize: 14, color: 'var(--text-muted)', cursor: isOwner ? 'pointer' : 'default', lineHeight: 1 }}
+                                onClick={handleSlotClick}
+                              >
+                                ○
+                              </span>
+                            );
+                            return (
                               <span
                                 key={s.id}
                                 style={{ fontSize: 10, color: cColor, border: `1px solid ${cColor}`,
                                   borderRadius: 4, padding: '3px 6px', cursor: isOwner ? 'pointer' : 'default' }}
-                                onClick={e => { if (!isOwner) return; e.stopPropagation(); setActiveEncounter({ route, slot: s }); }}
+                                onClick={handleSlotClick}
                               >
                                 {t(`outcome.${s.outcome}`)}
                               </span>
@@ -1010,6 +1043,9 @@ export function RunDetailPage() {
             )}
           onSave={isGuest ? handleGuestEncounter : undefined}
           guestTeamMembers={isGuest ? (guestTeamQ.data ?? []) : undefined}
+          onDelete={activeEncounter.slot?.caughtPokemon
+            ? () => deleteCaughtMut.mutateAsync(activeEncounter.slot!.caughtPokemon!.id)
+            : undefined}
           onClose={() => setActiveEncounter(null)}
         />
       )}
